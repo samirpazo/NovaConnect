@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { View, KeyboardAvoidingView, Platform, ScrollView, Alert, Image, Pressable, Animated } from 'react-native';
+import { View, KeyboardAvoidingView, Platform, ScrollView, Alert, Pressable, Animated } from 'react-native';
+import { Image } from 'expo-image';
 import { router, Stack } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,8 +16,13 @@ export default function RegisterScreen() {
   const [isLoading, setIsLoading] = React.useState(false);
 
   // Animation values for transition
-  const fadeAnim = React.useRef(new Animated.Value(1)).current;
-  const slideAnim = React.useRef(new Animated.Value(0)).current;
+  const fadeAnimRef = React.useRef<Animated.Value | null>(null);
+  if (!fadeAnimRef.current) fadeAnimRef.current = new Animated.Value(1);
+  const fadeAnim = fadeAnimRef.current;
+
+  const slideAnimRef = React.useRef<Animated.Value | null>(null);
+  if (!slideAnimRef.current) slideAnimRef.current = new Animated.Value(0);
+  const slideAnim = slideAnimRef.current;
 
   const handleNextStep = () => {
     if (!document || document.length < 8) {

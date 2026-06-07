@@ -53,9 +53,11 @@ export const authService = {
         };
 
         // Guardar Tokens de forma segura
-        await storage.setItem('token', authData.Token);
-        await storage.setItem('refreshToken', authData.RefreshToken);
-        await storage.setItem('user', JSON.stringify(authData.User));
+        await Promise.all([
+          storage.setItem('token', authData.Token),
+          storage.setItem('refreshToken', authData.RefreshToken),
+          storage.setItem('user', JSON.stringify(authData.User))
+        ]);
 
         return { success: true, data: authData };
       } else {
@@ -81,9 +83,11 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await storage.removeItem('token');
-    await storage.removeItem('refreshToken');
-    await storage.removeItem('user');
+    await Promise.all([
+      storage.removeItem('token'),
+      storage.removeItem('refreshToken'),
+      storage.removeItem('user')
+    ]);
   },
 
   async getSession(): Promise<AuthResponse['User'] | null> {

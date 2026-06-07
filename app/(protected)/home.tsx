@@ -12,7 +12,6 @@ export default function HomeScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/');
   };
 
   return (
@@ -22,7 +21,7 @@ export default function HomeScreen() {
           title: 'Inicio', 
           headerLeft: () => null,
           headerRight: () => (
-            <Button variant="ghost" size="icon" onPress={() => router.push('/settings' as any)} className="mr-2">
+            <Button variant="ghost" size="icon" onPress={() => router.push('/(protected)/settings')} className="mr-2">
               <Icon as={SettingsIcon} className="text-foreground" />
             </Button>
           )

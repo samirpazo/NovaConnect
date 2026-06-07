@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import { storage } from '@/lib/storage';
 
 // Use local network IP for testing on physical device/emulator, or localhost for iOS simulator
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'android' ? 'http://10.0.2.2:5044' : 'http://localhost:5044');
+const API_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'android' ? 'http://10.0.2.2:5044' : 'http://localhost:5044');
 
 export const api = axios.create({
   baseURL: API_URL,

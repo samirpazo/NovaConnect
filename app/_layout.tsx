@@ -3,11 +3,12 @@ import '@/global.css';
 import { NAV_THEME } from '@/lib/theme';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme, vars } from 'nativewind';
 import { View } from 'react-native';
 import { usePreferenceStore } from '@/stores/usePreferenceStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { hexToNativeWindHsl } from '@/lib/colorUtils';
 import { useEffect, useState } from 'react';
 
@@ -20,19 +21,43 @@ export {
   ErrorBoundary,
 } from 'expo-router';
 
+function useProtectedRoute(user: any, loading: boolean, isReady: boolean) {
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading || !isReady) return;
+
+    const inProtectedGroup = segments[0] === '(protected)';
+
+    if (!user && inProtectedGroup) {
+      router.replace('/');
+    } else if (user && !inProtectedGroup) {
+      router.replace('/(protected)/home');
+    }
+  }, [user, segments, loading, isReady]);
+}
+
 export default function RootLayout() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const { theme, primaryColor } = usePreferenceStore();
+  const { user, loading: authLoading, initializeAuth } = useAuthStore();
   const [isReady, setIsReady] = useState(false);
+
+  useProtectedRoute(user, authLoading, isReady);
 
   useEffect(() => {
     const initApp = async () => {
       // Esperar a que Zustand recupere el estado de AsyncStorage
-      let hydrated = usePreferenceStore.persist.hasHydrated();
-      while (!hydrated) {
-        await new Promise(r => setTimeout(r, 10));
-        hydrated = usePreferenceStore.persist.hasHydrated();
-      }
+      await new Promise<void>(resolve => {
+        if (usePreferenceStore.persist.hasHydrated()) return resolve();
+        const unsub = usePreferenceStore.persist.onFinishHydration(() => {
+          resolve();
+          unsub();
+        });
+      });
+
+      await initializeAuth();
 
       // Aplicar el tema recuperado inmediatamente antes de renderizar
       const currentTheme = usePreferenceStore.getState().theme;
@@ -50,7 +75,7 @@ export default function RootLayout() {
   const primaryHsl = hexToNativeWindHsl(primaryColor);
   
   const themeVars = vars({
-    '--primary': primaryHsl,
+    // '--primary': primaryHsl, // Removed so global.css handles primary correctly
   });
 
   if (!isReady) {
@@ -59,7 +84,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-      <View style={[{ flex: 1 }, themeVars as any]}>
+      <View style={[{ flex: 1 }]}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         <Stack />
         <PortalHost />
