@@ -4,34 +4,47 @@
     "slug": "nova-connect",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icons/icon.png",
     "scheme": "nova-connect",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/icons/splash-icon-light.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ffffff",
+      "dark": {
+        "image": "./assets/images/icons/splash-icon-dark.png",
+        "backgroundColor": "#0F172A"
+      }
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": {
+        "light": "./assets/images/icons/ios-light.png",
+        "dark": "./assets/images/icons/ios-dark.png",
+        "tinted": "./assets/images/icons/ios-tinted.png"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icons/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       }
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icons/icon.png"
     },
     "plugins": [
       "expo-router",
-      "expo-image"
+      "expo-image",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Permitir a Nova Connect usar Face ID para iniciar sesión de forma rápida."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

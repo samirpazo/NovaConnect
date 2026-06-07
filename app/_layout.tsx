@@ -4,9 +4,11 @@ import { NAV_THEME } from '@/lib/theme';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import Head from 'expo-router/head';
+import { Toaster } from 'sonner-native';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme, vars } from 'nativewind';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { usePreferenceStore } from '@/stores/usePreferenceStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { hexToNativeWindHsl } from '@/lib/colorUtils';
@@ -84,10 +86,22 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+      <Head>
+        <title>Nova Connect</title>
+      </Head>
       <View style={[{ flex: 1 }]}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         <Stack />
         <PortalHost />
+        <Toaster 
+          position="top-center" 
+          toastOptions={{
+            style: {
+              width: Platform.OS === 'web' ? 400 : 'auto',
+              alignSelf: 'center',
+            }
+          }}
+        />
       </View>
     </ThemeProvider>
   );
