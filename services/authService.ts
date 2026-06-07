@@ -68,12 +68,49 @@ export const authService = {
     }
   },
 
-  async registerCollaborator(credentials: any): Promise<{ success: boolean; data?: boolean; error?: string }> {
+  async validateRegistration(document: string): Promise<{ success: boolean; data?: number; error?: string }> {
     try {
-      const { data } = await api.post('/SecCollaborator/Register', credentials);
+      const { data } = await api.post('/SecCollaborator/Register', {
+        DocumentNumber: document,
+        Password: "dummy" // Requerido por el modelo, pero ignorado por el backend
+      });
       
       if (data.Succeeded) {
-        return { success: true, data: data.Data };
+        return { success: true, data: data.Data }; // Data contiene el PrsID
+      }
+      
+      return { success: false, error: data.Message || 'No se pudo completar la validación.' };
+    } catch (error: any) {
+      return { success: false, error: error?.response?.data?.Message || 'Error al intentar validar el registro.' };
+    }
+  },
+
+  async validateLogin(document: string): Promise<{ success: boolean; data?: { PrsID: number, HasAccount: boolean }; error?: string }> {
+    try {
+      const { data } = await api.post('/SecCollaborator/ValidateLogin', {
+        DocumentNumber: document
+      });
+      
+      if (data.Succeeded) {
+        return { success: true, data: data.Data }; 
+      }
+      
+      return { success: false, error: data.Message || 'No se pudo validar el acceso.' };
+    } catch (error: any) {
+      return { success: false, error: error?.response?.data?.Message || 'Error al validar el documento.' };
+    }
+  },
+
+  async registerCollaborator(prsId: number, password: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data } = await api.post('/SecCollaborator/Save', {
+        PrsID: prsId,
+        ColPassword: password,
+        SecStatus: true
+      });
+      
+      if (data.Succeeded) {
+        return { success: true };
       }
       
       return { success: false, error: data.Message || 'No se pudo completar el registro.' };

@@ -1,7 +1,11 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { api } from "@/lib/axios";
 import { hashPassword } from "@/lib/security";
 import { storage } from "@/lib/storage";
 import { showToast } from "@/lib/toast";
+import { authService } from "@/services/authService";
 import { secCollaboratorPreferenceService } from "@/services/secCollaboratorPreferenceService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
@@ -16,6 +20,8 @@ import {
   Headset,
   IdCard,
   LogOut,
+  Mail,
+  Phone,
   ShieldCheck,
   X,
 } from "lucide-react-native";
@@ -52,10 +58,27 @@ export default function LoginScreen() {
   const [showHelpModal, setShowHelpModal] = React.useState(false);
   const [showConfirmLogoutModal, setShowConfirmLogoutModal] =
     React.useState(false);
+  const [showRegisterModal, setShowRegisterModal] = React.useState(false);
+  const [registerDoc, setRegisterDoc] = React.useState("");
+  const [registerError, setRegisterError] = React.useState("");
+  const [isRegistering, setIsRegistering] = React.useState(false);
+  const [helpData, setHelpData] = React.useState<{
+    emails?: { email_1: string }[];
+    phones?: { phone_1: string }[];
+  } | null>(null);
   const [biometricSetupPin, setBiometricSetupPin] = React.useState("");
   const [hasStoredDocument, setHasStoredDocument] = React.useState(false);
 
   React.useEffect(() => {
+    api
+      .get("/GenParameter/GetHelpInfo")
+      .then((res) => {
+        if (res.data?.data) {
+          setHelpData(res.data.data);
+        }
+      })
+      .catch((err) => console.log("Error fetching help data:", err));
+
     const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     setShuffledNumbers([...numbers].sort(() => Math.random() - 0.5));
 
@@ -112,23 +135,73 @@ export default function LoginScreen() {
     alignItems: "center" as const,
   }));
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (!PrsDocumentNumber || PrsDocumentNumber.length < 8) {
       showToast.warning("Documento inválido", "Ingrese un documento válido.");
       return;
     }
 
-    opacity.value = withTiming(0, { duration: 200 });
-    translateX.value = withTiming(-50, { duration: 200 }, (finished) => {
-      if (finished) {
-        scheduleOnRN(() => {
-          setStep(2);
-          translateX.value = 50;
-          opacity.value = withTiming(1, { duration: 200 });
-          translateX.value = withTiming(0, { duration: 200 });
-        });
+    try {
+      const {
+        success,
+        data,
+        error: errorMsg,
+      } = await authService.validateLogin(PrsDocumentNumber);
+
+      if (success && data) {
+        if (data.HasAccount) {
+          // Ya tiene cuenta: pasar a ingresar PIN
+          opacity.value = withTiming(0, { duration: 200 });
+          translateX.value = withTiming(-50, { duration: 200 }, (finished) => {
+            if (finished) {
+              scheduleOnRN(() => {
+                setStep(2);
+                translateX.value = 50;
+                opacity.value = withTiming(1, { duration: 200 });
+                translateX.value = withTiming(0, { duration: 200 });
+              });
+            }
+          });
+        } else {
+          // Vínculo válido, pero sin cuenta: mostrar alerta
+          showToast.error("Cuenta no creada", "Aún no tienes una contraseña. Presiona 'Regístrate aquí' para crearla.");
+        }
+      } else {
+        // No existe persona o no tiene contrato activo
+        showToast.error(
+          "Acceso denegado",
+          errorMsg || "No se pudo validar el documento.",
+        );
       }
-    });
+    } catch (error) {
+      showToast.error("Error", "Error de conexión al validar el documento.");
+    }
+  };
+
+  const handleValidateRegistration = async () => {
+    if (!registerDoc || registerDoc.length < 8) {
+      setRegisterError("Ingrese un documento válido.");
+      return;
+    }
+    setRegisterError("");
+    setIsRegistering(true);
+    const {
+      success,
+      data: validatedPrsId,
+      error: errorMsg,
+    } = await authService.validateRegistration(registerDoc);
+    setIsRegistering(false);
+
+    if (success && validatedPrsId) {
+      setShowRegisterModal(false);
+      setRegisterDoc(""); // reset
+      setRegisterError(""); // reset
+      router.push(`/register?doc=${registerDoc}&prsId=${validatedPrsId}`);
+    } else {
+      setRegisterError(
+        errorMsg || "No cumples con los requisitos para registrarte.",
+      );
+    }
   };
 
   const handleForgetDocument = async () => {
@@ -378,9 +451,7 @@ export default function LoginScreen() {
                       <Text className="text-muted-foreground font-poppins text-sm">
                         ¿No tienes una cuenta?{" "}
                       </Text>
-                      <Pressable
-                        onPress={() => router.push("/register" as any)}
-                      >
+                      <Pressable onPress={() => setShowRegisterModal(true)}>
                         <Text className="text-primary font-bold font-poppins text-sm">
                           Regístrate aquí
                         </Text>
@@ -565,6 +636,75 @@ export default function LoginScreen() {
           </KeyboardAvoidingView>
         </Modal>
 
+        {/* Register Modal */}
+        <Modal
+          visible={showRegisterModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowRegisterModal(false)}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            className="flex-1 justify-center items-center bg-black/50 p-6"
+          >
+            <View className="bg-card w-full max-w-sm rounded-3xl p-6 items-center shadow-xl">
+              <View className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center mb-4">
+                <IdCard size={32} color="#002aff" />
+              </View>
+              <Text className="text-xl font-bold font-poppins text-foreground text-center mb-2">
+                Validar Documento
+              </Text>
+              <Text className="text-muted-foreground text-center mb-6 px-2 text-sm font-poppins">
+                Ingresa tu documento para verificar si tienes un contrato activo y
+                proceder con el registro.
+              </Text>
+              <View className="w-full mb-6">
+                <Input
+                  value={registerDoc}
+                  onChangeText={(text) => {
+                    setRegisterDoc(text);
+                    if (registerError) setRegisterError("");
+                  }}
+                  placeholder="Número de documento"
+                  keyboardType="number-pad"
+                  maxLength={20}
+                  className={`w-full h-12 bg-muted/50 rounded-xl text-center text-lg font-bold font-poppins ${registerError ? "border border-destructive" : "border-transparent"}`}
+                />
+                {registerError ? (
+                  <Text className="text-destructive text-sm font-poppins text-center mt-2">
+                    {registerError}
+                  </Text>
+                ) : null}
+              </View>
+              <View className="flex-row gap-3 w-full">
+                <Button
+                  variant="outline"
+                  onPress={() => {
+                    setShowRegisterModal(false);
+                    setRegisterDoc("");
+                    setRegisterError("");
+                  }}
+                  className="flex-1 h-12 rounded-xl"
+                  disabled={isRegistering}
+                >
+                  <Text className="text-foreground font-poppins text-base font-medium">
+                    Cancelar
+                  </Text>
+                </Button>
+                <Button
+                  onPress={handleValidateRegistration}
+                  className="flex-1 h-12 rounded-xl bg-primary"
+                  disabled={isRegistering || registerDoc.length < 8}
+                >
+                  <Text className="text-primary-foreground font-poppins text-base font-bold">
+                    {isRegistering ? "Validando..." : "Validar"}
+                  </Text>
+                </Button>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+
         {/* Help Modal */}
         <Modal
           visible={showHelpModal}
@@ -591,13 +731,41 @@ export default function LoginScreen() {
                 <Text className="text-xl font-bold text-foreground font-poppins">
                   Centro de Ayuda
                 </Text>
-                <Text className="text-sm text-muted-foreground font-poppins text-center mt-3">
+                <Text className="text-sm text-muted-foreground font-poppins text-center mt-3 mb-2">
                   Si tienes problemas para acceder a tu cuenta, por favor
-                  comunícate con tu administrador o escribe a:
+                  comunícate con tu administrador o contáctanos:
                 </Text>
-                <Text className="text-sm font-bold text-primary font-poppins text-center mt-2">
-                  soporte@novaconnect.com
-                </Text>
+
+                {helpData ? (
+                  <View className="w-full mt-2">
+                    {helpData.emails?.map((e, idx) => (
+                      <View
+                        key={`email-${idx}`}
+                        className="flex-row items-center justify-center mb-2"
+                      >
+                        <Mail size={14} className="text-primary mr-2" />
+                        <Text className="text-sm font-bold text-primary font-poppins text-center">
+                          {e.email_1}
+                        </Text>
+                      </View>
+                    ))}
+                    {helpData.phones?.map((p, idx) => (
+                      <View
+                        key={`phone-${idx}`}
+                        className="flex-row items-center justify-center mb-1"
+                      >
+                        <Phone size={14} className="text-primary mr-2" />
+                        <Text className="text-sm font-bold text-primary font-poppins text-center">
+                          {p.phone_1}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text className="text-sm font-bold text-primary font-poppins text-center mt-2">
+                    Cargando información...
+                  </Text>
+                )}
               </View>
 
               <Pressable
