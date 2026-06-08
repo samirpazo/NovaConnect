@@ -1,27 +1,27 @@
-import '@/global.css';
+import "@/global.css";
 
-import { NAV_THEME } from '@/lib/theme';
-import { ThemeProvider } from '@react-navigation/native';
-import { PortalHost } from '@rn-primitives/portal';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import Head from 'expo-router/head';
-import { Toaster } from 'sonner-native';
-import { StatusBar } from 'expo-status-bar';
-import { useColorScheme, vars } from 'nativewind';
-import { View, Platform } from 'react-native';
-import { usePreferenceStore } from '@/stores/usePreferenceStore';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { hexToNativeWindHsl } from '@/lib/colorUtils';
-import { useEffect, useState } from 'react';
+import { hexToNativeWindHsl } from "@/lib/colorUtils";
+import { NAV_THEME } from "@/lib/theme";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { usePreferenceStore } from "@/stores/usePreferenceStore";
+import { ThemeProvider } from "@react-navigation/native";
+import { PortalHost } from "@rn-primitives/portal";
+import { Stack, useRouter, useSegments } from "expo-router";
+import Head from "expo-router/head";
+import { StatusBar } from "expo-status-bar";
+import { useColorScheme, vars } from "nativewind";
+import { useEffect, useState } from "react";
+import { Platform, View } from "react-native";
+import { Toaster } from "@/lib/sonner";
 
-import { SplashScreen } from 'expo-router';
+import { SplashScreen } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
 
 export {
   // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+  ErrorBoundary
+} from "expo-router";
 
 function useProtectedRoute(user: any, loading: boolean, isReady: boolean) {
   const segments = useSegments();
@@ -30,12 +30,12 @@ function useProtectedRoute(user: any, loading: boolean, isReady: boolean) {
   useEffect(() => {
     if (loading || !isReady) return;
 
-    const inProtectedGroup = segments[0] === '(protected)';
+    const inProtectedGroup = segments[0] === "(protected)";
 
     if (!user && inProtectedGroup) {
-      router.replace('/');
+      router.replace("/");
     } else if (user && !inProtectedGroup) {
-      router.replace('/(protected)/home');
+      router.replace("/(protected)/home");
     }
   }, [user, segments, loading, isReady]);
 }
@@ -51,7 +51,7 @@ export default function RootLayout() {
   useEffect(() => {
     const initApp = async () => {
       // Esperar a que Zustand recupere el estado de AsyncStorage
-      await new Promise<void>(resolve => {
+      await new Promise<void>((resolve) => {
         if (usePreferenceStore.persist.hasHydrated()) return resolve();
         const unsub = usePreferenceStore.persist.onFinishHydration(() => {
           resolve();
@@ -63,7 +63,7 @@ export default function RootLayout() {
 
       // Aplicar el tema recuperado inmediatamente antes de renderizar
       const currentTheme = usePreferenceStore.getState().theme;
-      if (currentTheme !== 'system' && currentTheme !== colorScheme) {
+      if (currentTheme !== "system" && currentTheme !== colorScheme) {
         setColorScheme(currentTheme);
       }
 
@@ -75,7 +75,7 @@ export default function RootLayout() {
   }, []);
 
   const primaryHsl = hexToNativeWindHsl(primaryColor);
-  
+
   const themeVars = vars({
     // '--primary': primaryHsl, // Removed so global.css handles primary correctly
   });
@@ -85,26 +85,32 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+    <ThemeProvider value={NAV_THEME[colorScheme ?? "light"]}>
       <Head>
         <title>Nova Connect</title>
       </Head>
-      <View style={[
-        { flex: 1 },
-        Platform.OS === 'web' && { maxWidth: 512, width: '100%', alignSelf: 'center' }
-      ]}>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <View
+        style={[
+          { flex: 1 },
+          Platform.OS === "web" && {
+            maxWidth: 512,
+            width: "100%",
+            alignSelf: "center",
+          },
+        ]}
+      >
+        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
         <Stack>
           <Stack.Screen name="(protected)" options={{ headerShown: false }} />
         </Stack>
         <PortalHost />
-        <Toaster 
-          position="top-center" 
+        <Toaster
+          position="top-center"
           toastOptions={{
             style: {
-              width: Platform.OS === 'web' ? 400 : 'auto',
-              alignSelf: 'center',
-            }
+              width: Platform.OS === "web" ? 400 : "auto",
+              alignSelf: "center",
+            },
           }}
         />
       </View>

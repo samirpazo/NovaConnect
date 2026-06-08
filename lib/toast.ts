@@ -1,4 +1,4 @@
-import { toast } from 'sonner-native';
+import { toast } from '@/lib/sonner';
 
 export const showToast = {
   success: (message: string, description?: string) => {

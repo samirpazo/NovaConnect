@@ -16,20 +16,28 @@
         "backgroundColor": "#0F172A"
       }
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "icon": {
         "light": "./assets/images/icons/ios-light.png",
         "dark": "./assets/images/icons/ios-dark.png",
         "tinted": "./assets/images/icons/ios-tinted.png"
-      }
+      },
+      "bundleIdentifier": "com.programador-sunshine.novaconnect"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icons/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ],
+      "package": "com.programador_sunshine.novaconnect"
     },
     "web": {
       "bundler": "metro",
