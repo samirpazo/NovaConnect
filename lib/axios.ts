@@ -1,14 +1,18 @@
-import axios from 'axios';
-import { Platform } from 'react-native';
-import { storage } from '@/lib/storage';
+import { storage } from "@/lib/storage";
+import axios from "axios";
+import { Platform } from "react-native";
 
 // Use local network IP for testing on physical device/emulator, or localhost for iOS simulator
-const API_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080');
+const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === "android"
+    ? "http://10.0.2.2:8080"
+    : "http://localhost:8080");
 
 export const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -24,18 +28,18 @@ export const setGlobalLogoutCallback = (callback: () => void) => {
 api.interceptors.request.use(
   async (config) => {
     try {
-      const token = await storage.getItem('token');
+      const token = await storage.getItem("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (error) {
-      console.error('Error getting token from SecureStore', error);
+      console.error("Error getting token from SecureStore", error);
     }
     return config;
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 api.interceptors.response.use(
@@ -43,21 +47,25 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isLoggingOut) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isLoggingOut
+    ) {
       originalRequest._retry = true;
       try {
-        const refreshToken = await storage.getItem('refreshToken');
+        const refreshToken = await storage.getItem("refreshToken");
         if (refreshToken) {
           // Implementar refresh logic si el backend de NovaApi lo soporta con Bearer
           // const response = await axios.post(`${API_URL}/Token/Refresh`, { token: refreshToken });
           // await storage.setItem('token', response.data.Token);
           // originalRequest.headers.Authorization = `Bearer ${response.data.Token}`;
           // return axios(originalRequest);
-          
+
           // Por ahora simularemos un logout forzado al expirar para mantener seguridad
-          throw new Error('Refresh not implemented, forcing logout');
+          throw new Error("Refresh not implemented, forcing logout");
         } else {
-            throw new Error('No refresh token');
+          throw new Error("No refresh token");
         }
       } catch (refreshError) {
         isLoggingOut = true;
@@ -71,5 +79,5 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );

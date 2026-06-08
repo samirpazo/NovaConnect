@@ -89,9 +89,14 @@ export default function RootLayout() {
       <Head>
         <title>Nova Connect</title>
       </Head>
-      <View style={[{ flex: 1 }]}>
+      <View style={[
+        { flex: 1 },
+        Platform.OS === 'web' && { maxWidth: 512, width: '100%', alignSelf: 'center' }
+      ]}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <Stack />
+        <Stack>
+          <Stack.Screen name="(protected)" options={{ headerShown: false }} />
+        </Stack>
         <PortalHost />
         <Toaster 
           position="top-center" 

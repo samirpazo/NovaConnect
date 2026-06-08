@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { authService, AuthResponse } from '@/services/authService';
+import { authService } from '@/services/authService';
+import { AuthResponse } from '@/types/auth';
 import { setGlobalLogoutCallback } from '@/lib/axios';
 
 interface AuthState {

@@ -1,26 +1,6 @@
 import { api } from '@/lib/axios';
 import { storage } from '@/lib/storage';
-
-export interface AuthResponse {
-  Token: string;
-  RefreshToken: string;
-  AccessTokenExpiration: string;
-  SsnID: number;
-  User: {
-    UsrID: number;
-    UsrName: string;
-    UsrEmail: string;
-    PrsPhoto: string | null;
-    UsrChangePassword: boolean;
-    CreateDate: Date | string;
-    PrsID: number;
-    FullName: string;
-    PrsName: string;
-    PaternalLastName: string;
-    MaternalLastName: string;
-    ColID: number;
-  };
-}
+import { AuthResponse } from '@/types/auth';
 
 export const authService = {
   async loginCollaborator(credentials: any): Promise<{ success: boolean; data?: AuthResponse; error?: string }> {
@@ -37,7 +17,7 @@ export const authService = {
           AccessTokenExpiration: rawData.AccessTokenExpiration,
           SsnID: rawData.SsnID,
           User: {
-            UsrID: rawData.Collaborator?.PrsID, 
+            UsrID: rawData.Collaborator?.ColID, 
             UsrName: rawData.Collaborator?.PrsDocumentNumber,
             ColID: rawData.Collaborator?.ColID,
             UsrEmail: rawData.Collaborator?.PrsEmail,
@@ -49,6 +29,44 @@ export const authService = {
             PrsName: rawData.Collaborator?.PrsName,
             PaternalLastName: rawData.Collaborator?.PaternalLastName,
             MaternalLastName: rawData.Collaborator?.MaternalLastName,
+            PrsDocumentNumber: rawData.Collaborator?.PrsDocumentNumber,
+            // GenPerson
+            TypeDocument: rawData.Collaborator?.TypeDocument,
+            TypeDocumentName: rawData.Collaborator?.TypeDocumentName,
+            PrsBirthDay: rawData.Collaborator?.PrsBirthDay,
+            TypeGender: rawData.Collaborator?.TypeGender,
+            TypeGenderName: rawData.Collaborator?.TypeGenderName,
+            PrsPhone: rawData.Collaborator?.PrsPhone,
+            DptId: rawData.Collaborator?.DptId,
+            DptName: rawData.Collaborator?.DptName,
+            PrvId: rawData.Collaborator?.PrvId,
+            PrvName: rawData.Collaborator?.PrvName,
+            DtrId: rawData.Collaborator?.DtrId,
+            DtrName: rawData.Collaborator?.DtrName,
+            PaiId: rawData.Collaborator?.PaiId,
+            PaiName: rawData.Collaborator?.PaiName,
+            PrsAddress: rawData.Collaborator?.PrsAddress,
+            // MpwAgreement
+            AgrID: rawData.Collaborator?.AgrID,
+            AgrBeginDate: rawData.Collaborator?.AgrBeginDate,
+            AgrEndDate: rawData.Collaborator?.AgrEndDate,
+            AgrIsIndefinite: rawData.Collaborator?.AgrIsIndefinite,
+            TypePayroll: rawData.Collaborator?.TypePayroll,
+            TypePayrollName: rawData.Collaborator?.TypePayrollName,
+            TypeSituation: rawData.Collaborator?.TypeSituation,
+            TypeSituationName: rawData.Collaborator?.TypeSituationName,
+            TypeWorker: rawData.Collaborator?.TypeWorker,
+            TypeWorkerName: rawData.Collaborator?.TypeWorkerName,
+            TypeContract: rawData.Collaborator?.TypeContract,
+            TypeContractName: rawData.Collaborator?.TypeContractName,
+            AreID: rawData.Collaborator?.AreID,
+            AreName: rawData.Collaborator?.AreName,
+            PstID: rawData.Collaborator?.PstID,
+            PstName: rawData.Collaborator?.PstName,
+            CceCode: rawData.Collaborator?.CceCode,
+            CceName: rawData.Collaborator?.CceName,
+            BslCode: rawData.Collaborator?.BslCode,
+            BslName: rawData.Collaborator?.BslName,
           }
         };
 

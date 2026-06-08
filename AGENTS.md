@@ -30,3 +30,8 @@ He activado e integrado dos sistemas de inteligencia de diseño avanzados:
 
 8. **Audit Website**: Auditoría profunda de seguridad, rendimiento y accesibilidad utilizando Squirrelscan.
    - *Instrucciones:* [.agents/skills/audit-website/SKILL.md](file:///.agents/skills/audit-website/SKILL.md)
+
+# Reglas de Código Proyecto Nova Connect
+
+1. **Alertas**: NO utilices `Alert.alert` nativo de `react-native`. Usa SIEMPRE la utilidad encapsulada `AlertHelper.alert` importada desde `@/lib/alert` para asegurar compatibilidad web/móvil.
+2. **Toasts**: Contamos con nuestra propia utilidad para mostrar notificaciones efímeras. Utiliza SIEMPRE `showToast` importada desde `@/lib/toast` en lugar de librerías externas o utilidades nativas.

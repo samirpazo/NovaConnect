@@ -9,9 +9,11 @@ import { authService } from "@/services/authService";
 import { secCollaboratorPreferenceService } from "@/services/secCollaboratorPreferenceService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
-import { Image } from "expo-image";
+import { Link, Stack, router, useFocusEffect } from "expo-router";
 import * as LocalAuthentication from "expo-local-authentication";
-import { Stack, router } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { genParameterService, HelpData } from "@/services/genParameterService";
+import { Image } from "expo-image";
 import {
   ArrowRight,
   ChevronLeft,
@@ -62,22 +64,16 @@ export default function LoginScreen() {
   const [registerDoc, setRegisterDoc] = React.useState("");
   const [registerError, setRegisterError] = React.useState("");
   const [isRegistering, setIsRegistering] = React.useState(false);
-  const [helpData, setHelpData] = React.useState<{
-    emails?: { email_1: string }[];
-    phones?: { phone_1: string }[];
-  } | null>(null);
+  const [helpData, setHelpData] = React.useState<HelpData | null>(null);
   const [biometricSetupPin, setBiometricSetupPin] = React.useState("");
   const [hasStoredDocument, setHasStoredDocument] = React.useState(false);
 
   React.useEffect(() => {
-    api
-      .get("/GenParameter/GetHelpInfo")
-      .then((res) => {
-        if (res.data?.data) {
-          setHelpData(res.data.data);
-        }
-      })
-      .catch((err) => console.log("Error fetching help data:", err));
+    genParameterService.getHelpInfo().then((data) => {
+      if (data) {
+        setHelpData(data);
+      }
+    });
 
     const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     setShuffledNumbers([...numbers].sort(() => Math.random() - 0.5));
@@ -738,25 +734,25 @@ export default function LoginScreen() {
 
                 {helpData ? (
                   <View className="w-full mt-2">
-                    {helpData.emails?.map((e, idx) => (
+                    {helpData.emails?.map((email, idx) => (
                       <View
                         key={`email-${idx}`}
                         className="flex-row items-center justify-center mb-2"
                       >
                         <Mail size={14} className="text-primary mr-2" />
                         <Text className="text-sm font-bold text-primary font-poppins text-center">
-                          {e.email_1}
+                          {email}
                         </Text>
                       </View>
                     ))}
-                    {helpData.phones?.map((p, idx) => (
+                    {helpData.phones?.map((phone, idx) => (
                       <View
                         key={`phone-${idx}`}
                         className="flex-row items-center justify-center mb-1"
                       >
                         <Phone size={14} className="text-primary mr-2" />
                         <Text className="text-sm font-bold text-primary font-poppins text-center">
-                          {p.phone_1}
+                          {phone}
                         </Text>
                       </View>
                     ))}

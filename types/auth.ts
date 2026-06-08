@@ -1,0 +1,58 @@
+export interface AuthResponse {
+  Token: string;
+  RefreshToken: string;
+  AccessTokenExpiration: string;
+  SsnID: number;
+  User: {
+    UsrID: number;
+    UsrName: string;
+    UsrEmail: string;
+    PrsPhoto: string | null;
+    UsrChangePassword: boolean;
+    CreateDate: Date | string;
+    PrsID: number;
+    FullName: string;
+    PrsName: string;
+    PaternalLastName: string;
+    MaternalLastName: string;
+    PrsDocumentNumber?: string;
+    ColID: number;
+    // GenPerson
+    TypeDocument?: number;
+    TypeDocumentName?: string;
+    PrsBirthDay?: string;
+    TypeGender?: number;
+    TypeGenderName?: string;
+    PrsPhone?: string;
+    DptId?: number;
+    DptName?: string;
+    PrvId?: number;
+    PrvName?: string;
+    DtrId?: number;
+    DtrName?: string;
+    PaiId?: number;
+    PaiName?: string;
+    PrsAddress?: string;
+    // MpwAgreement
+    AgrID?: number;
+    AgrBeginDate?: string;
+    AgrEndDate?: string;
+    AgrIsIndefinite?: boolean;
+    TypePayroll?: number;
+    TypePayrollName?: string;
+    TypeSituation?: number;
+    TypeSituationName?: string;
+    TypeWorker?: number;
+    TypeWorkerName?: string;
+    TypeContract?: number;
+    TypeContractName?: string;
+    AreID?: number;
+    AreName?: string;
+    PstID?: number;
+    PstName?: string;
+    CceCode?: string;
+    CceName?: string;
+    BslCode?: string;
+    BslName?: string;
+  };
+}

@@ -4,11 +4,12 @@ import { Stack } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { usePreferenceStore } from '@/stores/usePreferenceStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { secCollaboratorPreferenceService } from '@/services/secCollaboratorPreferenceService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { MoonStarIcon, SunIcon, MonitorIcon, CheckIcon } from 'lucide-react-native';
+import { MoonStarIcon, SunIcon, MonitorIcon, CheckIcon, LogOutIcon } from 'lucide-react-native';
 import { Icon } from '@/components/ui/icon';
-import { Alert } from 'react-native';
+import { AlertHelper } from '@/lib/alert';
 
 const THEME_OPTIONS = [
   { value: 'light', label: 'Claro', icon: SunIcon },
@@ -27,7 +28,25 @@ const COLORS = [
 
 export default function SettingsScreen() {
   const { theme, primaryColor, setPreferences } = usePreferenceStore();
+  const { logout } = useAuthStore();
   const [isSaving, setIsSaving] = React.useState(false);
+
+  const handleLogout = async () => {
+    AlertHelper.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro que deseas cerrar tu sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Salir', 
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+          }
+        }
+      ]
+    );
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -36,10 +55,10 @@ export default function SettingsScreen() {
         Theme: theme,
         PrimaryColor: primaryColor,
       });
-      Alert.alert('Éxito', 'Preferencias guardadas en la nube correctamente.');
+      AlertHelper.alert('Éxito', 'Preferencias guardadas en la nube correctamente.');
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'Hubo un error al guardar las preferencias en la nube.');
+      AlertHelper.alert('Error', 'Hubo un error al guardar las preferencias en la nube.');
     } finally {
       setIsSaving(false);
     }
@@ -114,6 +133,15 @@ export default function SettingsScreen() {
             className="w-full"
           >
             <Text>{isSaving ? 'Guardando...' : 'Guardar Cambios'}</Text>
+          </Button>
+
+          <Button 
+            variant="destructive"
+            onPress={handleLogout} 
+            className="w-full mt-4 flex-row gap-2"
+          >
+            <Icon as={LogOutIcon} className="text-destructive-foreground size-5" />
+            <Text>Cerrar Sesión</Text>
           </Button>
         </View>
       </ScrollView>
