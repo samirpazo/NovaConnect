@@ -10,7 +10,7 @@
     "clean": "rm -rf .expo node_modules"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^3.1.1",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/native": "^7.0.0",
     "@rn-primitives/label": "^1.4.0",
     "@rn-primitives/portal": "~1.4.0",
@@ -25,7 +25,7 @@
     "expo-linking": "~55.0.14",
     "expo-local-authentication": "~55.0.14",
     "expo-router": "~55.0.13",
-    "expo-secure-store": "^56.0.4",
+    "expo-secure-store": "~55.0.14",
     "expo-splash-screen": "~55.0.19",
     "expo-status-bar": "~55.0.5",
     "expo-system-ui": "~55.0.16",
@@ -51,7 +51,7 @@
     "@babel/core": "^7.26.0",
     "@types/crypto-js": "^4.2.2",
     "@types/react": "~19.2.10",
-    "babel-preset-expo": "^56.0.14",
+    "babel-preset-expo": "~55.0.8",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "typescript": "~5.9.2"

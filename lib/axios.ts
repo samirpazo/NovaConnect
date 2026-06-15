@@ -24,13 +24,21 @@ export const setGlobalLogoutCallback = (callback: () => void) => {
   globalLogoutCallback = callback;
 };
 
-// Request interceptor to add the token
+// Request interceptor: agrega Token JWT y API Key móvil
 api.interceptors.request.use(
   async (config) => {
     try {
+      // 1. JWT Bearer token (para endpoints protegidos post-login)
       const token = await storage.getItem("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+
+      // 2. API Key móvil (para endpoints pre-login como ValidateLogin, Register)
+      // El backend acepta ambos: con JWT no verifica la key, sin JWT la verifica
+      const mobileApiKey = process.env.EXPO_PUBLIC_MOBILE_API_KEY;
+      if (mobileApiKey) {
+        config.headers["X-Mobile-Api-Key"] = mobileApiKey;
       }
     } catch (error) {
       console.error("Error getting token from SecureStore", error);

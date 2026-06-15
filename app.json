@@ -33,6 +33,7 @@
         "foregroundImage": "./assets/images/icons/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "usesCleartextTraffic": true,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
@@ -45,14 +46,20 @@
       "favicon": "./assets/images/icons/icon.png"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "origin": "https://novaconnect.com"
+        }
+      ],
       "expo-image",
       [
         "expo-local-authentication",
         {
           "faceIDPermission": "Permitir a Nova Connect usar Face ID para iniciar sesión de forma rápida."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

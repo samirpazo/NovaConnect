@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { Icon } from "@/components/ui/icon";
 import { api } from "@/lib/axios";
 import { hashPassword } from "@/lib/security";
 import { storage } from "@/lib/storage";
@@ -362,7 +363,7 @@ export default function LoginScreen() {
                   onPress={() => setShowHelpModal(true)}
                   className="flex-row items-center bg-primary/10 px-4 py-2 rounded-full"
                 >
-                  <Headset size={16} className="text-primary mr-2" />
+                  <Icon as={Headset} size={16} className="text-primary mr-2" />
                   <Text className="text-foreground font-poppins font-medium text-sm">
                     Ayuda
                   </Text>
@@ -400,10 +401,10 @@ export default function LoginScreen() {
                       </Text>
 
                       {/* Input Field */}
-                      <View className="flex-row items-center bg-secondary rounded-xl px-3 h-12 border border-border">
+                      <View className="flex-row items-center bg-secondary rounded-xl px-4 h-12 border border-border gap-3">
                         <IdCard
                           size={18}
-                          className="text-muted-foreground mr-2"
+                          color="#94a3b8"
                         />
                         <TextInput
                           placeholder="00000000"
@@ -412,7 +413,7 @@ export default function LoginScreen() {
                           onChangeText={setPrsDocumentNumber}
                           keyboardType="numeric"
                           style={{ outlineStyle: "none" } as any}
-                          className="flex-1 text-foreground font-poppins text-base bg-transparent h-full"
+                          className="flex-1 text-foreground font-poppins text-base bg-transparent py-0"
                         />
                       </View>
 
@@ -424,7 +425,7 @@ export default function LoginScreen() {
                       <Pressable
                         onPress={handleNextStep}
                         disabled={PrsDocumentNumber.length < 8}
-                        className={`w-full h-12 rounded-xl flex-row items-center justify-center gap-2 ${PrsDocumentNumber.length >= 8 ? "bg-primary shadow-sm shadow-primary/20" : "bg-secondary"}`}
+                        className={`w-full h-12 rounded-xl flex-row items-center justify-center gap-2 ${PrsDocumentNumber.length >= 8 ? "bg-primary" : "bg-secondary"}`}
                       >
                         <Text
                           className={`font-bold font-poppins text-base ${PrsDocumentNumber.length >= 8 ? "text-primary-foreground" : "text-muted-foreground"}`}

@@ -33,6 +33,13 @@ export interface AuthResponse {
     PaiId?: number;
     PaiName?: string;
     PrsAddress?: string;
+    PrsAddressDni?: string;
+    PrsVerifierCode?: string;
+    TypeBloodGroup?: number | null;
+    PrsEmergencyContact?: string;
+    PrsEmergencyPhone?: string;
+    PrsMedicalConditions?: string;
+    PrsRuc?: string;
     // MpwAgreement
     AgrID?: number;
     AgrBeginDate?: string;

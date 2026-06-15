@@ -46,6 +46,13 @@ export const authService = {
             PaiId: rawData.Collaborator?.PaiId,
             PaiName: rawData.Collaborator?.PaiName,
             PrsAddress: rawData.Collaborator?.PrsAddress,
+            PrsAddressDni: rawData.Collaborator?.PrsAddressDni,
+            PrsVerifierCode: rawData.Collaborator?.PrsVerifierCode,
+            TypeBloodGroup: rawData.Collaborator?.TypeBloodGroup,
+            PrsEmergencyContact: rawData.Collaborator?.PrsEmergencyContact,
+            PrsEmergencyPhone: rawData.Collaborator?.PrsEmergencyPhone,
+            PrsMedicalConditions: rawData.Collaborator?.PrsMedicalConditions,
+            PrsRuc: rawData.Collaborator?.PrsRuc,
             // MpwAgreement
             AgrID: rawData.Collaborator?.AgrID,
             AgrBeginDate: rawData.Collaborator?.AgrBeginDate,
