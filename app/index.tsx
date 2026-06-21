@@ -49,7 +49,8 @@ import { scheduleOnRN } from "react-native-worklets";
 
 export default function LoginScreen() {
   const { login, isAuthenticating } = useAuthStore();
-  const { setPreferences } = usePreferenceStore();
+  const { setPreferences, primaryColor: storePrimaryColor } = usePreferenceStore();
+  const primaryColor = storePrimaryColor?.toLowerCase() === '#ff0000' || storePrimaryColor?.toLowerCase() === 'ff0000' ? '#002aff' : storePrimaryColor;
   const [step, setStep] = React.useState<1 | 2>(1);
   const [PrsDocumentNumber, setPrsDocumentNumber] = React.useState("");
   const [pin, setPin] = React.useState("");
@@ -358,13 +359,13 @@ export default function LoginScreen() {
                 )}
               </View>
 
-              <View className="flex-1 items-end">
+              <View className="absolute top-12 right-6 z-10">
                 <Pressable
                   onPress={() => setShowHelpModal(true)}
-                  className="flex-row items-center bg-primary/10 px-4 py-2 rounded-full"
+                  className="flex-row items-center bg-secondary/80 px-4 py-2 rounded-full active:bg-secondary"
                 >
-                  <Icon as={Headset} size={16} className="text-primary mr-2" />
-                  <Text className="text-foreground font-poppins font-medium text-sm">
+                  <Headset size={16} color={primaryColor || '#002aff'} className="mr-2" />
+                  <Text className="text-sm font-poppins font-medium text-foreground">
                     Ayuda
                   </Text>
                 </Pressable>
@@ -425,10 +426,11 @@ export default function LoginScreen() {
                       <Pressable
                         onPress={handleNextStep}
                         disabled={PrsDocumentNumber.length < 8}
-                        className={`w-full h-12 rounded-xl flex-row items-center justify-center gap-2 ${PrsDocumentNumber.length >= 8 ? "bg-primary" : "bg-secondary"}`}
+                        className={`w-full h-12 rounded-xl flex-row items-center justify-center gap-2 ${PrsDocumentNumber.length < 8 ? "bg-secondary" : ""}`}
+                        style={PrsDocumentNumber.length >= 8 ? { backgroundColor: primaryColor || '#002aff' } : {}}
                       >
                         <Text
-                          className={`font-bold font-poppins text-base ${PrsDocumentNumber.length >= 8 ? "text-primary-foreground" : "text-muted-foreground"}`}
+                          className={`font-bold font-poppins text-base ${PrsDocumentNumber.length >= 8 ? "text-white" : "text-muted-foreground"}`}
                         >
                           Continuar
                         </Text>
@@ -448,8 +450,8 @@ export default function LoginScreen() {
                       <Text className="text-muted-foreground font-poppins text-sm">
                         ¿No tienes una cuenta?{" "}
                       </Text>
-                      <Pressable onPress={() => setShowRegisterModal(true)}>
-                        <Text className="text-primary font-bold font-poppins text-sm">
+                      <Pressable onPress={() => router.push("/register")}>
+                        <Text className="font-poppins font-bold text-sm" style={{ color: primaryColor || '#002aff' }}>
                           Regístrate aquí
                         </Text>
                       </Pressable>
@@ -497,7 +499,8 @@ export default function LoginScreen() {
                         {[...Array(6)].map((_, i) => (
                           <View
                             key={i}
-                            className={`size-3 rounded-full ${i < pin.length ? "bg-primary" : "bg-muted"}`}
+                            className={`size-3 rounded-full ${i < pin.length ? "" : "bg-muted"}`}
+                            style={i < pin.length ? { backgroundColor: primaryColor || '#002aff' } : {}}
                           />
                         ))}
                       </View>
@@ -534,6 +537,7 @@ export default function LoginScreen() {
                                       ? "text-primary"
                                       : "text-muted-foreground"
                                   }
+                                  color={isBiometricEnabled ? (primaryColor || '#002aff') : undefined}
                                 />
                               ) : null
                             ) : (
@@ -548,14 +552,15 @@ export default function LoginScreen() {
                       <Pressable
                         onPress={handleLogin}
                         disabled={isAuthenticating || pin.length < 6}
-                        className={`w-full h-10 rounded-xl flex-row items-center justify-center gap-2 ${pin.length >= 6 ? "bg-primary" : "bg-muted opacity-60"}`}
+                        className={`w-full h-10 rounded-xl flex-row items-center justify-center gap-2 ${pin.length < 6 ? "bg-muted opacity-60" : ""}`}
+                        style={pin.length >= 6 ? { backgroundColor: primaryColor || '#002aff' } : {}}
                       >
                         <ShieldCheck
                           size={18}
                           color={pin.length >= 6 ? "#ffffff" : "#94a3b8"}
                         />
                         <Text
-                          className={`font-bold select-none font-poppins text-base ${pin.length >= 6 ? "text-primary-foreground" : "text-muted-foreground"}`}
+                          className={`font-bold select-none font-poppins text-base ${pin.length >= 6 ? "text-white" : "text-muted-foreground"}`}
                         >
                           {isAuthenticating ? "Cargando..." : "Acceder"}
                         </Text>
@@ -568,7 +573,7 @@ export default function LoginScreen() {
                         ¿Olvidaste tu PIN?{" "}
                       </Text>
                       <Pressable>
-                        <Text className="text-primary font-bold font-poppins text-sm select-none">
+                        <Text className="font-bold font-poppins text-sm select-none" style={{ color: primaryColor || '#002aff' }}>
                           Recuperar
                         </Text>
                       </Pressable>
@@ -646,7 +651,7 @@ export default function LoginScreen() {
           >
             <View className="bg-card w-full max-w-sm rounded-3xl p-6 items-center shadow-xl">
               <View className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center mb-4">
-                <IdCard size={32} color="#002aff" />
+                <IdCard size={32} color={primaryColor || '#002aff'} />
               </View>
               <Text className="text-xl font-bold font-poppins text-foreground text-center mb-2">
                 Validar Documento
@@ -690,7 +695,8 @@ export default function LoginScreen() {
                 </Button>
                 <Button
                   onPress={handleValidateRegistration}
-                  className="flex-1 h-12 rounded-xl bg-primary"
+                  className="flex-1 h-12 rounded-xl"
+                  style={{ backgroundColor: primaryColor || '#002aff' }}
                   disabled={isRegistering || registerDoc.length < 8}
                 >
                   <Text className="text-primary-foreground font-poppins text-base font-bold">
@@ -723,7 +729,7 @@ export default function LoginScreen() {
 
               <View className="items-center mb-4 mt-2">
                 <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center mb-3">
-                  <Headset size={24} className="text-primary" />
+                  <Headset size={24} color={primaryColor || '#002aff'} />
                 </View>
                 <Text className="text-xl font-bold text-foreground font-poppins">
                   Centro de Ayuda
@@ -740,8 +746,8 @@ export default function LoginScreen() {
                         key={`email-${idx}`}
                         className="flex-row items-center justify-center mb-2"
                       >
-                        <Mail size={14} className="text-primary mr-2" />
-                        <Text className="text-sm font-bold text-primary font-poppins text-center">
+                        <Mail size={14} color={primaryColor || '#002aff'} className="mr-2" />
+                        <Text className="text-sm font-bold font-poppins text-center" style={{ color: primaryColor || '#002aff' }}>
                           {email}
                         </Text>
                       </View>
@@ -751,8 +757,8 @@ export default function LoginScreen() {
                         key={`phone-${idx}`}
                         className="flex-row items-center justify-center mb-1"
                       >
-                        <Phone size={14} className="text-primary mr-2" />
-                        <Text className="text-sm font-bold text-primary font-poppins text-center">
+                        <Phone size={14} color={primaryColor || '#002aff'} className="mr-2" />
+                        <Text className="text-sm font-bold font-poppins text-center" style={{ color: primaryColor || '#002aff' }}>
                           {phone}
                         </Text>
                       </View>

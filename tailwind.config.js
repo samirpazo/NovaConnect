@@ -7,6 +7,12 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      fontFamily: {
+        poppins: ['Poppins_400Regular', 'sans-serif'],
+        'poppins-medium': ['Poppins_500Medium', 'sans-serif'],
+        'poppins-semibold': ['Poppins_600SemiBold', 'sans-serif'],
+        'poppins-bold': ['Poppins_700Bold', 'sans-serif'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

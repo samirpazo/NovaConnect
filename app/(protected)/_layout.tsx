@@ -1,37 +1,31 @@
-import { Image } from "expo-image";
+import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Tabs } from "expo-router";
 import { Clock, FileText, User, Utensils } from "lucide-react-native";
-import { Platform, Text, View } from "react-native";
+import { View } from "react-native";
+
+import { useColorScheme } from "nativewind";
 
 export default function ProtectedLayout() {
+  const { primaryColor } = usePreferenceStore();
+  const { colorScheme } = useColorScheme();
+
+  const isDark = colorScheme === "dark";
+  const surfaceColor = isDark ? "#1a1a1c" : "#ffffff";
+  const textMutedColor = isDark ? "#a1a1aa" : "#71717a";
+  const borderColor = isDark ? "#27272a" : "#e4e4e7";
+
   return (
     <Tabs
       screenOptions={{
-        headerShown: true,
-        headerStyle: {
-          backgroundColor: "#1e293b",
-          borderBottomWidth: 0,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-        headerTitleAlign: "center",
-        headerTitle: () => (
-          <View className="flex-row items-center justify-center gap-2">
-            <Image
-              source={require("@/assets/images/logo-nova.svg")}
-              style={{ width: 40, height: 35 }}
-              contentFit="contain"
-            />
-            <Text className="text-white font-bold text-xl tracking-tight">
-              Nova Connect
-            </Text>
-          </View>
-        ),
-        tabBarActiveTintColor: "#002aff",
-        tabBarInactiveTintColor: "#ffffff",
+        headerShown: false,
+        tabBarActiveTintColor: primaryColor || "#002aff",
+        tabBarInactiveTintColor: textMutedColor,
+        tabBarShowLabel: true,
         tabBarStyle: {
-          backgroundColor: "#1e293b",
-          borderTopWidth: 0,
+          backgroundColor: surfaceColor,
+          borderTopColor: borderColor,
+          borderTopWidth: 0.5,
+          elevation: 0,
         },
       }}
     >
@@ -39,38 +33,82 @@ export default function ProtectedLayout() {
         name="home"
         options={{
           title: "Perfil",
-          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <View className="items-center justify-center h-full w-full">
+              <User color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+              {focused && (
+                <View
+                  style={{ backgroundColor: primaryColor || "#002aff" }}
+                  className="w-1 h-1 rounded-full absolute -bottom-0.5"
+                />
+              )}
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="documents"
         options={{
-          title: "Documentos Pe...",
-          tabBarIcon: ({ color, size }) => (
-            <FileText color={color} size={size} />
+          title: "Boletas",
+          tabBarIcon: ({ color, size, focused }) => (
+            <View className="items-center justify-center h-full w-full">
+              <FileText
+                color={color}
+                size={22}
+                strokeWidth={focused ? 2.5 : 1.8}
+              />
+              {focused && (
+                <View
+                  style={{ backgroundColor: primaryColor || "#002aff" }}
+                  className="w-1 h-1 rounded-full absolute -bottom-0.5"
+                />
+              )}
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
-          title: "Historial de Doc...",
-          tabBarIcon: ({ color, size }) => <Clock color={color} size={size} />,
+          title: "Historial",
+          tabBarIcon: ({ color, size, focused }) => (
+            <View className="items-center justify-center h-full w-full">
+              <Clock color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+              {focused && (
+                <View
+                  style={{ backgroundColor: primaryColor || "#002aff" }}
+                  className="w-1 h-1 rounded-full absolute -bottom-0.5"
+                />
+              )}
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="dining"
         options={{
           title: "Comedor",
-          tabBarIcon: ({ color, size }) => (
-            <Utensils color={color} size={size} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <View className="items-center justify-center h-full w-full">
+              <Utensils
+                color={color}
+                size={22}
+                strokeWidth={focused ? 2.5 : 1.8}
+              />
+              {focused && (
+                <View
+                  style={{ backgroundColor: primaryColor || "#002aff" }}
+                  className="w-1 h-1 rounded-full absolute -bottom-0.5"
+                />
+              )}
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          href: null, // Hide settings from bottom tabs
+          href: null,
         }}
       />
     </Tabs>

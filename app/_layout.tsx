@@ -11,10 +11,17 @@ import Head from "expo-router/head";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme, vars } from "nativewind";
 import { useEffect, useState } from "react";
-import { Platform, View } from "react-native";
+import { Platform, View, Dimensions } from "react-native";
 import { Toaster } from "@/lib/sonner";
 
 import { SplashScreen } from "expo-router";
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from "@expo-google-fonts/poppins";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -41,6 +48,13 @@ function useProtectedRoute(user: any, loading: boolean, isReady: boolean) {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
+
   const { colorScheme, setColorScheme } = useColorScheme();
   const { theme, primaryColor } = usePreferenceStore();
   const { user, loading: authLoading, initializeAuth } = useAuthStore();
@@ -71,8 +85,10 @@ export default function RootLayout() {
       await SplashScreen.hideAsync();
     };
 
-    initApp();
-  }, []);
+    if (fontsLoaded || fontError) {
+      initApp();
+    }
+  }, [fontsLoaded, fontError]);
 
   const primaryHsl = hexToNativeWindHsl(primaryColor);
 
@@ -95,7 +111,9 @@ export default function RootLayout() {
           Platform.OS === "web" && {
             maxWidth: 512,
             width: "100%",
+            height: Dimensions.get("window").height,
             alignSelf: "center",
+            overflow: "hidden",
           },
         ]}
       >
