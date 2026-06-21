@@ -9,12 +9,7 @@ export default function DocumentsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <View className="flex-row items-center justify-center py-4">
-        <Text className="text-xl font-bold font-poppins text-foreground tracking-tight">
-          Boletas de Pago
-        </Text>
-      </View>
-      <View className="flex-1 items-center justify-center px-8 -mt-12">
+      <View className="flex-1 items-center justify-center px-8">
         <View
           className="w-20 h-20 rounded-2xl items-center justify-center mb-5"
           style={{ backgroundColor: `${primaryColor || "#002aff"}15` }}

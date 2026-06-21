@@ -167,7 +167,7 @@ export default function RegisterScreen() {
 
             <View className="items-center mb-8 mt-10">
               <Image
-                source={require("@/assets/images/logo-nova.svg")}
+                source={require("../../assets/images/logo-nova.svg")}
                 style={{ width: 60, height: 60, resizeMode: "contain" }}
                 className="mb-4"
               />

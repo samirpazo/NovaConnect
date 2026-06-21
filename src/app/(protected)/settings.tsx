@@ -16,7 +16,7 @@ import {
 } from "lucide-react-native";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 
 const THEME_OPTIONS = [
   { value: "light", label: "Claro", icon: SunIcon },
@@ -65,47 +65,48 @@ export default function SettingsScreen() {
       <View className="flex-row items-center px-4 py-3">
         <Pressable 
           onPress={() => router.back()}
-          className="size-10 items-center justify-center rounded-full bg-secondary active:bg-secondary/70"
+          className="size-11 items-center justify-center rounded-2xl bg-secondary/80 border border-border/40 active:bg-secondary/50"
         >
           <ChevronLeft size={24} className="text-foreground" />
         </Pressable>
-        <Text className="flex-1 text-center text-lg font-bold font-poppins text-foreground mr-10">
+        <Text className="flex-1 text-center text-lg font-poppins-bold text-foreground mr-11">
           Configuración
         </Text>
       </View>
 
       <ScrollView
         className="flex-1 bg-background"
-        contentContainerClassName="p-4 pb-24"
+        contentContainerClassName="p-5 pb-24"
+        showsVerticalScrollIndicator={false}
       >
         <Animated.View
-          entering={FadeIn.duration(400).delay(100)}
-          className="mb-6"
+          entering={FadeInDown.duration(400).springify()}
+          className="mb-8"
         >
-          <Text className="text-2xl font-bold text-foreground font-poppins mb-1">
+          <Text className="text-2xl font-poppins-bold text-foreground mb-1 tracking-tight">
             Apariencia
           </Text>
-          <Text className="text-muted-foreground font-poppins text-sm mb-8">
+          <Text className="text-muted-foreground font-poppins-medium text-sm mb-8">
             Personaliza la interfaz a tu gusto.
           </Text>
 
           {/* Theme Selector */}
           <View className="mb-8">
-            <Text className="text-xs font-bold text-muted-foreground uppercase tracking-widest font-poppins mb-3 px-2">
+            <Text className="text-[11px] font-poppins-bold text-muted-foreground uppercase tracking-widest mb-3 px-2">
               Tema Visual
             </Text>
-            <View className="bg-card rounded-2xl p-1 flex-row">
+            <View className="bg-card rounded-[24px] p-1.5 flex-row border border-border/40 shadow-sm">
               {THEME_OPTIONS.map((option) => {
                 const isSelected = theme === option.value;
                 return (
                   <Pressable
                     key={option.value}
                     onPress={() => setPreferences(option.value, primaryColor)}
-                    className={`flex-1 flex-row items-center justify-center gap-2 py-3 rounded-xl ${isSelected ? "bg-background shadow-sm" : ""}`}
+                    className={`flex-1 flex-row items-center justify-center gap-2 py-3.5 rounded-[20px] ${isSelected ? "bg-background shadow-sm border border-border/50" : ""}`}
                   >
                     <Icon
                       as={option.icon}
-                      size={16}
+                      size={18}
                       color={isSelected ? primaryColor : undefined}
                       className={
                         isSelected
@@ -114,7 +115,7 @@ export default function SettingsScreen() {
                       }
                     />
                     <Text
-                      className={`text-sm font-poppins font-medium ${isSelected ? "text-foreground" : "text-muted-foreground"}`}
+                      className={`text-sm font-poppins-semibold ${isSelected ? "text-foreground" : "text-muted-foreground"}`}
                     >
                       {option.label}
                     </Text>
@@ -126,10 +127,10 @@ export default function SettingsScreen() {
 
           {/* Color Picker */}
           <View className="mb-2">
-            <Text className="text-xs font-bold text-muted-foreground uppercase tracking-widest font-poppins mb-3 px-2">
+            <Text className="text-[11px] font-poppins-bold text-muted-foreground uppercase tracking-widest mb-3 px-2">
               Color Principal
             </Text>
-            <View className="bg-card rounded-2xl p-6">
+            <View className="bg-card rounded-[24px] p-6 border border-border/40 shadow-sm">
               <View className="flex-row flex-wrap gap-5 justify-center">
                 {COLORS.map((color) => {
                   const isSelected = primaryColor === color.value;
@@ -161,17 +162,17 @@ export default function SettingsScreen() {
 
         {/* Sync Button */}
         <Animated.View
-          entering={FadeIn.duration(400).delay(200)}
+          entering={FadeInDown.duration(400).delay(200).springify()}
           className="gap-3 mt-6"
         >
           <Pressable
             onPress={handleSave}
             disabled={isSaving}
-            className="w-full h-14 rounded-2xl flex-row items-center justify-center gap-3 active:opacity-80"
+            className="w-full h-14 rounded-[20px] flex-row items-center justify-center gap-3 active:opacity-80 shadow-sm"
             style={{ backgroundColor: primaryColor || "#002aff" }}
           >
             <Icon as={CloudUploadIcon} size={22} color="#ffffff" />
-            <Text className="text-white font-bold font-poppins text-base">
+            <Text className="text-white font-poppins-semibold text-base">
               {isSaving ? "Guardando..." : "Sincronizar en la Nube"}
             </Text>
           </Pressable>

@@ -1,15 +1,20 @@
-import { api } from '@/lib/axios';
-import { storage } from '@/lib/storage';
-import { AuthResponse } from '@/types/auth';
+import { api } from "@/lib/axios";
+import { storage } from "@/lib/storage";
+import { AuthResponse } from "@/types/auth";
 
 export const authService = {
-  async loginCollaborator(credentials: any): Promise<{ success: boolean; data?: AuthResponse; error?: string }> {
+  async loginCollaborator(
+    credentials: any,
+  ): Promise<{ success: boolean; data?: AuthResponse; error?: string }> {
     try {
-      const { data } = await api.post('/Token/AuthenticationCollaborator', credentials);
+      const { data } = await api.post(
+        "/Token/AuthenticationCollaborator",
+        credentials,
+      );
       const isSuccess = data.Succeeded;
       const rawData = data.Data;
       const message = data.Message;
-      
+
       if (isSuccess) {
         const authData: AuthResponse = {
           Token: rawData.Token,
@@ -17,12 +22,12 @@ export const authService = {
           AccessTokenExpiration: rawData.AccessTokenExpiration,
           SsnID: rawData.SsnID,
           User: {
-            UsrID: rawData.Collaborator?.ColID, 
+            UsrID: rawData.Collaborator?.ColID,
             UsrName: rawData.Collaborator?.PrsDocumentNumber,
             ColID: rawData.Collaborator?.ColID,
             UsrEmail: rawData.Collaborator?.PrsEmail,
             PrsPhoto: rawData.Collaborator?.PrsPhoto,
-            UsrChangePassword: false, 
+            UsrChangePassword: false,
             CreateDate: new Date(),
             PrsID: rawData.Collaborator?.PrsID,
             FullName: rawData.Collaborator?.FullName,
@@ -74,89 +79,128 @@ export const authService = {
             CceName: rawData.Collaborator?.CceName,
             BslCode: rawData.Collaborator?.BslCode,
             BslName: rawData.Collaborator?.BslName,
-          }
+          },
         };
 
         // Guardar Tokens de forma segura
         await Promise.all([
-          storage.setItem('token', authData.Token),
-          storage.setItem('refreshToken', authData.RefreshToken),
-          storage.setItem('user', JSON.stringify(authData.User))
+          storage.setItem("token", authData.Token),
+          storage.setItem("refreshToken", authData.RefreshToken),
+          storage.setItem("user", JSON.stringify(authData.User)),
         ]);
 
         return { success: true, data: authData };
       } else {
-        return { success: false, error: message || 'Credenciales inválidas.' };
+        return { success: false, error: message || "Credenciales inválidas." };
       }
     } catch (error: any) {
-      return { success: false, error: error?.response?.data?.Message || 'Error al conectar con el servidor.' };
+      return {
+        success: false,
+        error:
+          error?.response?.data?.Message ||
+          "Error al conectar con el servidor.",
+      };
     }
   },
 
-  async validateRegistration(document: string): Promise<{ success: boolean; data?: number; error?: string }> {
+  async validateRegistration(
+    document: string,
+  ): Promise<{ success: boolean; data?: number; error?: string }> {
     try {
-      const { data } = await api.post('/SecCollaborator/Register', {
+      const { data } = await api.post("/SecCollaborator/Register", {
         DocumentNumber: document,
-        Password: "dummy" // Requerido por el modelo, pero ignorado por el backend
+        Password: "dummy", // Requerido por el modelo, pero ignorado por el backend
       });
-      
+
       if (data.Succeeded) {
         return { success: true, data: data.Data }; // Data contiene el PrsID
       }
-      
-      return { success: false, error: data.Message || 'No se pudo completar la validación.' };
+
+      return {
+        success: false,
+        error: data.Message || "No se pudo completar la validación.",
+      };
     } catch (error: any) {
-      return { success: false, error: error?.response?.data?.Message || 'Error al intentar validar el registro.' };
+      return {
+        success: false,
+        error:
+          error?.response?.data?.Message ||
+          "Error al intentar validar el registro.",
+      };
     }
   },
 
-  async validateLogin(document: string): Promise<{ success: boolean; data?: { PrsID: number, HasAccount: boolean }; error?: string }> {
+  async validateLogin(
+    document: string,
+  ): Promise<{
+    success: boolean;
+    data?: { PrsID: number; HasAccount: boolean };
+    error?: string;
+  }> {
     try {
-      const { data } = await api.post('/SecCollaborator/ValidateLogin', {
-        DocumentNumber: document
+      const { data } = await api.post("/SecCollaborator/ValidateLogin", {
+        DocumentNumber: document,
       });
-      
+
       if (data.Succeeded) {
-        return { success: true, data: data.Data }; 
+        return { success: true, data: data.Data };
       }
-      
-      return { success: false, error: data.Message || 'No se pudo validar el acceso.' };
+
+      return {
+        success: false,
+        error: data.Message || "No se pudo validar el acceso.",
+      };
     } catch (error: any) {
-      return { success: false, error: error?.response?.data?.Message || 'Error al validar el documento.' };
+      return {
+        success: false,
+        error:
+          error?.response?.data?.Message || "Error al validar el documento.",
+      };
     }
   },
 
-  async registerCollaborator(prsId: number, password: string): Promise<{ success: boolean; error?: string }> {
+  async registerCollaborator(
+    prsId: number,
+    password: string,
+  ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { data } = await api.post('/SecCollaborator/Save', {
+      const { data } = await api.post("/SecCollaborator/Save", {
         PrsID: prsId,
         ColPassword: password,
-        SecStatus: true
+        SecStatus: true,
       });
-      
+
       if (data.Succeeded) {
         return { success: true };
       }
-      
-      return { success: false, error: data.Message || 'No se pudo completar el registro.' };
+
+      return {
+        success: false,
+        error: data.Message || "No se pudo completar el registro.",
+      };
     } catch (error: any) {
-      return { success: false, error: error?.response?.data?.Message || 'Error al intentar registrar el colaborador.' };
+      return {
+        success: false,
+        error:
+          error?.response?.data?.Message ||
+          "Error al intentar registrar el colaborador.",
+      };
     }
   },
 
   async logout(): Promise<void> {
     await Promise.all([
-      storage.removeItem('token'),
-      storage.removeItem('refreshToken'),
-      storage.removeItem('user')
+      storage.removeItem("token"),
+      storage.removeItem("refreshToken"),
+      storage.removeItem("user"),
     ]);
   },
 
-  async getSession(): Promise<AuthResponse['User'] | null> {
-    const userStr = await storage.getItem('user');
+  async getSession(): Promise<AuthResponse["User"] | null> {
+    const userStr = await storage.getItem("user");
     if (userStr) {
       return JSON.parse(userStr);
     }
     return null;
-  }
+  },
 };

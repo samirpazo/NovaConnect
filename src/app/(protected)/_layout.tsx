@@ -1,7 +1,8 @@
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Tabs } from "expo-router";
 import { Clock, FileText, User, Utensils } from "lucide-react-native";
-import { View } from "react-native";
+import { Image } from "expo-image";
+import { View, Dimensions, Platform, Text } from "react-native";
 
 import { useColorScheme } from "nativewind";
 
@@ -17,7 +18,41 @@ export default function ProtectedLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        headerTitle: "",
+        headerShadowVisible: false,
+        headerStyle: {
+          backgroundColor: surfaceColor,
+        },
+        headerLeft: () => {
+          const screenWidth = Dimensions.get("window").width;
+          return (
+            <View
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                right: 0,
+                width: Platform.OS === "web" ? Math.min(512, screenWidth) : screenWidth,
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Image
+                source={require("../../../assets/images/logo-nova.svg")}
+                style={{ width: 24, height: 24 }}
+                contentFit="contain"
+              />
+              <Text style={{ fontSize: 18, fontWeight: "bold", color: isDark ? "#ffffff" : "#000000" }}>
+                Nova Connect
+              </Text>
+            </View>
+          </View>
+          );
+        },
         tabBarActiveTintColor: primaryColor || "#002aff",
         tabBarInactiveTintColor: textMutedColor,
         tabBarShowLabel: true,
@@ -33,7 +68,7 @@ export default function ProtectedLayout() {
         name="home"
         options={{
           title: "Perfil",
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View className="items-center justify-center h-full w-full">
               <User color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
               {focused && (
@@ -50,7 +85,7 @@ export default function ProtectedLayout() {
         name="documents"
         options={{
           title: "Boletas",
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View className="items-center justify-center h-full w-full">
               <FileText
                 color={color}
@@ -71,7 +106,7 @@ export default function ProtectedLayout() {
         name="history"
         options={{
           title: "Historial",
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View className="items-center justify-center h-full w-full">
               <Clock color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
               {focused && (
@@ -88,7 +123,7 @@ export default function ProtectedLayout() {
         name="dining"
         options={{
           title: "Comedor",
-          tabBarIcon: ({ color, size, focused }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View className="items-center justify-center h-full w-full">
               <Utensils
                 color={color}
@@ -109,6 +144,7 @@ export default function ProtectedLayout() {
         name="settings"
         options={{
           href: null,
+          headerShown: false,
         }}
       />
     </Tabs>
