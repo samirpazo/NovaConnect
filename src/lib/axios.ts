@@ -3,7 +3,7 @@ import axios from "axios";
 import { Platform } from "react-native";
 
 // Use local network IP for testing on physical device/emulator, or localhost for iOS simulator
-const API_URL =
+export const API_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   (Platform.OS === "android"
     ? "http://10.0.2.2:8080"

@@ -1,9 +1,11 @@
 import { Text } from "@/components/ui/text";
 import { genParameterService, HelpData } from "@/services/genParameterService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
-import { Headset, Mail, Phone } from "lucide-react-native";
+import { showToast } from "@/lib/toast";
+import * as Clipboard from "expo-clipboard";
+import { Copy, Headset, Mail, Phone } from "lucide-react-native";
 import * as React from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -31,6 +33,14 @@ export default function HelpScreen() {
     };
     fetchHelpData();
   }, []);
+
+  const handleCopy = async (text: string, type: "email" | "phone") => {
+    await Clipboard.setStringAsync(text);
+    showToast.success(
+      type === "email" ? "Correo copiado" : "Teléfono copiado",
+      `${text} ha sido copiado al portapapeles.`
+    );
+  };
 
   return (
     <View className="flex-1 bg-background">
@@ -95,6 +105,12 @@ export default function HelpScreen() {
                         <Text className="font-poppins-medium text-sm text-foreground flex-1">
                           {email}
                         </Text>
+                        <Pressable
+                          onPress={() => handleCopy(email, "email")}
+                          className="p-2 ml-2 bg-card rounded-md border border-border/40 active:opacity-70"
+                        >
+                          <Copy size={16} className="text-muted-foreground" />
+                        </Pressable>
                       </View>
                     ))}
                   </View>
@@ -118,6 +134,12 @@ export default function HelpScreen() {
                         <Text className="font-poppins-medium text-sm text-foreground flex-1">
                           {phone}
                         </Text>
+                        <Pressable
+                          onPress={() => handleCopy(phone, "phone")}
+                          className="p-2 ml-2 bg-card rounded-md border border-border/40 active:opacity-70"
+                        >
+                          <Copy size={16} className="text-muted-foreground" />
+                        </Pressable>
                       </View>
                     ))}
                   </View>
