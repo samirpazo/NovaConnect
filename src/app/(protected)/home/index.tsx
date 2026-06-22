@@ -65,7 +65,7 @@ export default function HomeScreen() {
               <Pressable
                 onPress={() => setPhotoVisible(true)}
                 className="w-28 h-28 rounded-full border-4 overflow-hidden items-center justify-center bg-muted/30 shadow-sm active:opacity-80"
-                style={{ borderColor: `${primaryColor}50` }}
+                style={{ borderColor: `${primaryColor}` }}
               >
                 <NImage
                   genParameter="ROUTE_PERSONS"

@@ -15,4 +15,5 @@ export interface ProcessedDocument {
   DeleteDate: string | null;
   PdcIsReceived: boolean | number;
   DprID: number;
+  DprDisplayName?: string;
 }

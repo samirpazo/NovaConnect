@@ -29,6 +29,8 @@ export default function HistoryLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="[year]/index" options={{ title: "" }} />
+      <Stack.Screen name="[year]/[month]/index" options={{ title: "Detalles por mes" }} />
     </Stack>
   );
 }

@@ -1,116 +1,116 @@
 import { Text } from "@/components/ui/text";
-import { usePreferenceStore } from "@/stores/usePreferenceStore";
-import { Calendar, CheckCircle2, FileText } from "lucide-react-native";
-import { View, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
-import { processedDocumentService } from "@/services/processedDocumentService";
+import { usePreferenceStore } from "@/stores/usePreferenceStore";
+import { router } from "expo-router";
+import { ChevronRight, Folder, Search } from "lucide-react-native";
+import { useMemo, useState } from "react";
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  View,
+} from "react-native";
+import { Input } from "@/components/ui/input";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { ProcessedDocument } from "@/types/document";
-import { showToast } from "@/lib/toast";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function HistoryScreen() {
-  const { primaryColor: storePrimaryColor } = usePreferenceStore();
-  const primaryColor = storePrimaryColor || "#002aff";
-  
-  const { documents, isLoading, isRefreshing, refetch } = useProcessedDocuments(true);
+export default function HistoryYearsScreen() {
+  const { documents, isLoading, isRefreshing, refetch } =
+    useProcessedDocuments(true);
+  const primaryColor = usePreferenceStore((s) => s.primaryColor) || "#002aff";
+  const [search, setSearch] = useState("");
 
-  const handleOpenPdf = async (fileName: string) => {
-    try {
-      await processedDocumentService.openPdf(fileName, primaryColor);
-    } catch (error) {
-      showToast.error("Error", "No se pudo abrir el documento.");
-    }
-  };
-
-  const renderItem = ({ item, index }: { item: ProcessedDocument; index: number }) => {
-    return (
-      <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
-        <Pressable
-          onPress={() => handleOpenPdf(item.PdcFilePath)}
-          className="bg-card rounded-[18px] p-3.5 mb-3 border border-border/40 shadow-sm flex-row items-center active:opacity-70"
-        >
-          <View 
-            className="w-11 h-11 rounded-[14px] items-center justify-center mr-3.5"
-            style={{ backgroundColor: `${primaryColor}15` }}
-          >
-            <FileText size={20} color={primaryColor} />
-          </View>
-          
-          <View className="flex-1 justify-center">
-            <Text className="text-sm font-poppins-semibold text-foreground mb-0.5 tracking-tight">
-              Documento Recepcionado
-            </Text>
-            <View className="flex-row items-center">
-              <Calendar size={12} className="text-muted-foreground mr-1" />
-              <Text className="text-[11px] font-poppins-medium text-muted-foreground capitalize">
-                {item.PdcPeriodMonth} {item.PdcPeriodYear}
-              </Text>
-            </View>
-          </View>
-          
-          <View className="w-8 h-8 rounded-full bg-green-500/10 items-center justify-center border border-green-500/20">
-            <CheckCircle2 size={16} className="text-green-600 dark:text-green-400" />
-          </View>
-        </Pressable>
-      </Animated.View>
+  const years = useMemo(() => {
+    const uniqueYears = Array.from(
+      new Set(documents.map((d) => d.PdcPeriodYear)),
     );
-  };
+    const sortedYears = uniqueYears.sort((a, b) => parseInt(b) - parseInt(a));
+    if (!search) return sortedYears;
+    return sortedYears.filter((y) => y.toString().includes(search));
+  }, [documents, search]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <View className="px-6 pt-4 pb-2">
-        <Text className="text-3xl font-poppins-bold text-foreground tracking-tight">
-          Historial
-        </Text>
-        <Text className="text-sm font-poppins-medium text-muted-foreground mt-1">
-          Tus documentos ya procesados y firmados.
-        </Text>
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="px-6 py-4 relative justify-center">
+        <Search size={20} className="absolute left-10 text-muted-foreground z-10" />
+        <Input
+          className="pl-11 h-12 rounded-[18px] bg-card border-border/40 font-poppins text-base"
+          placeholder="Buscar año..."
+          placeholderTextColor="#71717a"
+          value={search}
+          onChangeText={setSearch}
+          keyboardType="numeric"
+        />
       </View>
 
-      {isLoading && !isRefreshing ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={primaryColor} />
-          <Text className="mt-4 font-poppins text-muted-foreground text-sm">
-            Cargando historial...
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={documents}
-          keyExtractor={(item) => item.PdcID.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={{ padding: 24, paddingBottom: 100, flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={refetch}
-              tintColor={primaryColor}
-              colors={[primaryColor]}
-            />
-          }
-          ListEmptyComponent={
-            <Animated.View 
-              entering={FadeInDown.springify()} 
-              style={{ flex: 1, alignItems: "center", justifyContent: "center", marginTop: 80 }}
+      <FlatList
+        data={years}
+        keyExtractor={(item) => item.toString()}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingBottom: 100,
+          flexGrow: 1,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refetch}
+            tintColor={primaryColor}
+            colors={[primaryColor]}
+          />
+        }
+        renderItem={({ item, index }) => (
+          <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
+            <Pressable
+              onPress={() => router.push(`/history/${item}`)}
+              className="bg-card rounded-[18px] p-4 mb-3 border border-border/40 flex-row items-center active:opacity-70"
+            >
+              <View className="w-12 h-12 rounded-[14px] items-center justify-center bg-background border border-border/40 mr-4">
+                <Folder size={24} color={primaryColor} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-poppins-bold text-foreground">
+                  {item}
+                </Text>
+                <Text className="text-sm font-poppins-medium text-muted-foreground">
+                  Carpeta • Año {item}
+                </Text>
+              </View>
+              <ChevronRight size={20} className="text-muted-foreground" />
+            </Pressable>
+          </Animated.View>
+        )}
+        ListEmptyComponent={
+          !isLoading ? (
+            <Animated.View
+              entering={FadeInDown.springify()}
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: 80,
+              }}
             >
               <View
                 className="w-24 h-24 rounded-[32px] items-center justify-center mb-6"
                 style={{ backgroundColor: `${primaryColor}10` }}
               >
-                <FileText size={40} color={primaryColor} style={{ opacity: 0.6 }} />
+                <Search
+                  size={40}
+                  color={primaryColor}
+                  style={{ opacity: 0.6 }}
+                />
               </View>
               <Text className="text-xl font-poppins-bold text-foreground text-center mb-2">
-                Sin registros
+                Sin resultados
               </Text>
               <Text className="text-sm font-poppins text-muted-foreground text-center max-w-[250px] leading-5">
-                Aún no tienes documentos en tu historial de recepción.
+                No encontramos el año buscado.
               </Text>
             </Animated.View>
-          }
-        />
-      )}
+          ) : null
+        }
+      />
     </SafeAreaView>
   );
 }

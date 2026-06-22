@@ -71,7 +71,7 @@ export default function DocumentsScreen() {
           
           <View className="flex-1 justify-center">
             <Text className="text-sm font-poppins-semibold text-foreground mb-0.5 tracking-tight">
-              Documento
+              {item.DprDisplayName || "Documento"}
             </Text>
             <View className="flex-row items-center">
               <Calendar size={12} className="text-muted-foreground mr-1" />
