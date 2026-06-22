@@ -1,14 +1,15 @@
 import { Text } from "@/components/ui/text";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Calendar, ChevronRight, FileText } from "lucide-react-native";
-import { View, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native";
+import { View, FlatList, Pressable, RefreshControl, ActivityIndicator, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { processedDocumentService } from "@/services/processedDocumentService";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { ProcessedDocument } from "@/types/document";
-import { AlertHelper } from "@/lib/alert";
 import { showToast } from "@/lib/toast";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 export default function DocumentsScreen() {
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
@@ -24,35 +25,34 @@ export default function DocumentsScreen() {
     }
   };
 
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<ProcessedDocument | null>(null);
+
   const handleDocumentPress = (item: ProcessedDocument) => {
-    AlertHelper.alert(
-      "Confirmar recepción",
-      `¿Deseas recepcionar el documento de ${item.PdcPeriodMonth} ${item.PdcPeriodYear}?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Recepcionar",
-          style: "default",
-          onPress: async () => {
-            try {
-              const success = await processedDocumentService.receiveDocument(item);
-              if (success) {
-                showToast.success(
-                  "Documento recepcionado",
-                  "El documento se ha movido a tu historial."
-                );
-                refetch();
-                await handleOpenPdf(item.PdcFilePath);
-              } else {
-                showToast.error("Error", "No se pudo recepcionar el documento.");
-              }
-            } catch (error) {
-              showToast.error("Error", "Ocurrió un problema al procesar la solicitud.");
-            }
-          },
-        },
-      ]
-    );
+    setSelectedDocument(item);
+    setIsModalVisible(true);
+  };
+
+  const confirmReception = async () => {
+    if (!selectedDocument) return;
+    setIsModalVisible(false);
+    
+    try {
+      const success = await processedDocumentService.receiveDocument(selectedDocument);
+      if (success) {
+        showToast.success(
+          "Documento recepcionado",
+          "El documento se ha movido a tu historial."
+        );
+        refetch();
+        await handleOpenPdf(selectedDocument.PdcFilePath);
+      } else {
+        showToast.error("Error", "No se pudo recepcionar el documento.");
+      }
+    } catch (error) {
+      showToast.error("Error", "Ocurrió un problema al procesar la solicitud.");
+    }
+    setSelectedDocument(null);
   };
 
   const renderItem = ({ item, index }: { item: ProcessedDocument; index: number }) => {
@@ -143,6 +143,49 @@ export default function DocumentsScreen() {
           }
         />
       )}
+
+      <Modal
+        visible={isModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View 
+          className="flex-1 justify-center items-center px-6" 
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <View className="w-full max-w-sm bg-card rounded-[24px] p-6 shadow-xl border border-border/40">
+            <View 
+              className="w-12 h-12 rounded-full items-center justify-center mb-4"
+              style={{ backgroundColor: `${primaryColor}15` }}
+            >
+              <FileText size={24} color={primaryColor} />
+            </View>
+            <Text className="text-xl font-poppins-bold text-foreground mb-2">
+              Confirmar recepción
+            </Text>
+            <Text className="text-base font-poppins text-muted-foreground mb-8">
+              ¿Deseas recepcionar el documento de {selectedDocument?.PdcPeriodMonth} {selectedDocument?.PdcPeriodYear}?
+            </Text>
+            
+            <View className="flex-row justify-end gap-3">
+              <Button 
+                variant="ghost" 
+                onPress={() => setIsModalVisible(false)}
+                className="px-6"
+              >
+                <Text>Cancelar</Text>
+              </Button>
+              <Button 
+                onPress={confirmReception}
+                className="px-6"
+              >
+                <Text>Recepcionar</Text>
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
