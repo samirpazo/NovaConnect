@@ -13,16 +13,17 @@ import {
   LogOut,
   Mail,
   Phone,
-  QrCode,
   Settings,
 } from "lucide-react-native";
 import * as React from "react";
-import { Pressable, ScrollView, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import { Modal, Pressable, ScrollView, View } from "react-native";
+import QRCode from "react-native-qrcode-svg";
+import Animated, { FadeInDown, FadeOut, ZoomIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const { user, logout } = useAuthStore();
+  const [photoVisible, setPhotoVisible] = React.useState(false);
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
   const primaryColor =
     storePrimaryColor?.toLowerCase() === "#ff0000" ||
@@ -31,7 +32,7 @@ export default function HomeScreen() {
       : storePrimaryColor;
 
   const handleSettings = () => {
-    router.push("/(protected)/settings");
+    router.push("/(protected)/home/settings");
   };
 
   const handleLogout = async () => {
@@ -61,9 +62,10 @@ export default function HomeScreen() {
           {/* Profile Hero */}
           <Animated.View entering={FadeInDown.duration(400).springify()}>
             <View className="items-center w-full gap-4">
-              <View
-                className="w-28 h-28 rounded-full border-4 overflow-hidden items-center justify-center bg-muted/30 shadow-sm"
-                style={{ borderColor: `${primaryColor}20` }}
+              <Pressable
+                onPress={() => setPhotoVisible(true)}
+                className="w-28 h-28 rounded-full border-4 overflow-hidden items-center justify-center bg-muted/30 shadow-sm active:opacity-80"
+                style={{ borderColor: `${primaryColor}50` }}
               >
                 <NImage
                   genParameter="ROUTE_PERSONS"
@@ -71,7 +73,7 @@ export default function HomeScreen() {
                   className="w-full h-full"
                   fallbackText={user?.PrsName?.[0] || "U"}
                 />
-              </View>
+              </Pressable>
               <View className="items-center gap-1.5 w-full">
                 <Text className="text-2xl font-poppins-bold text-foreground tracking-tight text-center leading-tight">
                   {user?.FullName || "Usuario"}
@@ -163,6 +165,28 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
+          {/* QR Code Card */}
+          <Animated.View
+            entering={FadeInDown.duration(400).delay(150).springify()}
+          >
+            <View className="bg-card rounded-[24px] border border-border/40 overflow-hidden shadow-sm items-center p-6 w-full">
+              <Text className="text-[11px] font-poppins-semibold text-muted-foreground uppercase tracking-widest mb-4 text-center">
+                Fotocheck QR
+              </Text>
+              <View className="bg-white p-3 rounded-2xl shadow-sm border border-border/20 self-center">
+                <QRCode
+                  value={user?.PrsDocumentNumber || "No registrado"}
+                  size={140}
+                  color="#000000"
+                  backgroundColor="#ffffff"
+                />
+              </View>
+              <Text className="font-poppins-medium text-sm text-muted-foreground mt-4 text-center">
+                Escanea este código para validar tu identidad
+              </Text>
+            </View>
+          </Animated.View>
+
           {/* Quick Actions */}
           <Animated.View
             entering={FadeInDown.duration(400).delay(200).springify()}
@@ -173,20 +197,7 @@ export default function HomeScreen() {
               </Text>
 
               <Pressable
-                onPress={() => {}}
-                className="flex-row items-center gap-3.5 py-2 px-4 rounded-[16px] bg-card border border-border/40 active:bg-secondary/50"
-              >
-                <View className="w-9 h-9 rounded-[12px] bg-secondary/80 items-center justify-center">
-                  <QrCode size={18} className="text-foreground" />
-                </View>
-                <Text className="flex-1 font-poppins-semibold text-foreground text-sm">
-                  Mi Código QR
-                </Text>
-                <ChevronRight size={18} className="text-muted-foreground/50" />
-              </Pressable>
-
-              <Pressable
-                onPress={() => {}}
+                onPress={() => router.push("/(protected)/home/help")}
                 className="flex-row items-center gap-3.5 py-2 px-4 rounded-[16px] bg-card border border-border/40 active:bg-secondary/50"
               >
                 <View className="w-9 h-9 rounded-[12px] bg-secondary/80 items-center justify-center">
@@ -236,6 +247,41 @@ export default function HomeScreen() {
           </Animated.View>
         </View>
       </ScrollView>
+
+      {/* Photo Modal */}
+      <Modal
+        visible={photoVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPhotoVisible(false)}
+      >
+        <View className="flex-1 bg-black/90 items-center justify-center p-8">
+          <Pressable
+            className="absolute top-0 bottom-0 left-0 right-0"
+            onPress={() => setPhotoVisible(false)}
+          />
+          {photoVisible && (
+            <Animated.View
+              entering={ZoomIn.duration(400).springify()}
+              exiting={FadeOut.duration(200)}
+              className="overflow-hidden bg-muted/20 border-4 shadow-2xl items-center justify-center"
+              style={{
+                borderColor: `${primaryColor}50`,
+                width: 320,
+                height: 320,
+                borderRadius: 160,
+              }}
+            >
+              <NImage
+                genParameter="ROUTE_PERSONS"
+                fileName={user?.PrsPhoto}
+                className="w-full h-full rounded-lg"
+                fallbackText={user?.PrsName?.[0] || "U"}
+              />
+            </Animated.View>
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

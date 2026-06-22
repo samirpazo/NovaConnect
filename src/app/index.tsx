@@ -350,7 +350,7 @@ export default function LoginScreen() {
         >
           <ScrollView contentContainerClassName="flex-grow p-6">
             {/* Header Area */}
-            <View className="w-full flex-row justify-between items-start mb-2 min-h-[44px]">
+            <View className="w-full flex-row justify-between items-center mb-2 min-h-[44px] z-10">
               <View className="flex-1 items-start">
                 {step === 2 && !hasStoredDocument && (
                   <Pressable onPress={handleBack} className="p-2 -ml-2">
@@ -359,7 +359,7 @@ export default function LoginScreen() {
                 )}
               </View>
 
-              <View className="absolute top-12 right-6 z-10">
+              <View className="items-end">
                 <Pressable
                   onPress={() => setShowHelpModal(true)}
                   className="flex-row items-center bg-secondary/80 px-4 py-2 rounded-full active:bg-secondary"
@@ -747,7 +747,7 @@ export default function LoginScreen() {
                         className="flex-row items-center justify-center mb-2"
                       >
                         <Mail size={14} color={primaryColor || '#002aff'} className="mr-2" />
-                        <Text className="text-sm font-bold font-poppins text-center" style={{ color: primaryColor || '#002aff' }}>
+                        <Text className="text-sm font-bold font-poppins text-center text-foreground">
                           {email}
                         </Text>
                       </View>
@@ -758,7 +758,7 @@ export default function LoginScreen() {
                         className="flex-row items-center justify-center mb-1"
                       >
                         <Phone size={14} color={primaryColor || '#002aff'} className="mr-2" />
-                        <Text className="text-sm font-bold font-poppins text-center" style={{ color: primaryColor || '#002aff' }}>
+                        <Text className="text-sm font-bold font-poppins text-center text-foreground">
                           {phone}
                         </Text>
                       </View>
