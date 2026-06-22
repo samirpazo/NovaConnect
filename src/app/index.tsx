@@ -450,7 +450,7 @@ export default function LoginScreen() {
                       <Text className="text-muted-foreground font-poppins text-sm">
                         ¿No tienes una cuenta?{" "}
                       </Text>
-                      <Pressable onPress={() => router.push("/register")}>
+                      <Pressable onPress={() => setShowRegisterModal(true)}>
                         <Text className="font-poppins font-bold text-sm" style={{ color: primaryColor || '#002aff' }}>
                           Regístrate aquí
                         </Text>

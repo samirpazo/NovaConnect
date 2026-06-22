@@ -1,5 +1,5 @@
 import { Text } from "@/components/ui/text";
-import { AlertHelper } from "@/lib/alert";
+import { showToast } from "@/lib/toast";
 import { hashPassword } from "@/lib/security";
 import { storage } from "@/lib/storage";
 import { authService } from "@/services/authService";
@@ -40,7 +40,7 @@ export default function RegisterScreen() {
 
   const handleContinue = () => {
     if (pin.length < 6) {
-      AlertHelper.alert("Error", "El PIN debe tener 6 dígitos.");
+      showToast.error("Error", "El PIN debe tener 6 dígitos.");
       return;
     }
     setFirstPin(pin);
@@ -50,21 +50,21 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (pin.length < 6) {
-      AlertHelper.alert("Error", "El PIN debe tener 6 dígitos.");
+      showToast.error("Error", "El PIN debe tener 6 dígitos.");
       return;
     }
 
     if (pin !== firstPin) {
-      AlertHelper.alert(
+      showToast.error(
         "Error",
-        "Los PINs no coinciden. Por favor, inténtalo de nuevo.",
+        "Los PINs no coinciden. Por favor, inténtalo de nuevo."
       );
       setPin("");
       return;
     }
 
     if (!parsedPrsId) {
-      AlertHelper.alert("Error", "No se ha proporcionado un ID válido.");
+      showToast.error("Error", "No se ha proporcionado un ID válido.");
       return;
     }
 
@@ -104,23 +104,19 @@ export default function RegisterScreen() {
           console.log("Failed to load user preferences", e);
         }
 
-        AlertHelper.alert("¡Éxito!", "Te has registrado correctamente.", [
-          {
-            text: "Comenzar",
-            onPress: () => router.replace("/(protected)/home"),
-          },
-        ]);
+        showToast.success("¡Éxito!", "Te has registrado correctamente.");
+        router.replace("/(protected)/home");
       } else {
-        AlertHelper.alert(
+        showToast.success(
           "¡Éxito!",
-          "Te has registrado correctamente. Por favor inicia sesión.",
-          [{ text: "Ir al Login", onPress: () => router.replace("/") }],
+          "Te has registrado correctamente. Por favor inicia sesión."
         );
+        router.replace("/");
       }
     } else {
-      AlertHelper.alert(
+      showToast.error(
         "Error",
-        result.error || "No se pudo completar el registro.",
+        result.error || "No se pudo completar el registro."
       );
     }
   };
