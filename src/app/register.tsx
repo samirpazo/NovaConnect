@@ -38,6 +38,15 @@ export default function RegisterScreen() {
   // Parse prsId to number, since URL params are strings
   const parsedPrsId = prsId ? parseInt(prsId as string, 10) : null;
 
+  React.useEffect(() => {
+    if (!doc || !prsId) {
+      setTimeout(() => {
+        showToast.error("Acceso denegado", "Debes validar tu documento primero.");
+        router.replace("/");
+      }, 0);
+    }
+  }, [doc, prsId]);
+
   const handleContinue = () => {
     if (pin.length < 6) {
       showToast.error("Error", "El PIN debe tener 6 dígitos.");
