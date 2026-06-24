@@ -15,6 +15,9 @@ import { useEffect, useState } from "react";
 import { Platform, View, Dimensions, Appearance, useColorScheme as useRNColorScheme } from "react-native";
 import { Toaster } from "@/lib/sonner";
 import SessionWrapper from "@/components/SessionWrapper";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 import { SplashScreen } from "expo-router";
 import {
@@ -108,7 +111,8 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={NAV_THEME[colorScheme === "dark" ? "dark" : "light"]}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider value={NAV_THEME[colorScheme === "dark" ? "dark" : "light"]}>
       <Head>
         <title>Nova Connect</title>
         <meta name="description" content="Portal oficial de los colaboradores de Nova" />
@@ -146,5 +150,6 @@ export default function RootLayout() {
         </View>
       </SessionWrapper>
     </ThemeProvider>
+    </QueryClientProvider>
   );
 }
