@@ -3,7 +3,7 @@ import { showToast } from "@/lib/toast";
 import { processedDocumentService } from "@/services/processedDocumentService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import * as FileSystem from "expo-file-system/legacy";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, usePathname } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { ChevronLeft, Download } from "lucide-react-native";
 import { useEffect, useState } from "react";
@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DocumentViewerScreen() {
+  const pathname = usePathname();
   const { fileName, title } = useLocalSearchParams();
   const { primaryColor } = usePreferenceStore();
   const [loading, setLoading] = useState(true);
@@ -100,7 +101,16 @@ export default function DocumentViewerScreen() {
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-border/40">
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            if (Platform.OS === "web") {
+              const segments = pathname.split("/").filter(Boolean);
+              segments.pop();
+              const parentPath = "/" + segments.join("/");
+              router.replace(parentPath as any);
+            } else {
+              router.back();
+            }
+          }}
           className="w-10 h-10 items-center justify-center rounded-full bg-secondary/50"
         >
           <ChevronLeft size={24} className="text-foreground" />

@@ -79,6 +79,7 @@ export default function ProtectedLayout() {
         name="home"
         options={{
           title: "Perfil",
+          href: "/(protected)/home",
           tabBarIcon: ({ color, focused }) => (
             <View className="items-center justify-center h-full w-full">
               <User color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
@@ -96,6 +97,7 @@ export default function ProtectedLayout() {
         name="documents"
         options={{
           title: "Documentos",
+          href: "/(protected)/documents",
           tabBarIcon: ({ color, focused }) => (
             <View className="items-center justify-center h-full w-full">
               <FileText
@@ -117,6 +119,7 @@ export default function ProtectedLayout() {
         name="history"
         options={{
           title: "Historial",
+          href: "/(protected)/history",
           tabBarIcon: ({ color, focused }) => (
             <View className="items-center justify-center h-full w-full">
               <Clock
@@ -138,6 +141,7 @@ export default function ProtectedLayout() {
         name="dining"
         options={{
           title: "Comedor",
+          href: "/(protected)/dining",
           tabBarIcon: ({ color, focused }) => (
             <View className="items-center justify-center h-full w-full">
               <Utensils
