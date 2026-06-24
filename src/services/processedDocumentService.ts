@@ -37,6 +37,14 @@ export const processedDocumentService = {
     return `${API_URL}/GenUploadFiles/downloadFile?genParameter=ROUTE_BOLETAS&nameFile=${fileName}`;
   },
 
+  async getPdfBlob(fileName: string): Promise<Blob> {
+    const { data } = await api.get(
+      `/GenUploadFiles/downloadFile?genParameter=ROUTE_BOLETAS&nameFile=${fileName}`,
+      { responseType: "blob" }
+    );
+    return new Blob([data], { type: "application/pdf" });
+  },
+
   async openPdf(fileName: string, primaryColor: string): Promise<void> {
     if (!fileName) return;
     try {

@@ -10,6 +10,7 @@ import { ProcessedDocument } from "@/types/document";
 import { showToast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { router } from "expo-router";
 
 export default function DocumentsScreen() {
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
@@ -17,9 +18,12 @@ export default function DocumentsScreen() {
   
   const { documents, isLoading, isRefreshing, refetch } = useProcessedDocuments(false);
 
-  const handleOpenPdf = async (fileName: string) => {
+  const handleOpenPdf = async (fileName: string, title?: string) => {
     try {
-      await processedDocumentService.openPdf(fileName, primaryColor);
+      router.push({
+        pathname: "/(protected)/documents/viewer" as any,
+        params: { fileName, title: title || "Documento" },
+      });
     } catch (error) {
       showToast.error("Error", "No se pudo abrir el documento.");
     }
@@ -45,7 +49,7 @@ export default function DocumentsScreen() {
           "El documento se ha movido a tu historial."
         );
         refetch();
-        await handleOpenPdf(selectedDocument.PdcFilePath);
+        await handleOpenPdf(selectedDocument.PdcFilePath, selectedDocument.DprDisplayName);
       } else {
         showToast.error("Error", "No se pudo recepcionar el documento.");
       }

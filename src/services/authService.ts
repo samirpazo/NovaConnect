@@ -130,9 +130,7 @@ export const authService = {
     }
   },
 
-  async validateLogin(
-    document: string,
-  ): Promise<{
+  async validateLogin(document: string): Promise<{
     success: boolean;
     data?: { PrsID: number; HasAccount: boolean };
     error?: string;

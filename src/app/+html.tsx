@@ -8,7 +8,7 @@ import { ScrollViewStyleReset } from 'expo-router/html';
 // do not have access to the DOM or browser APIs.
 export default function Root({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
@@ -21,6 +21,27 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <ScrollViewStyleReset />
 
         {/* Add any additional <head> elements that you want globally available on web... */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const prefsStr = localStorage.getItem('nova-collaborator-preferences');
+                let theme = 'system';
+                if (prefsStr) {
+                  const prefs = JSON.parse(prefsStr);
+                  if (prefs && prefs.state && prefs.state.theme) {
+                    theme = prefs.state.theme;
+                  }
+                }
+                if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
         <title>Nova Connect</title>
         <meta name="description" content="Portal oficial de los colaboradores de Nova" />
         <meta property="og:title" content="Nova Connect" />

@@ -4,7 +4,7 @@ import { showToast } from "@/lib/toast";
 import { processedDocumentService } from "@/services/processedDocumentService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { ProcessedDocument } from "@/types/document";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, router } from "expo-router";
 import { Calendar, CheckCircle2, FileText } from "lucide-react-native";
 import { useMemo } from "react";
 import {
@@ -40,9 +40,12 @@ export default function HistoryMonthDocumentsScreen() {
     );
   }, [allDocuments, year, month]);
 
-  const handleOpenPdf = async (fileName: string) => {
+  const handleOpenPdf = async (fileName: string, title?: string) => {
     try {
-      await processedDocumentService.openPdf(fileName, primaryColor);
+      router.push({
+        pathname: "/(protected)/history/viewer" as any,
+        params: { fileName, title: title || "Documento" },
+      });
     } catch (error) {
       showToast.error("Error", "No se pudo abrir el documento.");
     }
@@ -58,7 +61,7 @@ export default function HistoryMonthDocumentsScreen() {
     return (
       <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
         <Pressable
-          onPress={() => handleOpenPdf(item.PdcFilePath)}
+          onPress={() => handleOpenPdf(item.PdcFilePath, item.DprDisplayName)}
           className="bg-card rounded-[18px] p-3.5 mb-3 border border-border/40 shadow-sm flex-row items-center active:opacity-70"
         >
           <View

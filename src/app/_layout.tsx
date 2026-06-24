@@ -12,7 +12,7 @@ import Head from "expo-router/head";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme, vars } from "nativewind";
 import { useEffect, useState } from "react";
-import { Platform, View, Dimensions } from "react-native";
+import { Platform, View, Dimensions, Appearance, useColorScheme as useRNColorScheme } from "react-native";
 import { Toaster } from "@/lib/sonner";
 
 import { SplashScreen } from "expo-router";
@@ -57,9 +57,16 @@ export default function RootLayout() {
   });
 
   const { colorScheme, setColorScheme } = useColorScheme();
+  const rnColorScheme = useRNColorScheme();
   const { theme, primaryColor } = usePreferenceStore();
   const { user, loading: authLoading, initializeAuth } = useAuthStore();
   const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    if (isReady) {
+      setColorScheme(theme === "system" ? (rnColorScheme === "dark" ? "dark" : "light") : theme);
+    }
+  }, [theme, rnColorScheme, isReady]);
 
   useProtectedRoute(user, authLoading, isReady);
 
@@ -78,9 +85,7 @@ export default function RootLayout() {
 
       // Aplicar el tema recuperado inmediatamente antes de renderizar
       const currentTheme = usePreferenceStore.getState().theme;
-      if (currentTheme !== "system" && currentTheme !== colorScheme) {
-        setColorScheme(currentTheme);
-      }
+      setColorScheme(currentTheme === "system" ? (Appearance.getColorScheme() === "dark" ? "dark" : "light") : currentTheme);
 
       setIsReady(true);
       await SplashScreen.hideAsync();
@@ -102,7 +107,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={NAV_THEME[colorScheme ?? "light"]}>
+    <ThemeProvider value={NAV_THEME[colorScheme === "dark" ? "dark" : "light"]}>
       <Head>
         <title>Nova Connect</title>
         <meta name="description" content="Portal oficial de los colaboradores de Nova" />

@@ -29,6 +29,7 @@ export default function DocumentsLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="viewer" options={{ headerShown: false }} />
     </Stack>
   );
 }

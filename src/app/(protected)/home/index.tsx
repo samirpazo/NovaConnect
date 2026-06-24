@@ -179,6 +179,9 @@ export default function HomeScreen() {
                   size={140}
                   color="#000000"
                   backgroundColor="#ffffff"
+                  logo={require("../../../../assets/images/logo-nova.svg")}
+                  logoSize={30}
+                  logoBackgroundColor="transparent"
                 />
               </View>
               <Text className="font-poppins-medium text-sm text-muted-foreground mt-4 text-center">
