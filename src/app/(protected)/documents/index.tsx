@@ -10,11 +10,12 @@ import { ProcessedDocument } from "@/types/document";
 import { showToast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { router } from "expo-router";
+import { router, usePathname } from "expo-router";
 
 export default function DocumentsScreen() {
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
   const primaryColor = storePrimaryColor || "#002aff";
+  const pathname = usePathname();
   
   const { documents, isLoading, isRefreshing, refetch } = useProcessedDocuments(false);
 
@@ -22,7 +23,7 @@ export default function DocumentsScreen() {
     try {
       router.push({
         pathname: "/(protected)/documents/viewer" as any,
-        params: { fileName, title: title || "Documento" },
+        params: { fileName, title: title || "Documento", returnTo: pathname },
       });
     } catch (error) {
       showToast.error("Error", "No se pudo abrir el documento.");

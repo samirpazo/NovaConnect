@@ -4,7 +4,7 @@ import { showToast } from "@/lib/toast";
 import { processedDocumentService } from "@/services/processedDocumentService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { ProcessedDocument } from "@/types/document";
-import { Stack, useLocalSearchParams, router } from "expo-router";
+import { Stack, useLocalSearchParams, router, usePathname } from "expo-router";
 import { Calendar, CheckCircle2, FileText } from "lucide-react-native";
 import { useMemo } from "react";
 import {
@@ -21,6 +21,7 @@ export default function HistoryMonthDocumentsScreen() {
     year: string;
     month: string;
   }>();
+  const pathname = usePathname();
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
   const primaryColor = storePrimaryColor || "#002aff";
 
@@ -44,7 +45,7 @@ export default function HistoryMonthDocumentsScreen() {
     try {
       router.push({
         pathname: "/(protected)/history/viewer" as any,
-        params: { fileName, title: title || "Documento" },
+        params: { fileName, title: title || "Documento", returnTo: pathname },
       });
     } catch (error) {
       showToast.error("Error", "No se pudo abrir el documento.");

@@ -18,7 +18,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DocumentViewerScreen() {
   const pathname = usePathname();
-  const { fileName, title } = useLocalSearchParams();
+  const {
+    fileName,
+    title,
+    returnTo,
+  } = useLocalSearchParams<{
+    fileName: string;
+    title: string;
+    returnTo?: string;
+  }>();
   const { primaryColor } = usePreferenceStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,10 +111,14 @@ export default function DocumentViewerScreen() {
         <TouchableOpacity
           onPress={() => {
             if (Platform.OS === "web") {
-              const segments = pathname.split("/").filter(Boolean);
-              segments.pop();
-              const parentPath = "/" + segments.join("/");
-              router.replace(parentPath as any);
+              if (returnTo) {
+                router.replace(returnTo as any);
+              } else {
+                const segments = pathname.split("/").filter(Boolean);
+                segments.pop();
+                const parentPath = "/" + segments.join("/");
+                router.replace(parentPath as any);
+              }
             } else {
               router.back();
             }
