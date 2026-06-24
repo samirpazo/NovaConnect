@@ -186,9 +186,12 @@ export const authService = {
     }
   },
 
-  async requestPinReset(documentNumber: string): Promise<{ success: boolean; error?: string; noEmail?: boolean }> {
+  async requestPinReset(documentNumber: string, forceResend: boolean = false): Promise<{ success: boolean; error?: string; noEmail?: boolean }> {
     try {
-      const { data } = await api.post("/SecCollaborator/RequestPinReset", { DocumentNumber: documentNumber });
+      const { data } = await api.post("/SecCollaborator/RequestPinReset", { 
+        DocumentNumber: documentNumber,
+        ForceResend: forceResend
+      });
       if (data.Succeeded) return { success: true };
       return { success: false, error: data.Message || "Error al solicitar el código." };
     } catch (error: any) {

@@ -5,6 +5,7 @@ import { Text } from "@/components/ui/text";
 import { AlertHelper } from "@/lib/alert";
 import { hashPassword } from "@/lib/security";
 import { showToast } from "@/lib/toast";
+import { storage } from "@/lib/storage";
 import { authService } from "@/services/authService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { router, Stack, useLocalSearchParams } from "expo-router";
@@ -35,17 +36,73 @@ export default function RecoverPinScreen() {
   const [confirmPin, setConfirmPin] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleRequestOtp = async (docToUse?: string) => {
+  // Reenviar contador
+  const [resendCount, setResendCount] = React.useState(0);
+  const [countdown, setCountdown] = React.useState(0);
+  const RESEND_INTERVALS = process.env.EXPO_PUBLIC_OTP_RESEND_INTERVALS
+    ? process.env.EXPO_PUBLIC_OTP_RESEND_INTERVALS.split(",").map(Number)
+    : [1, 2, 5, 15, 30, 60, 120, 1440];
+
+  React.useEffect(() => {
+    const initTimer = async () => {
+      const savedCount = await storage.getItem("otp_resend_count");
+      const savedTime = await storage.getItem("otp_resend_time");
+      
+      if (savedCount && savedTime) {
+        const timeMs = parseInt(savedTime, 10);
+        const count = parseInt(savedCount, 10);
+        
+        const now = Date.now();
+        const maxInterval = RESEND_INTERVALS[RESEND_INTERVALS.length - 1] || 1440;
+        
+        if (now > timeMs + (maxInterval * 60 * 1000)) {
+          await storage.removeItem("otp_resend_count");
+          await storage.removeItem("otp_resend_time");
+          setResendCount(0);
+        } else if (now < timeMs) {
+          setResendCount(count);
+          setCountdown(Math.ceil((timeMs - now) / 1000));
+        } else {
+          setResendCount(count);
+        }
+      }
+    };
+    initTimer();
+  }, []);
+
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (countdown > 0) {
+      interval = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [countdown]);
+
+  const handleRequestOtp = async (docToUse?: string, forceResend: boolean = false) => {
     const doc = docToUse || documentNumber;
     if (!doc || doc.length < 8) return;
 
+    if (forceResend) {
+      const nextCount = Math.min(resendCount + 1, RESEND_INTERVALS.length);
+      const intervalMinutes = RESEND_INTERVALS[nextCount - 1];
+      const nextTime = Date.now() + (intervalMinutes * 60 * 1000);
+      
+      await storage.setItem("otp_resend_count", nextCount.toString());
+      await storage.setItem("otp_resend_time", nextTime.toString());
+      
+      setResendCount(nextCount);
+      setCountdown(intervalMinutes * 60);
+    }
+
     setIsLoading(true);
-    const result = await authService.requestPinReset(doc);
+    const result = await authService.requestPinReset(doc, forceResend);
     setIsLoading(false);
 
     if (result.success) {
       setStep(2);
-      showToast.success("Código enviado", "Revisa tu bandeja de entrada.");
+      showToast.success("Código enviado", forceResend ? "Se ha reenviado el código a tu correo." : "Revisa tu bandeja de entrada.");
     } else if (result.noEmail) {
       AlertHelper.alert(
         "Sin correo registrado",
@@ -177,10 +234,28 @@ export default function RecoverPinScreen() {
             Verificar código
           </Text>
         </Button>
+
+        <View className="mt-4 flex-row justify-center items-center">
+          <Text className="text-sm font-poppins text-muted-foreground">
+            ¿No recibiste el código?{" "}
+          </Text>
+          <Pressable 
+            onPress={() => handleRequestOtp(undefined, true)}
+            disabled={countdown > 0 || isLoading}
+          >
+            <Text 
+              className="text-sm font-poppins-bold" 
+              style={{ color: countdown > 0 ? "gray" : primaryColor, opacity: countdown > 0 ? 0.6 : 1 }}
+            >
+              {countdown > 0 
+                ? `Reenviar en ${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')}` 
+                : "Reenviar"}
+            </Text>
+          </Pressable>
+        </View>
       </View>
     </Animated.View>
   );
-
   const renderStep3 = () => (
     <Animated.View
       entering={FadeInRight.duration(400)}
