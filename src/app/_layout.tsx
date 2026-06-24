@@ -105,6 +105,10 @@ export default function RootLayout() {
     <ThemeProvider value={NAV_THEME[colorScheme ?? "light"]}>
       <Head>
         <title>Nova Connect</title>
+        <meta name="description" content="Portal oficial de los colaboradores de Nova" />
+        <meta property="og:title" content="Nova Connect" />
+        <meta property="og:description" content="Portal oficial de los colaboradores de Nova" />
+        <meta property="og:image" content="https://novateam-001-site3.itempurl.com/opengraph-image.png" />
       </Head>
       <View
         style={[
