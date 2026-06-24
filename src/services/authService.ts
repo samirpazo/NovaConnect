@@ -186,6 +186,44 @@ export const authService = {
     }
   },
 
+  async requestPinReset(documentNumber: string): Promise<{ success: boolean; error?: string; noEmail?: boolean }> {
+    try {
+      const { data } = await api.post("/SecCollaborator/RequestPinReset", { DocumentNumber: documentNumber });
+      if (data.Succeeded) return { success: true };
+      return { success: false, error: data.Message || "Error al solicitar el código." };
+    } catch (error: any) {
+      if (error.response?.data?.Message === "NO_EMAIL") return { success: false, noEmail: true };
+      return { success: false, error: error.response?.data?.Message || "Ocurrió un error inesperado." };
+    }
+  },
+
+  async confirmPinReset(documentNumber: string, otp: string, newPasswordHash: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data } = await api.post("/SecCollaborator/ConfirmPinReset", {
+        DocumentNumber: documentNumber,
+        Otp: otp,
+        NewPasswordHash: newPasswordHash,
+      });
+      if (data.Succeeded) return { success: true };
+      return { success: false, error: data.Message || "No se pudo actualizar el PIN." };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.Message || "Código incorrecto o ha expirado." };
+    }
+  },
+
+  async changePassword(oldPasswordHash: string, newPasswordHash: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data } = await api.post("/SecCollaborator/ChangePassword", {
+        OldPasswordHash: oldPasswordHash,
+        NewPasswordHash: newPasswordHash,
+      });
+      if (data.Succeeded) return { success: true };
+      return { success: false, error: data.Message || "No se pudo actualizar el PIN." };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.Message || "Hubo un problema al contactar con el servidor." };
+    }
+  },
+
   async logout(): Promise<void> {
     await Promise.all([
       storage.removeItem("token"),

@@ -597,7 +597,7 @@ export default function LoginScreen() {
                       <Text className="text-muted-foreground font-poppins text-sm select-none">
                         ¿Olvidaste tu PIN?{" "}
                       </Text>
-                      <Pressable>
+                      <Pressable onPress={() => router.push({ pathname: "/recover", params: { document: PrsDocumentNumber } })}>
                         <Text
                           className="font-bold font-poppins text-sm select-none"
                           style={{ color: primaryColor || "#002aff" }}
