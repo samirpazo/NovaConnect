@@ -14,9 +14,10 @@ import {
   Mail,
   Phone,
   Settings,
+  HardDrive,
 } from "lucide-react-native";
 import * as React from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Modal, Platform, Pressable, ScrollView, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import Animated, { FadeInDown, FadeOut, ZoomIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -198,6 +199,21 @@ export default function HomeScreen() {
               <Text className="text-[11px] font-poppins-bold text-muted-foreground uppercase tracking-widest px-2 mb-1">
                 Acciones Rápidas
               </Text>
+
+              {Platform.OS !== "web" && (
+                <Pressable
+                  onPress={() => router.push("/(protected)/vault" as any)}
+                  className="flex-row items-center gap-3.5 py-2 px-4 rounded-[16px] bg-card border border-border/40 active:bg-secondary/50"
+                >
+                  <View className="w-9 h-9 rounded-[12px] bg-secondary/80 items-center justify-center">
+                    <HardDrive size={18} className="text-foreground" />
+                  </View>
+                  <Text className="flex-1 font-poppins-semibold text-foreground text-sm">
+                    Bóveda Offline
+                  </Text>
+                  <ChevronRight size={18} className="text-muted-foreground/50" />
+                </Pressable>
+              )}
 
               <Pressable
                 onPress={() => router.push("/(protected)/home/help")}

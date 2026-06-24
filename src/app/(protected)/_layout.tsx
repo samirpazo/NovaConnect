@@ -159,6 +159,13 @@ export default function ProtectedLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="vault/index"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 }

@@ -5,7 +5,8 @@ import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import * as FileSystem from "expo-file-system/legacy";
 import { router, useLocalSearchParams, usePathname } from "expo-router";
 import * as Sharing from "expo-sharing";
-import { ChevronLeft, Download } from "lucide-react-native";
+import { useVault } from "@/hooks/useVault";
+import { ChevronLeft, Download, HardDriveDownload } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -31,6 +32,8 @@ export default function DocumentViewerScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const { saveToVault } = useVault();
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadPdf();
@@ -104,6 +107,33 @@ export default function DocumentViewerScreen() {
     }
   };
 
+  const handleSaveToVault = async () => {
+    if (!fileName || typeof fileName !== "string") return;
+    try {
+      setIsSaving(true);
+      const safeFileName = fileName.split("/").pop() || "Documento.pdf";
+      
+      const response = await processedDocumentService.getPdfBlob(fileName);
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(response);
+      });
+
+      await saveToVault(base64Data, safeFileName);
+      showToast.success("Guardado en Bóveda", "El documento está disponible offline.");
+    } catch (error) {
+      console.error("Error guardando en bóveda:", error);
+      showToast.error("Error", "No se pudo guardar en la bóveda.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
       {/* Header */}
@@ -140,13 +170,30 @@ export default function DocumentViewerScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity
-          onPress={handleDownload}
-          className="w-10 h-10 items-center justify-center rounded-full"
-          style={{ backgroundColor: `${primaryColor || "#002aff"}15` }}
-        >
-          <Download size={20} color={primaryColor || "#002aff"} />
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-2">
+          {Platform.OS !== "web" && (
+            <TouchableOpacity
+              onPress={handleSaveToVault}
+              disabled={isSaving}
+              className="w-10 h-10 items-center justify-center rounded-full"
+              style={{ backgroundColor: `${primaryColor || "#002aff"}15` }}
+            >
+              {isSaving ? (
+                <ActivityIndicator size="small" color={primaryColor || "#002aff"} />
+              ) : (
+                <HardDriveDownload size={20} color={primaryColor || "#002aff"} />
+              )}
+            </TouchableOpacity>
+          )}
+          
+          <TouchableOpacity
+            onPress={handleDownload}
+            className="w-10 h-10 items-center justify-center rounded-full"
+            style={{ backgroundColor: `${primaryColor || "#002aff"}15` }}
+          >
+            <Download size={20} color={primaryColor || "#002aff"} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Content */}

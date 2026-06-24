@@ -63,6 +63,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": "https://novaconnect.com"
+      },
+      "eas": {
+        "projectId": "6f8adb1a-9a03-4cc4-ae0a-04cc5da0c972"
+      }
     }
   }
 }

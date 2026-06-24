@@ -38,6 +38,7 @@
     "expo-system-ui": "~55.0.16",
     "expo-web-browser": "~55.0.16",
     "lucide-react-native": "^0.545.0",
+    "luxon": "^3.7.2",
     "nativewind": "^4.2.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
@@ -62,6 +63,7 @@
   "devDependencies": {
     "@babel/core": "^7.26.0",
     "@types/crypto-js": "^4.2.2",
+    "@types/luxon": "^3.7.2",
     "@types/react": "~19.2.10",
     "babel-preset-expo": "~55.0.8",
     "prettier": "^3.8.3",
