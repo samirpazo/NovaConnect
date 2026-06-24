@@ -14,6 +14,7 @@ import { useColorScheme, vars } from "nativewind";
 import { useEffect, useState } from "react";
 import { Platform, View, Dimensions, Appearance, useColorScheme as useRNColorScheme } from "react-native";
 import { Toaster } from "@/lib/sonner";
+import SessionWrapper from "@/components/SessionWrapper";
 
 import { SplashScreen } from "expo-router";
 import {
@@ -115,33 +116,35 @@ export default function RootLayout() {
         <meta property="og:description" content="Portal oficial de los colaboradores de Nova" />
         <meta property="og:image" content="https://novateam-001-site3.itempurl.com/opengraph-image.png" />
       </Head>
-      <View
-        style={[
-          { flex: 1 },
-          Platform.OS === "web" && {
-            maxWidth: 512,
-            width: "100%",
-            height: Dimensions.get("window").height,
-            alignSelf: "center",
-            overflow: "hidden",
-          },
-        ]}
-      >
-        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-        <Stack>
-          <Stack.Screen name="(protected)" options={{ headerShown: false }} />
-        </Stack>
-        <PortalHost />
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            style: {
-              width: Platform.OS === "web" ? 400 : "auto",
+      <SessionWrapper>
+        <View
+          style={[
+            { flex: 1 },
+            Platform.OS === "web" && {
+              maxWidth: 512,
+              width: "100%",
+              height: Dimensions.get("window").height,
               alignSelf: "center",
+              overflow: "hidden",
             },
-          }}
-        />
-      </View>
+          ]}
+        >
+          <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+          <Stack>
+            <Stack.Screen name="(protected)" options={{ headerShown: false }} />
+          </Stack>
+          <PortalHost />
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                width: Platform.OS === "web" ? 400 : "auto",
+                alignSelf: "center",
+              },
+            }}
+          />
+        </View>
+      </SessionWrapper>
     </ThemeProvider>
   );
 }
