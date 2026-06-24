@@ -3,12 +3,29 @@ import { Image } from "expo-image";
 import { Tabs } from "expo-router";
 import { Clock, FileText, User, Utensils } from "lucide-react-native";
 import { Dimensions, Platform, Text, View } from "react-native";
+import { useEffect } from "react";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { registerForPushNotificationsAsync } from "@/hooks/usePushNotifications";
+import { pushNotificationService } from "@/services/pushNotificationService";
 
 import { useColorScheme } from "nativewind";
 
 export default function ProtectedLayout() {
   const { primaryColor } = usePreferenceStore();
   const { colorScheme } = useColorScheme();
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    async function setupPush() {
+      if (user?.PrsID && Platform.OS !== "web") {
+        const token = await registerForPushNotificationsAsync();
+        if (token) {
+          await pushNotificationService.saveToken(user.PrsID, token);
+        }
+      }
+    }
+    setupPush();
+  }, [user?.PrsID]);
 
   const isDark = colorScheme === "dark";
   const surfaceColor = isDark ? "#1a1a1c" : "#ffffff";
