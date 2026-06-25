@@ -173,7 +173,7 @@ export default function RegisterScreen() {
             <Animated.View
               key={step}
               entering={FadeInDown.duration(400).springify()}
-              className="bg-card w-full max-w-[360px] mt-2 self-center rounded-3xl p-6 border border-border/40 shadow-sm dark:shadow-xl"
+              className="bg-card w-full max-w-[300px] mt-2 self-center rounded-3xl p-5 border border-border/40 shadow-sm dark:shadow-xl"
             >
               <View className="items-center mb-3">
                 <View

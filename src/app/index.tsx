@@ -124,7 +124,7 @@ export default function LoginScreen() {
     opacity: opacity.value,
     transform: [{ translateX: translateX.value }],
     width: "100%",
-    maxWidth: 360,
+    maxWidth: 300,
     alignItems: "center" as const,
   }));
 
@@ -384,7 +384,7 @@ export default function LoginScreen() {
                 {step === 1 ? (
                   <View className="w-full">
                     {/* Card Wrapper */}
-                    <View className="bg-card w-full rounded-3xl p-6 border border-border/40 shadow-sm dark:shadow-xl">
+                    <View className="bg-card w-full rounded-3xl p-5 border border-border/40 shadow-sm dark:shadow-xl">
                       <Text className="text-card-foreground font-poppins-semibold text-sm mb-3">
                         Documento de Identidad
                       </Text>
@@ -488,7 +488,7 @@ export default function LoginScreen() {
                     </View>
 
                     {/* Card Wrapper for PIN */}
-                    <View className="bg-card w-full max-w-[360px] mt-2 self-center rounded-3xl p-6 border border-border/40 shadow-sm dark:shadow-xl">
+                    <View className="bg-card w-full max-w-[300px] mt-2 self-center rounded-3xl p-5 border border-border/40 shadow-sm dark:shadow-xl">
                       {/* Keypad */}
                       <View className="w-full mb-5">
                         <PinKeypad

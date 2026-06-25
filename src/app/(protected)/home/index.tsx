@@ -202,7 +202,7 @@ export default function HomeScreen() {
 
               {Platform.OS !== "web" && (
                 <Pressable
-                  onPress={() => router.push("/(protected)/vault" as any)}
+                  onPress={() => router.push("/(protected)/home/vault" as any)}
                   className="flex-row items-center gap-3.5 py-2 px-4 rounded-[16px] bg-card border border-border/40 active:bg-secondary/50"
                 >
                   <View className="w-9 h-9 rounded-[12px] bg-secondary/80 items-center justify-center">

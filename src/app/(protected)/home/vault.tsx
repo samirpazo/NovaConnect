@@ -5,14 +5,13 @@ import { router } from "expo-router";
 import { ChevronLeft, FileText, HardDrive, Trash2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   FlatList,
   Platform,
   Text,
-  TouchableOpacity,
+  Pressable,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { AlertHelper } from "@/lib/alert";
 
 export default function VaultScreen() {
   const { primaryColor } = usePreferenceStore();
@@ -41,7 +40,7 @@ export default function VaultScreen() {
   };
 
   const handleDelete = (file: VaultFile) => {
-    Alert.alert(
+    AlertHelper.alert(
       "Eliminar documento",
       `¿Estás seguro de que deseas eliminar ${file.name} de tu bóveda?`,
       [
@@ -59,16 +58,19 @@ export default function VaultScreen() {
   };
 
   const renderItem = ({ item }: { item: VaultFile }) => (
-    <View className="flex-row items-center justify-between p-4 mb-3 bg-card border border-border/50 rounded-2xl shadow-sm">
-      <TouchableOpacity
+    <View className="flex-row items-center justify-between p-3.5 mb-3 bg-card border border-border/40 rounded-2xl shadow-sm">
+      <Pressable
         onPress={() => openVaultFile(item.uri)}
+        style={({ pressed }) => ({
+          opacity: pressed ? 0.7 : 1,
+        })}
         className="flex-row items-center flex-1"
       >
         <View
-          className="w-12 h-12 rounded-xl items-center justify-center mr-4"
+          className="w-11 h-11 rounded-xl items-center justify-center mr-3.5"
           style={{ backgroundColor: `${primaryColor || "#002aff"}15` }}
         >
-          <FileText size={24} color={primaryColor || "#002aff"} />
+          <FileText size={22} color={primaryColor || "#002aff"} />
         </View>
         <View className="flex-1">
           <Text
@@ -77,42 +79,49 @@ export default function VaultScreen() {
           >
             {item.name}
           </Text>
-          <Text className="font-poppins text-muted-foreground text-xs mt-0.5">
+          <Text className="font-poppins text-muted-foreground text-sm mt-0.5">
             {DateTime.fromMillis(item.modificationTime * 1000)
               .setLocale("es")
               .toFormat("dd MMM yyyy, HH:mm")}{" "}
             • {(item.size / 1024 / 1024).toFixed(2)} MB
           </Text>
         </View>
-      </TouchableOpacity>
+      </Pressable>
 
-      <TouchableOpacity
+      <Pressable
         onPress={() => handleDelete(item)}
-        className="w-10 h-10 items-center justify-center rounded-full ml-2 bg-destructive/10"
+        style={({ pressed }) => ({
+          opacity: pressed ? 0.7 : 1,
+        })}
+        className="w-8 h-8 items-center justify-center rounded-full ml-2 bg-destructive/10"
       >
-        <Trash2 size={20} className="text-destructive" />
-      </TouchableOpacity>
+        <Trash2 size={16} color="#ef4444" />
+      </Pressable>
     </View>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-border/40">
-        <TouchableOpacity
+    <View className="flex-1 bg-background">
+      {/* Custom Header */}
+      <View className="flex-row items-center px-4 py-2.5 border-b border-border">
+        <Pressable
           onPress={() => router.back()}
-          className="w-10 h-10 items-center justify-center rounded-full bg-secondary/50"
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.7 : 1,
+          })}
+          className="w-8 h-8 items-center justify-center rounded-full bg-secondary"
         >
-          <ChevronLeft size={24} className="text-foreground" />
-        </TouchableOpacity>
-        <Text className="text-lg font-poppins-semibold text-foreground">
-          Bóveda Offline
-        </Text>
-        <View className="w-10 h-10" />
+          <ChevronLeft size={20} color={primaryColor || "#002aff"} />
+        </Pressable>
+        <View className="flex-1 px-3">
+          <Text className="text-lg font-poppins-semibold text-foreground">
+            Bóveda Offline
+          </Text>
+        </View>
       </View>
 
       {/* Content */}
-      <View className="flex-1 px-4 pt-4">
+      <View className="flex-1 px-6 pt-3">
         <View className="bg-secondary/30 p-4 rounded-xl flex-row items-center mb-6">
           <HardDrive size={24} color={primaryColor || "#002aff"} />
           <Text className="ml-3 font-poppins text-sm text-foreground flex-1">
@@ -158,6 +167,6 @@ export default function VaultScreen() {
           />
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -1,21 +1,18 @@
-import { usePreferenceStore } from "@/stores/usePreferenceStore";
+import { registerForPushNotificationsAsync } from "@/hooks/usePushNotifications";
+import { pushNotificationService } from "@/services/pushNotificationService";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { Image } from "expo-image";
 import { Tabs } from "expo-router";
 import { Clock, FileText, User, Utensils } from "lucide-react-native";
-import { Dimensions, Platform, Text, View } from "react-native";
 import { useEffect } from "react";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { registerForPushNotificationsAsync } from "@/hooks/usePushNotifications";
-import { pushNotificationService } from "@/services/pushNotificationService";
-
-
+import { Dimensions, Platform, Text, View } from "react-native";
 
 import { useTheme } from "@react-navigation/native";
 
 function HeaderLogo() {
   const { dark: isDark } = useTheme();
   const screenWidth = Dimensions.get("window").width;
-  
+
   return (
     <View
       style={{
@@ -54,7 +51,11 @@ function TabIcon({ color, focused, icon: IconComponent }: any) {
   const { colors } = useTheme();
   return (
     <View className="items-center justify-center h-full w-full">
-      <IconComponent color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+      <IconComponent
+        color={color}
+        size={22}
+        strokeWidth={focused ? 2.5 : 1.8}
+      />
       {focused && (
         <View
           style={{ backgroundColor: colors.primary }}
@@ -124,13 +125,6 @@ export default function ProtectedLayout() {
           title: "Comedor",
           href: "/(protected)/dining",
           tabBarIcon: (props) => <TabIcon {...props} icon={Utensils} />,
-        }}
-      />
-      <Tabs.Screen
-        name="vault/index"
-        options={{
-          href: null,
-          headerShown: false,
         }}
       />
     </Tabs>
