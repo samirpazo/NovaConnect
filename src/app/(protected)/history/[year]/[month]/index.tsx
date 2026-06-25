@@ -77,7 +77,7 @@ export default function HistoryMonthDocumentsScreen() {
               {item.DprDisplayName || "Documento"}
             </Text>
             <View className="flex-row items-center">
-              <Calendar size={12} className="text-muted-foreground mr-1" />
+              <Calendar size={12} color="#71717a" className="mr-1" />
               <Text className="text-[11px] font-poppins-medium text-muted-foreground capitalize">
                 {item.PdcPeriodMonth} {item.PdcPeriodYear}
               </Text>
@@ -87,7 +87,7 @@ export default function HistoryMonthDocumentsScreen() {
           <View className="w-8 h-8 rounded-full bg-green-500/10 items-center justify-center border border-green-500/20">
             <CheckCircle2
               size={16}
-              className="text-green-600 dark:text-green-400"
+              color="#22c55e"
             />
           </View>
         </Pressable>

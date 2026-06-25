@@ -78,7 +78,7 @@ export default function HistoryMonthsScreen() {
                     • Mes {item.month}
                   </Text>
                 </View>
-                <ChevronRight size={20} className="text-muted-foreground" />
+                <ChevronRight size={20} color="#71717a" />
               </Pressable>
             </Animated.View>
           )}

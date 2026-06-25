@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "nova-connect",
+    "name": "Nova Connect",
     "slug": "nova-connect",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -59,7 +59,8 @@
           "faceIDPermission": "Permitir a Nova Connect usar Face ID para iniciar sesión de forma rápida."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

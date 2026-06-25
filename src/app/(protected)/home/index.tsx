@@ -180,7 +180,7 @@ export default function HomeScreen() {
                   size={140}
                   color="#000000"
                   backgroundColor="#ffffff"
-                  logo={require("../../../../assets/images/logo-nova.svg")}
+                  logo={require("../../../../assets/images/icons/icon.png")}
                   logoSize={30}
                   logoBackgroundColor="transparent"
                 />
@@ -206,12 +206,12 @@ export default function HomeScreen() {
                   className="flex-row items-center gap-3.5 py-2 px-4 rounded-[16px] bg-card border border-border/40 active:bg-secondary/50"
                 >
                   <View className="w-9 h-9 rounded-[12px] bg-secondary/80 items-center justify-center">
-                    <HardDrive size={18} className="text-foreground" />
+                    <HardDrive size={18} color={primaryColor || "#002aff"} />
                   </View>
                   <Text className="flex-1 font-poppins-semibold text-foreground text-sm">
                     Bóveda Offline
                   </Text>
-                  <ChevronRight size={18} className="text-muted-foreground/50" />
+                  <ChevronRight size={18} color={primaryColor || "#002aff"} />
                 </Pressable>
               )}
 
@@ -220,12 +220,12 @@ export default function HomeScreen() {
                 className="flex-row items-center gap-3.5 py-2 px-4 rounded-[16px] bg-card border border-border/40 active:bg-secondary/50"
               >
                 <View className="w-9 h-9 rounded-[12px] bg-secondary/80 items-center justify-center">
-                  <HelpCircle size={18} className="text-foreground" />
+                  <HelpCircle size={18} color={primaryColor || "#002aff"} />
                 </View>
                 <Text className="flex-1 font-poppins-semibold text-foreground text-sm">
                   Centro de Ayuda
                 </Text>
-                <ChevronRight size={18} className="text-muted-foreground/50" />
+                <ChevronRight size={18} color={primaryColor || "#002aff"} />
               </Pressable>
 
               <Pressable
@@ -233,12 +233,12 @@ export default function HomeScreen() {
                 className="flex-row items-center gap-3.5 py-2 px-4 rounded-[16px] bg-card border border-border/40 active:bg-secondary/50"
               >
                 <View className="w-9 h-9 rounded-[12px] bg-secondary/80 items-center justify-center">
-                  <Settings size={18} className="text-foreground" />
+                  <Settings size={18} color={primaryColor || "#002aff"} />
                 </View>
                 <Text className="flex-1 font-poppins-semibold text-foreground text-sm">
                   Configuración
                 </Text>
-                <ChevronRight size={18} className="text-muted-foreground/50" />
+                <ChevronRight size={18} color={primaryColor || "#002aff"} />
               </Pressable>
             </View>
           </Animated.View>

@@ -32,6 +32,7 @@ export default function DocumentViewerScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const { saveToVault } = useVault();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -43,6 +44,8 @@ export default function DocumentViewerScreen() {
     try {
       setLoading(true);
       setError(null);
+      setPdfUrl(null);
+      setPdfBase64(null);
       if (!fileName || typeof fileName !== "string") {
         throw new Error("Nombre de archivo no válido");
       }
@@ -52,8 +55,21 @@ export default function DocumentViewerScreen() {
         const response = await processedDocumentService.getPdfBlob(fileName);
         const blobUrl = window.URL.createObjectURL(response);
         setPdfUrl(blobUrl);
+      } else if (Platform.OS === "android") {
+        // En Android, descargamos el PDF de forma autenticada y lo pasamos como base64
+        const response = await processedDocumentService.getPdfBlob(fileName);
+        const base64Data = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(",")[1]);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(response);
+        });
+        setPdfBase64(base64Data);
       } else {
-        // En nativo, react-native-webview puede cargar la URL directamente
+        // En iOS, react-native-webview puede cargar la URL directamente
         const url = processedDocumentService.getPdfUrl(fileName);
         setPdfUrl(url);
       }
@@ -155,7 +171,7 @@ export default function DocumentViewerScreen() {
           }}
           className="w-10 h-10 items-center justify-center rounded-full bg-secondary/50"
         >
-          <ChevronLeft size={24} className="text-foreground" />
+          <ChevronLeft size={24} color={primaryColor || "#002aff"} />
         </TouchableOpacity>
 
         <View className="flex-1 px-4">
@@ -220,8 +236,8 @@ export default function DocumentViewerScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        ) : pdfUrl ? (
-          <PDFViewer uri={pdfUrl} />
+        ) : pdfUrl || pdfBase64 ? (
+          <PDFViewer uri={pdfUrl || undefined} pdfBase64={pdfBase64 || undefined} />
         ) : null}
       </View>
     </SafeAreaView>

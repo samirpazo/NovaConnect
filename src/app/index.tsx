@@ -40,9 +40,9 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
+  runOnJS,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { scheduleOnRN } from "react-native-worklets";
 
 export default function LoginScreen() {
   const { login, isAuthenticating } = useAuthStore();
@@ -154,12 +154,10 @@ export default function LoginScreen() {
           opacity.value = withTiming(0, { duration: 200 });
           translateX.value = withTiming(-50, { duration: 200 }, (finished) => {
             if (finished) {
-              scheduleOnRN(() => {
-                setStep(2);
-                translateX.value = 50;
-                opacity.value = withTiming(1, { duration: 200 });
-                translateX.value = withTiming(0, { duration: 200 });
-              });
+              runOnJS(setStep)(2);
+              translateX.value = 50;
+              opacity.value = withTiming(1, { duration: 200 });
+              translateX.value = withTiming(0, { duration: 200 });
             }
           });
         } else {
@@ -220,12 +218,10 @@ export default function LoginScreen() {
     opacity.value = withTiming(0, { duration: 200 });
     translateX.value = withTiming(50, { duration: 200 }, (finished) => {
       if (finished) {
-        scheduleOnRN(() => {
-          setStep(1);
-          translateX.value = -50;
-          opacity.value = withTiming(1, { duration: 200 });
-          translateX.value = withTiming(0, { duration: 200 });
-        });
+        runOnJS(setStep)(1);
+        translateX.value = -50;
+        opacity.value = withTiming(1, { duration: 200 });
+        translateX.value = withTiming(0, { duration: 200 });
       }
     });
   };
@@ -234,8 +230,8 @@ export default function LoginScreen() {
     opacity.value = withTiming(0, { duration: 200 });
     translateX.value = withTiming(50, { duration: 200 }, (finished) => {
       if (finished) {
-        scheduleOnRN(setStep, 1);
-        scheduleOnRN(setPin, "");
+        runOnJS(setStep)(1);
+        runOnJS(setPin)("");
         translateX.value = -50;
         opacity.value = withTiming(1, { duration: 200 });
         translateX.value = withTiming(0, { duration: 200 });
@@ -253,7 +249,6 @@ export default function LoginScreen() {
         );
       }
     } catch (e) {}
-    router.replace("/(protected)/home");
   };
 
   const handleBiometricAuth = async (doc?: string) => {
@@ -372,9 +367,8 @@ export default function LoginScreen() {
                   <Headset
                     size={16}
                     color={primaryColor || "#002aff"}
-                    className="mr-2"
                   />
-                  <Text className="text-sm font-poppins font-medium text-foreground">
+                  <Text className="text-sm font-poppins font-medium text-foreground ml-2">
                     Ayuda
                   </Text>
                 </Pressable>
@@ -777,9 +771,8 @@ export default function LoginScreen() {
                         <Mail
                           size={14}
                           color={primaryColor || "#002aff"}
-                          className="mr-2"
                         />
-                        <Text className="text-sm font-bold font-poppins text-center text-foreground">
+                        <Text className="text-sm font-bold font-poppins text-center text-foreground ml-2">
                           {email}
                         </Text>
                       </View>
@@ -792,9 +785,8 @@ export default function LoginScreen() {
                         <Phone
                           size={14}
                           color={primaryColor || "#002aff"}
-                          className="mr-2"
                         />
-                        <Text className="text-sm font-bold font-poppins text-center text-foreground">
+                        <Text className="text-sm font-bold font-poppins text-center text-foreground ml-2">
                           {phone}
                         </Text>
                       </View>

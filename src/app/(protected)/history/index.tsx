@@ -32,7 +32,9 @@ export default function HistoryYearsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="px-6 py-4 relative justify-center">
-        <Search size={20} className="absolute left-10 text-muted-foreground z-10" />
+        <View className="absolute left-10 top-0 bottom-0 justify-center z-10">
+          <Search size={20} color="#71717a" />
+        </View>
         <Input
           className="pl-11 h-12 rounded-[18px] bg-card border-border/40 font-poppins text-base"
           placeholder="Buscar año..."
@@ -76,7 +78,7 @@ export default function HistoryYearsScreen() {
                   Carpeta • Año {item}
                 </Text>
               </View>
-              <ChevronRight size={20} className="text-muted-foreground" />
+              <ChevronRight size={20} color="#71717a" />
             </Pressable>
           </Animated.View>
         )}

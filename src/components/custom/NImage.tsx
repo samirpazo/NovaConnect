@@ -28,7 +28,10 @@ export const NImage = ({ genParameter, fileName, className, fallbackText }: NIma
         const nameFile = lastDotIndex !== -1 ? fileName.substring(0, lastDotIndex) : fileName;
         
         const data = await fileService.getFile(genParameter, nameFile, true);
-        setBase64(data);
+        
+        // React Native / Expo Image es estricto y falla si el base64 contiene saltos de línea (a diferencia de la Web)
+        const cleanBase64 = data ? data.replace(/[\n\r\s]/g, '') : null;
+        setBase64(cleanBase64);
       } catch (err) {
         setError(true);
       } finally {
@@ -50,9 +53,13 @@ export const NImage = ({ genParameter, fileName, className, fallbackText }: NIma
   return (
     <Image
       source={{ uri: base64 || undefined }}
+      style={{ width: '100%', height: '100%' }}
       className={className}
       contentFit="cover"
       transition={200}
+      onError={() => {
+        setError(true);
+      }}
     />
   );
 };
