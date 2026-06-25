@@ -60,13 +60,13 @@ export function PinKeypad({
   ] : [];
 
   return (
-    <View className="w-full max-w-[300px] self-center">
+    <View className="w-full max-w-[280px] self-center">
       {/* PIN Dots */}
-      <View className="flex-row gap-3 mb-6 justify-center">
+      <View className="flex-row gap-2.5 mb-4 justify-center">
         {[...Array(maxLength)].map((_, i) => (
           <View
             key={i}
-            className={`size-3 rounded-full ${i < pin.length ? "" : "bg-muted"}`}
+            className={`size-2.5 rounded-full ${i < pin.length ? "" : "bg-muted"}`}
             style={
               i < pin.length ? { backgroundColor: primaryColor || "#002aff" } : {}
             }
@@ -75,10 +75,10 @@ export function PinKeypad({
       </View>
 
       {/* Keypad */}
-      <View className="w-full flex-row flex-wrap justify-center gap-3 mb-5">
+      <View className="w-full flex-row flex-wrap justify-center gap-2 mb-2">
         {keypadItems.map((item, i) => {
           if (item === "" && !showBiometric) {
-            return <View key={i} className="w-[30%] h-12" />; // Empty placeholder
+            return <View key={i} className="w-[30%] h-11" />; // Empty placeholder
           }
 
           return (
@@ -93,24 +93,24 @@ export function PinKeypad({
                 }
               }}
               disabled={item === "bio" && !isBiometricSupported}
-              className={`w-[30%] h-12 items-center justify-center rounded-lg ${
-                item !== "bio" && item !== "" ? "bg-secondary active:bg-muted" : ""
+              className={`w-[30%] h-11 items-center justify-center rounded-xl ${
+                item !== "bio" && item !== "" ? "bg-secondary/60 active:bg-muted" : ""
               } ${item === "bio" && !isBiometricSupported ? "opacity-0" : ""}`}
             >
               {item === "del" ? (
-                <Delete size={24} color={colorScheme === "dark" ? "#a1a1aa" : "#71717a"} />
+                <Delete size={20} color={colorScheme === "dark" ? "#a1a1aa" : "#71717a"} />
               ) : item === "bio" ? (
                 isBiometricSupported ? (
                   Platform.OS === "ios" ? (
                     <ScanFace
-                      size={28}
+                      size={24}
                       color={
                         isBiometricEnabled ? primaryColor || "#002aff" : (colorScheme === "dark" ? "#a1a1aa" : "#71717a")
                       }
                     />
                   ) : (
                     <Fingerprint
-                      size={28}
+                      size={24}
                       color={
                         isBiometricEnabled ? primaryColor || "#002aff" : (colorScheme === "dark" ? "#a1a1aa" : "#71717a")
                       }
@@ -118,7 +118,7 @@ export function PinKeypad({
                   )
                 ) : null
               ) : item !== "" ? (
-                <Text className="text-2xl font-bold text-foreground font-poppins select-none">
+                <Text className="text-xl font-poppins-semibold text-foreground select-none">
                   {item}
                 </Text>
               ) : null}

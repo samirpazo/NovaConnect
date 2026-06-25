@@ -192,7 +192,13 @@ export default function SettingsScreen() {
     setStorePrimaryColor(hex);
     setTimeout(() => {
       setPreferences(theme, hex);
-      secCollaboratorPreferenceService.savePreferences({ Theme: theme, PrimaryColor: hex }).catch(() => {});
+      secCollaboratorPreferenceService.savePreferences({ 
+        ColID: user?.ColID, 
+        Theme: theme, 
+        PrimaryColor: hex 
+      }).catch((err) => {
+        console.error("Error saving preferences to cloud:", err?.response?.data || err.message);
+      });
     }, 100);
   };
 
@@ -260,7 +266,13 @@ export default function SettingsScreen() {
                         setStorePrimaryColor(primaryColor);
                         setTimeout(() => {
                           setPreferences(option.value as any, primaryColor);
-                          secCollaboratorPreferenceService.savePreferences({ Theme: option.value as any, PrimaryColor: primaryColor }).catch(() => {});
+                          secCollaboratorPreferenceService.savePreferences({ 
+                            ColID: user?.ColID, 
+                            Theme: option.value as any, 
+                            PrimaryColor: primaryColor 
+                          }).catch((err) => {
+                            console.error("Error saving preferences to cloud:", err?.response?.data || err.message);
+                          });
                         }, 100);
                       }}
                       style={({ pressed }) => ({
@@ -323,7 +335,13 @@ export default function SettingsScreen() {
                             setStorePrimaryColor(color.value);
                             setTimeout(() => {
                               setPreferences(theme, color.value);
-                              secCollaboratorPreferenceService.savePreferences({ Theme: theme, PrimaryColor: color.value }).catch(() => {});
+                              secCollaboratorPreferenceService.savePreferences({ 
+                                ColID: user?.ColID, 
+                                Theme: theme, 
+                                PrimaryColor: color.value 
+                              }).catch((err) => {
+                                console.error("Error saving preferences to cloud:", err?.response?.data || err.message);
+                              });
                             }, 100);
                           });
                         }}

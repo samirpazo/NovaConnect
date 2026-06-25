@@ -173,7 +173,7 @@ export default function RegisterScreen() {
             <Animated.View
               key={step}
               entering={FadeInDown.duration(400).springify()}
-              className="bg-card w-full max-w-[300px] mt-2 self-center rounded-3xl p-6 shadow-sm dark:shadow-xl"
+              className="bg-card w-full max-w-[360px] mt-2 self-center rounded-3xl p-6 border border-border/40 shadow-sm dark:shadow-xl"
             >
               <View className="items-center mb-3">
                 <View
@@ -211,7 +211,7 @@ export default function RegisterScreen() {
                 <Pressable 
                   onPress={handleContinue} 
                   disabled={pin.length < 6}
-                  className={`w-full h-12 rounded-xl flex-row items-center justify-center ${pin.length < 6 ? 'bg-muted opacity-60' : ''}`}
+                  className={`w-full h-12 rounded-2xl flex-row items-center justify-center ${pin.length < 6 ? 'bg-muted opacity-60' : ''}`}
                   style={pin.length >= 6 ? { backgroundColor: primaryColor || '#002aff' } : {}}
                 >
                   <Text className={`font-poppins text-base font-bold ${pin.length >= 6 ? 'text-white' : 'text-muted-foreground'}`}>
@@ -222,7 +222,7 @@ export default function RegisterScreen() {
                 <Pressable 
                   onPress={handleRegister} 
                   disabled={isLoading || pin.length < 6}
-                  className={`w-full h-12 rounded-xl flex-row items-center justify-center ${pin.length < 6 ? 'bg-muted opacity-60' : ''}`}
+                  className={`w-full h-12 rounded-2xl flex-row items-center justify-center ${pin.length < 6 ? 'bg-muted opacity-60' : ''}`}
                   style={pin.length >= 6 ? { backgroundColor: primaryColor || '#002aff' } : {}}
                 >
                   <Text className={`font-poppins text-base font-bold ${pin.length >= 6 ? 'text-white' : 'text-muted-foreground'}`}>

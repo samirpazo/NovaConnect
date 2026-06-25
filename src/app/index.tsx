@@ -235,14 +235,15 @@ export default function LoginScreen() {
   const processSuccessfulLogin = async () => {
     try {
       const pref = await secCollaboratorPreferenceService.getMyPreferences();
-      // Ya no sobrescribimos el localstorage con lo que viene del API si el usuario ya tiene uno
-      // if (pref) {
-      //   setPreferences(
-      //     (pref.Theme as any) || "system",
-      //     pref.PrimaryColor || "#002aff",
-      //   );
-      // }
-    } catch (e) {}
+      if (pref) {
+        setPreferences(
+          (pref.Theme as any) || "system",
+          pref.PrimaryColor || "#002aff",
+        );
+      }
+    } catch (e) {
+      console.error("Failed to load user preferences from cloud:", e);
+    }
   };
 
   const handleBiometricAuth = async (doc?: string) => {
@@ -383,13 +384,13 @@ export default function LoginScreen() {
                 {step === 1 ? (
                   <View className="w-full">
                     {/* Card Wrapper */}
-                    <View className="bg-card w-full rounded-2xl p-5 shadow-sm dark:shadow-xl">
-                      <Text className="text-card-foreground font-bold font-poppins text-sm mb-3">
+                    <View className="bg-card w-full rounded-3xl p-6 border border-border/40 shadow-sm dark:shadow-xl">
+                      <Text className="text-card-foreground font-poppins-semibold text-sm mb-3">
                         Documento de Identidad
                       </Text>
 
                       {/* Input Field */}
-                      <View className="flex-row items-center bg-secondary rounded-xl px-4 h-12 border border-border gap-3">
+                      <View className="flex-row items-center bg-secondary/50 rounded-2xl px-4 h-12 border border-border/40 gap-3">
                         <IdCard size={18} color="#94a3b8" />
                         <TextInput
                           placeholder="00000000"
@@ -402,7 +403,7 @@ export default function LoginScreen() {
                         />
                       </View>
 
-                      <Text className="text-muted-foreground text-[11px] font-poppins mt-2 mb-4">
+                      <Text className="text-muted-foreground text-xs font-poppins mt-2 mb-4">
                         Ingresa tu documento de identidad
                       </Text>
 
@@ -410,7 +411,7 @@ export default function LoginScreen() {
                       <Pressable
                         onPress={handleNextStep}
                         disabled={PrsDocumentNumber.length < 8}
-                        className={`w-full h-12 rounded-xl flex-row items-center justify-center gap-2 ${PrsDocumentNumber.length < 8 ? "bg-secondary" : ""}`}
+                        className={`w-full h-12 rounded-2xl flex-row items-center justify-center gap-2 ${PrsDocumentNumber.length < 8 ? "bg-secondary" : ""}`}
                         style={
                           PrsDocumentNumber.length >= 8
                             ? { backgroundColor: primaryColor || "#002aff" }
@@ -471,20 +472,23 @@ export default function LoginScreen() {
                       </Text>
                       <Pressable
                         onPress={() => setShowConfirmLogoutModal(true)}
-                        className="flex-row items-center bg-secondary/80 px-3 py-1.5 rounded-full active:bg-secondary"
+                        className="flex-row items-center bg-secondary px-3.5 py-1.5 rounded-full active:bg-secondary/80 gap-1.5"
                       >
                         <LogOut
-                          size={14}
-                          className="text-muted-foreground mr-1.5"
+                          size={13}
+                          color={primaryColor}
                         />
-                        <Text className="text-xs font-poppins font-medium text-muted-foreground select-none">
+                        <Text 
+                          style={{ color: primaryColor }}
+                          className="text-xs font-poppins-bold select-none"
+                        >
                           Cambiar
                         </Text>
                       </Pressable>
                     </View>
 
                     {/* Card Wrapper for PIN */}
-                    <View className="bg-card w-full max-w-[360px] mt-2 self-center rounded-3xl p-6 shadow-sm dark:shadow-xl">
+                    <View className="bg-card w-full max-w-[360px] mt-2 self-center rounded-3xl p-6 border border-border/40 shadow-sm dark:shadow-xl">
                       {/* Keypad */}
                       <View className="w-full mb-5">
                         <PinKeypad
@@ -508,7 +512,7 @@ export default function LoginScreen() {
                       <Pressable
                         onPress={handleLogin}
                         disabled={isAuthenticating || pin.length < 6}
-                        className={`w-full h-10 rounded-xl flex-row items-center justify-center gap-2 ${pin.length < 6 ? "bg-muted opacity-60" : ""}`}
+                        className={`w-full h-12 rounded-2xl flex-row items-center justify-center gap-2 ${pin.length < 6 ? "bg-muted opacity-60" : ""}`}
                         style={
                           pin.length >= 6
                             ? { backgroundColor: primaryColor || "#002aff" }
@@ -582,7 +586,7 @@ export default function LoginScreen() {
               <View className="flex-row items-center justify-between gap-3 mt-4">
                 <Pressable
                   onPress={() => setShowConfirmLogoutModal(false)}
-                  className="flex-1 h-12 rounded-xl flex-row items-center justify-center bg-secondary"
+                  className="flex-1 h-12 rounded-2xl flex-row items-center justify-center bg-secondary"
                 >
                   <Text className="font-bold font-poppins text-base text-foreground">
                     Cancelar
@@ -590,7 +594,7 @@ export default function LoginScreen() {
                 </Pressable>
                 <Pressable
                   onPress={handleForgetDocument}
-                  className="flex-1 h-12 rounded-xl flex-row items-center justify-center bg-destructive"
+                  className="flex-1 h-12 rounded-2xl flex-row items-center justify-center bg-destructive"
                 >
                   <Text className="font-bold font-poppins text-base text-foreground">
                     Sí, Eliminar
@@ -633,7 +637,7 @@ export default function LoginScreen() {
                   placeholder="Número de documento"
                   keyboardType="number-pad"
                   maxLength={20}
-                  className={`w-full h-12 bg-muted/50 rounded-xl text-center text-lg font-bold font-poppins ${registerError ? "border border-destructive" : "border-transparent"}`}
+                  className={`w-full h-12 bg-muted/50 rounded-2xl text-center text-lg font-bold font-poppins ${registerError ? "border border-destructive" : "border-transparent"}`}
                 />
                 {registerError ? (
                   <Text className="text-destructive text-sm font-poppins text-center mt-2">
@@ -649,7 +653,7 @@ export default function LoginScreen() {
                     setRegisterDoc("");
                     setRegisterError("");
                   }}
-                  className="flex-1 h-12 rounded-xl"
+                  className="flex-1 h-12 rounded-2xl"
                   disabled={isRegistering}
                 >
                   <Text className="text-foreground font-poppins text-base font-medium">
@@ -658,7 +662,7 @@ export default function LoginScreen() {
                 </Button>
                 <Button
                   onPress={handleValidateRegistration}
-                  className="flex-1 h-12 rounded-xl"
+                  className="flex-1 h-12 rounded-2xl"
                   style={{ backgroundColor: primaryColor || "#002aff" }}
                   disabled={isRegistering || registerDoc.length < 8}
                 >
@@ -742,7 +746,7 @@ export default function LoginScreen() {
 
               <Pressable
                 onPress={() => setShowHelpModal(false)}
-                className="w-full h-12 rounded-xl flex-row items-center justify-center bg-secondary mt-2"
+                className="w-full h-12 rounded-2xl flex-row items-center justify-center bg-secondary mt-2"
               >
                 <Text className="font-bold font-poppins text-base text-foreground">
                   Entendido
@@ -796,7 +800,7 @@ export default function LoginScreen() {
             <Pressable
               onPress={handleBiometricSetupSubmit}
               disabled={isAuthenticating || biometricSetupPin.length < 4}
-              className={`w-full h-12 rounded-xl flex-row items-center justify-center ${biometricSetupPin.length >= 4 ? "bg-primary" : "bg-muted opacity-60"}`}
+              className={`w-full h-12 rounded-2xl flex-row items-center justify-center ${biometricSetupPin.length >= 4 ? "bg-primary" : "bg-muted opacity-60"}`}
             >
               <Text
                 className={`font-bold font-poppins text-base ${biometricSetupPin.length >= 4 ? "text-primary-foreground" : "text-muted-foreground"}`}
