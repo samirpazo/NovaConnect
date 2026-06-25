@@ -8,11 +8,64 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { registerForPushNotificationsAsync } from "@/hooks/usePushNotifications";
 import { pushNotificationService } from "@/services/pushNotificationService";
 
-import { useColorScheme } from "nativewind";
+
+
+import { useTheme } from "@react-navigation/native";
+
+function HeaderLogo() {
+  const { dark: isDark } = useTheme();
+  const screenWidth = Dimensions.get("window").width;
+  
+  return (
+    <View
+      style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        bottom: 0,
+        right: 0,
+        width: Platform.OS === "web" ? Math.min(512, screenWidth) : screenWidth,
+        height: "100%",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Image
+          source={require("../../../assets/images/logo-nova.svg")}
+          style={{ width: 24, height: 24 }}
+          contentFit="contain"
+        />
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: "bold",
+            color: isDark ? "#ffffff" : "#000000",
+          }}
+        >
+          Nova Connect
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function TabIcon({ color, focused, icon: IconComponent }: any) {
+  const { colors } = useTheme();
+  return (
+    <View className="items-center justify-center h-full w-full">
+      <IconComponent color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+      {focused && (
+        <View
+          style={{ backgroundColor: colors.primary }}
+          className="w-1 h-1 rounded-full absolute -bottom-0.5"
+        />
+      )}
+    </View>
+  );
+}
 
 export default function ProtectedLayout() {
-  const { primaryColor } = usePreferenceStore();
-  const { colorScheme } = useColorScheme();
   const { user } = useAuthStore();
 
   useEffect(() => {
@@ -27,66 +80,15 @@ export default function ProtectedLayout() {
     setupPush();
   }, [user?.PrsID]);
 
-  const isDark = colorScheme === "dark";
-  const surfaceColor = isDark ? "#1a1a1c" : "#ffffff";
-  const textMutedColor = isDark ? "#a1a1aa" : "#71717a";
-  const borderColor = isDark ? "#27272a" : "#e4e4e7";
-
   return (
     <Tabs
       screenOptions={{
         headerShown: true,
         headerTitle: "",
         headerShadowVisible: false,
-        headerStyle: {
-          backgroundColor: surfaceColor,
-        },
-        headerLeft: () => {
-          const screenWidth = Dimensions.get("window").width;
-          return (
-            <View
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                bottom: 0,
-                right: 0,
-                width:
-                  Platform.OS === "web"
-                    ? Math.min(512, screenWidth)
-                    : screenWidth,
-                height: "100%",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-              >
-                <Image
-                  source={require("../../../assets/images/logo-nova.svg")}
-                  style={{ width: 24, height: 24 }}
-                  contentFit="contain"
-                />
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: "bold",
-                    color: isDark ? "#ffffff" : "#000000",
-                  }}
-                >
-                  Nova Connect
-                </Text>
-              </View>
-            </View>
-          );
-        },
-        tabBarActiveTintColor: primaryColor || "#002aff",
-        tabBarInactiveTintColor: textMutedColor,
+        headerLeft: () => <HeaderLogo />,
         tabBarShowLabel: true,
         tabBarStyle: {
-          backgroundColor: surfaceColor,
-          borderTopColor: borderColor,
           borderTopWidth: 0.5,
           elevation: 0,
         },
@@ -97,17 +99,7 @@ export default function ProtectedLayout() {
         options={{
           title: "Perfil",
           href: "/(protected)/home",
-          tabBarIcon: ({ color, focused }) => (
-            <View className="items-center justify-center h-full w-full">
-              <User color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
-              {focused && (
-                <View
-                  style={{ backgroundColor: primaryColor || "#002aff" }}
-                  className="w-1 h-1 rounded-full absolute -bottom-0.5"
-                />
-              )}
-            </View>
-          ),
+          tabBarIcon: (props) => <TabIcon {...props} icon={User} />,
         }}
       />
       <Tabs.Screen
@@ -115,21 +107,7 @@ export default function ProtectedLayout() {
         options={{
           title: "Documentos",
           href: "/(protected)/documents",
-          tabBarIcon: ({ color, focused }) => (
-            <View className="items-center justify-center h-full w-full">
-              <FileText
-                color={color}
-                size={22}
-                strokeWidth={focused ? 2.5 : 1.8}
-              />
-              {focused && (
-                <View
-                  style={{ backgroundColor: primaryColor || "#002aff" }}
-                  className="w-1 h-1 rounded-full absolute -bottom-0.5"
-                />
-              )}
-            </View>
-          ),
+          tabBarIcon: (props) => <TabIcon {...props} icon={FileText} />,
         }}
       />
       <Tabs.Screen
@@ -137,21 +115,7 @@ export default function ProtectedLayout() {
         options={{
           title: "Historial",
           href: "/(protected)/history",
-          tabBarIcon: ({ color, focused }) => (
-            <View className="items-center justify-center h-full w-full">
-              <Clock
-                color={color}
-                size={22}
-                strokeWidth={focused ? 2.5 : 1.8}
-              />
-              {focused && (
-                <View
-                  style={{ backgroundColor: primaryColor || "#002aff" }}
-                  className="w-1 h-1 rounded-full absolute -bottom-0.5"
-                />
-              )}
-            </View>
-          ),
+          tabBarIcon: (props) => <TabIcon {...props} icon={Clock} />,
         }}
       />
       <Tabs.Screen
@@ -159,21 +123,7 @@ export default function ProtectedLayout() {
         options={{
           title: "Comedor",
           href: "/(protected)/dining",
-          tabBarIcon: ({ color, focused }) => (
-            <View className="items-center justify-center h-full w-full">
-              <Utensils
-                color={color}
-                size={22}
-                strokeWidth={focused ? 2.5 : 1.8}
-              />
-              {focused && (
-                <View
-                  style={{ backgroundColor: primaryColor || "#002aff" }}
-                  className="w-1 h-1 rounded-full absolute -bottom-0.5"
-                />
-              )}
-            </View>
-          ),
+          tabBarIcon: (props) => <TabIcon {...props} icon={Utensils} />,
         }}
       />
       <Tabs.Screen

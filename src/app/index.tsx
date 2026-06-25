@@ -235,12 +235,13 @@ export default function LoginScreen() {
   const processSuccessfulLogin = async () => {
     try {
       const pref = await secCollaboratorPreferenceService.getMyPreferences();
-      if (pref) {
-        setPreferences(
-          (pref.Theme as any) || "system",
-          pref.PrimaryColor || "#002aff",
-        );
-      }
+      // Ya no sobrescribimos el localstorage con lo que viene del API si el usuario ya tiene uno
+      // if (pref) {
+      //   setPreferences(
+      //     (pref.Theme as any) || "system",
+      //     pref.PrimaryColor || "#002aff",
+      //   );
+      // }
     } catch (e) {}
   };
 
@@ -378,7 +379,7 @@ export default function LoginScreen() {
                 </View>
               )}
 
-              <Animated.View style={animatedStyle}>
+              <Animated.View style={animatedStyle} className="w-full max-w-[360px]">
                 {step === 1 ? (
                   <View className="w-full">
                     {/* Card Wrapper */}
@@ -483,7 +484,7 @@ export default function LoginScreen() {
                     </View>
 
                     {/* Card Wrapper for PIN */}
-                    <View className="bg-card w-full max-w-[300px] mt-2 self-center rounded-3xl p-6 shadow-sm dark:shadow-xl">
+                    <View className="bg-card w-full max-w-[360px] mt-2 self-center rounded-3xl p-6 shadow-sm dark:shadow-xl">
                       {/* Keypad */}
                       <View className="w-full mb-5">
                         <PinKeypad

@@ -22,7 +22,6 @@ import {
   ScanFace,
   ChevronLeft,
 } from "lucide-react-native";
-import { useColorScheme } from "nativewind";
 import { router } from "expo-router";
 import * as React from "react";
 import {
@@ -35,6 +34,7 @@ import {
   View,
   KeyboardAvoidingView,
   TextInput,
+  InteractionManager,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { FadeInDown, runOnJS } from "react-native-reanimated";
@@ -58,12 +58,11 @@ const COLORS = [
 
 export default function SettingsScreen() {
   const { user, login } = useAuthStore();
-  const {
-    theme,
-    primaryColor: storePrimaryColor,
-    setPreferences,
-  } = usePreferenceStore();
-  const { setColorScheme } = useColorScheme();
+  const store = usePreferenceStore.getState();
+  const setPreferences = store.setPreferences;
+
+  const [theme, setTheme] = React.useState(store.theme);
+  const [storePrimaryColor, setStorePrimaryColor] = React.useState(store.primaryColor);
   const insets = useSafeAreaInsets();
 
   const primaryColor =
@@ -186,40 +185,15 @@ export default function SettingsScreen() {
     }
   };
 
-  const isFirstMount = React.useRef(true);
-  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  React.useEffect(() => {
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      return;
-    }
-
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    timeoutRef.current = setTimeout(() => {
-      secCollaboratorPreferenceService
-        .savePreferences({
-          Theme: theme,
-          PrimaryColor: primaryColor,
-        })
-        .then(() => {
-          showToast.success("Guardado", "Tus preferencias se han guardado automáticamente.");
-        })
-        .catch(() => {
-          showToast.error("Error", "No se pudieron guardar las preferencias.");
-        });
-    }, 2000);
-
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [theme, primaryColor]);
+  // Eliminado el useEffect con timeoutRef para evitar pérdida de datos al desmontar
 
   const applyColor = (hex: string) => {
-    setPreferences(theme, hex);
+    setTheme(theme);
+    setStorePrimaryColor(hex);
+    setTimeout(() => {
+      setPreferences(theme, hex);
+      secCollaboratorPreferenceService.savePreferences({ Theme: theme, PrimaryColor: hex }).catch(() => {});
+    }, 100);
   };
 
   const onColorComplete = (color: { hex: string }) => {
@@ -231,10 +205,13 @@ export default function SettingsScreen() {
     <>
       <View className="flex-1 bg-background">
         {/* Custom Header */}
-        <View className="flex-row items-center px-5 py-4 border-b border-border/40">
+        <View className="flex-row items-center px-5 py-4 border-b border-border">
           <Pressable
             onPress={() => router.back()}
-            className="w-10 h-10 items-center justify-center rounded-full bg-secondary/50"
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.7 : 1,
+            })}
+            className="w-10 h-10 items-center justify-center rounded-full bg-secondary"
           >
             <ChevronLeft size={24} color={primaryColor} />
           </Pressable>
@@ -272,19 +249,26 @@ export default function SettingsScreen() {
                   Tema Visual
                 </Text>
               </View>
-              <View className="bg-secondary/50 rounded-[20px] p-1 flex-row border border-border/40 shadow-sm">
+              <View className="bg-secondary rounded-[20px] p-1 flex-row border border-border">
                 {THEME_OPTIONS.map((option) => {
                   const isSelected = theme === option.value;
                   return (
                     <Pressable
                       key={option.value}
                       onPress={() => {
-                        setPreferences(option.value, primaryColor);
-                        setColorScheme(option.value);
+                        setTheme(option.value as any);
+                        setStorePrimaryColor(primaryColor);
+                        setTimeout(() => {
+                          setPreferences(option.value as any, primaryColor);
+                          secCollaboratorPreferenceService.savePreferences({ Theme: option.value as any, PrimaryColor: primaryColor }).catch(() => {});
+                        }, 100);
                       }}
+                      style={({ pressed }) => ({
+                        opacity: pressed ? 0.7 : 1,
+                      })}
                       className={`flex-1 flex-row items-center justify-center gap-1.5 py-2.5 rounded-[16px] ${
                         isSelected
-                          ? "bg-card shadow-sm border border-border/50"
+                          ? "bg-card border border-border"
                           : ""
                       }`}
                     >
@@ -322,7 +306,7 @@ export default function SettingsScreen() {
                 </Text>
               </View>
 
-              <View className="bg-card rounded-[24px] p-5 border border-border/40 shadow-sm">
+              <View className="bg-card rounded-[24px] p-5 border border-border">
                 <Text className="text-[10px] font-poppins-bold text-muted-foreground uppercase tracking-widest mb-3 text-center">
                   Predefinidos
                 </Text>
@@ -333,11 +317,23 @@ export default function SettingsScreen() {
                     return (
                       <Pressable
                         key={color.value}
-                        onPress={() => setPreferences(theme, color.value)}
+                        onPress={() => {
+                          InteractionManager.runAfterInteractions(() => {
+                            setTheme(theme);
+                            setStorePrimaryColor(color.value);
+                            setTimeout(() => {
+                              setPreferences(theme, color.value);
+                              secCollaboratorPreferenceService.savePreferences({ Theme: theme, PrimaryColor: color.value }).catch(() => {});
+                            }, 100);
+                          });
+                        }}
+                        style={({ pressed }) => ({
+                          opacity: pressed ? 0.7 : 1,
+                        })}
                         className="items-center justify-center"
                       >
                         <View
-                          className="w-10 h-10 rounded-full items-center justify-center shadow-sm"
+                          className="w-10 h-10 rounded-full items-center justify-center"
                           style={{
                             backgroundColor: color.value,
                             borderWidth: isSelected ? 3 : 0,
@@ -355,7 +351,7 @@ export default function SettingsScreen() {
                   })}
                 </View>
 
-                <View className="h-[1px] w-full bg-border/40 mb-5" />
+                <View className="h-[1px] w-full bg-border mb-5" />
 
                 <Text className="text-[10px] font-poppins-bold text-muted-foreground uppercase tracking-widest mb-4 text-center">
                   Personalizado Libre
@@ -380,10 +376,13 @@ export default function SettingsScreen() {
                     })
                   ) : (
                     <View className="flex-row items-center gap-4 w-full">
-                      <View className="w-12 h-12 rounded-full shadow-sm border-[3px] border-card" style={{ backgroundColor: primaryColor }} />
+                      <View className="w-12 h-12 rounded-full border-[3px] border-card" style={{ backgroundColor: primaryColor }} />
                       <Pressable 
                         onPress={() => setIsColorPickerVisible(true)}
-                        className="flex-1 bg-secondary/50 rounded-xl px-4 py-3 border border-border/40 items-center justify-center"
+                        style={({ pressed }) => ({
+                          opacity: pressed ? 0.7 : 1,
+                        })}
+                        className="flex-1 bg-secondary rounded-xl px-4 py-3 border border-border items-center justify-center"
                       >
                         <Text className="text-foreground font-poppins-semibold">
                           Seleccionar Color
@@ -410,7 +409,7 @@ export default function SettingsScreen() {
               </Text>
             </View>
 
-            <View className="bg-card rounded-[24px] border border-border/40 shadow-sm overflow-hidden mb-4">
+            <View className="bg-card rounded-[24px] border border-border overflow-hidden mb-4">
               {hasHardware && Platform.OS !== "web" && (
                 <>
                   <View className="flex-row items-center justify-between px-5 py-4">
@@ -428,13 +427,16 @@ export default function SettingsScreen() {
                       trackColor={{ false: "#71717a", true: primaryColor }}
                     />
                   </View>
-                  <View className="h-[1px] bg-border/40 mx-5" />
+                  <View className="h-[1px] bg-border mx-5" />
                 </>
               )}
 
               <Pressable
                 onPress={() => setPinModalVisible(true)}
-                className="flex-row items-center bg-secondary/60 active:bg-secondary py-3 px-4 rounded-xl"
+                style={({ pressed }) => ({
+                  opacity: pressed ? 0.8 : 1,
+                })}
+                className="flex-row items-center bg-secondary py-3 px-4 rounded-xl"
               >
                 <View className="flex-1">
                   <Text className="text-base font-poppins-semibold text-foreground">
@@ -444,7 +446,7 @@ export default function SettingsScreen() {
                     Actualiza tu código de acceso de 6 dígitos.
                   </Text>
                 </View>
-                <View className="bg-secondary/50 p-2 rounded-full">
+                <View className="bg-secondary p-2 rounded-full">
                   <Icon
                     as={CloudUploadIcon}
                     size={16}
@@ -470,7 +472,7 @@ export default function SettingsScreen() {
           className="flex-1 justify-center items-center px-6"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
-          <View className="w-full max-w-sm bg-card rounded-[24px] p-6 shadow-xl border border-border/40">
+          <View className="w-full max-w-sm bg-card rounded-[24px] p-6 border border-border">
             <Text className="text-xl font-poppins-bold text-foreground mb-1">
               Cambiar PIN
             </Text>
@@ -550,9 +552,12 @@ export default function SettingsScreen() {
           className="flex-1 justify-center items-center p-6"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
-          <View className="bg-card w-full max-w-[320px] rounded-[24px] p-6 shadow-xl relative border border-border/40">
+          <View className="bg-card w-full max-w-[320px] rounded-[24px] p-6 relative border border-border">
             <Pressable
               onPress={() => setBioSetupModalVisible(false)}
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.7 : 1,
+              })}
               className="absolute top-4 right-4 p-2 z-10"
             >
               <X size={20} className="text-muted-foreground" />
@@ -586,6 +591,9 @@ export default function SettingsScreen() {
             <Pressable
               onPress={handleConfirmBioSetup}
               disabled={isActivatingBio || bioSetupPin.length < 4}
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.7 : 1,
+              })}
               className={`w-full h-12 rounded-[16px] flex-row items-center justify-center ${bioSetupPin.length >= 4 ? "bg-primary" : "bg-muted opacity-60"}`}
             >
               <Text
@@ -610,12 +618,18 @@ export default function SettingsScreen() {
             className="flex-1 justify-center items-center px-6"
             style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
           >
-            <View className="w-full max-w-sm bg-card rounded-[24px] p-6 shadow-xl border border-border/40">
+            <View className="w-full max-w-sm bg-card rounded-[24px] p-6 border border-border">
               <View className="flex-row justify-between items-center mb-6">
                 <Text className="text-xl font-poppins-bold text-foreground">
                   Elige un color
                 </Text>
-                <Pressable onPress={() => setIsColorPickerVisible(false)} className="p-2 bg-secondary/50 rounded-full">
+                <Pressable
+                  onPress={() => setIsColorPickerVisible(false)}
+                  style={({ pressed }) => ({
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                  className="p-2 bg-secondary rounded-full"
+                >
                   <X size={20} className="text-foreground" />
                 </Pressable>
               </View>

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Pressable, Text, Platform } from "react-native";
 import { Delete, Fingerprint, ScanFace } from "lucide-react-native";
-import { useColorScheme } from "nativewind";
+import { useAppTheme } from "@/hooks/useAppTheme";
 
 interface PinKeypadProps {
   pin: string;
@@ -26,7 +26,7 @@ export function PinKeypad({
   onBiometric,
   shuffle = false,
 }: PinKeypadProps) {
-  const { colorScheme } = useColorScheme();
+  const { colorScheme } = useAppTheme();
   const [shuffledNumbers, setShuffledNumbers] = React.useState<number[]>([]);
 
   React.useEffect(() => {
