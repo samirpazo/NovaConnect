@@ -42,11 +42,11 @@ export default function HistoryMonthDocumentsScreen() {
     );
   }, [allDocuments, year, month]);
 
-  const handleOpenPdf = async (fileName: string, title?: string) => {
+  const handleOpenPdf = async (fileName: string, title?: string, periodMonth?: string, periodYear?: string) => {
     try {
       router.push({
         pathname: "/(protected)/history/viewer" as any,
-        params: { fileName, title: title || "Documento", returnTo: pathname },
+        params: { fileName, title: title || "Documento", returnTo: pathname, periodMonth, periodYear },
       });
     } catch (error) {
       showToast.error("Error", "No se pudo abrir el documento.");
@@ -63,7 +63,7 @@ export default function HistoryMonthDocumentsScreen() {
     return (
       <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
         <Pressable
-          onPress={() => handleOpenPdf(item.PdcFilePath, item.DprDisplayName)}
+          onPress={() => handleOpenPdf(item.PdcFilePath, item.DprDisplayName, item.PdcPeriodMonth, item.PdcPeriodYear)}
           style={({ pressed }) => ({
             opacity: pressed ? 0.7 : 1,
           })}

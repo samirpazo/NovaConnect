@@ -19,11 +19,11 @@ export default function DocumentsScreen() {
   
   const { documents, isLoading, isRefreshing, refetch } = useProcessedDocuments(false);
 
-  const handleOpenPdf = async (fileName: string, title?: string) => {
+  const handleOpenPdf = async (fileName: string, title?: string, periodMonth?: string, periodYear?: string) => {
     try {
       router.push({
         pathname: "/(protected)/documents/viewer" as any,
-        params: { fileName, title: title || "Documento", returnTo: pathname },
+        params: { fileName, title: title || "Documento", returnTo: pathname, periodMonth, periodYear },
       });
     } catch (error) {
       showToast.error("Error", "No se pudo abrir el documento.");
@@ -50,7 +50,7 @@ export default function DocumentsScreen() {
           "El documento se ha movido a tu historial."
         );
         refetch();
-        await handleOpenPdf(selectedDocument.PdcFilePath, selectedDocument.DprDisplayName);
+        await handleOpenPdf(selectedDocument.PdcFilePath, selectedDocument.DprDisplayName, selectedDocument.PdcPeriodMonth, selectedDocument.PdcPeriodYear);
       } else {
         showToast.error("Error", "No se pudo recepcionar el documento.");
       }

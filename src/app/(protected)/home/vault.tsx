@@ -2,7 +2,7 @@ import { VaultFile, useVault } from "@/hooks/useVault";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { DateTime } from "luxon";
 import { router } from "expo-router";
-import { ChevronLeft, FileText, HardDrive, Trash2 } from "lucide-react-native";
+import { ChevronLeft, FileText, HardDrive, Trash2, Calendar } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   FlatList,
@@ -72,14 +72,22 @@ export default function VaultScreen() {
         >
           <FileText size={22} color={primaryColor || "#002aff"} />
         </View>
-        <View className="flex-1">
+        <View className="flex-1 justify-center">
           <Text
-            className="font-poppins-semibold text-foreground text-base"
+            className="text-base font-poppins-semibold text-foreground mb-0.5 tracking-tight"
             numberOfLines={1}
           >
-            {item.name}
+            {item.displayName || item.name}
           </Text>
-          <Text className="font-poppins text-muted-foreground text-sm mt-0.5">
+          {(item.periodMonth || item.periodYear) && (
+            <View className="flex-row items-center gap-1.5 mb-0.5">
+              <Calendar size={14} color="#71717a" />
+              <Text className="text-sm font-poppins-medium text-muted-foreground capitalize">
+                {item.periodMonth} {item.periodYear}
+              </Text>
+            </View>
+          )}
+          <Text className="text-[11px] font-poppins text-muted-foreground/80">
             {DateTime.fromMillis(item.modificationTime * 1000)
               .setLocale("es")
               .toFormat("dd MMM yyyy, HH:mm")}{" "}

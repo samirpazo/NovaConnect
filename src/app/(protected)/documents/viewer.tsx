@@ -23,10 +23,14 @@ export default function DocumentViewerScreen() {
     fileName,
     title,
     returnTo,
+    periodMonth,
+    periodYear,
   } = useLocalSearchParams<{
     fileName: string;
     title: string;
     returnTo?: string;
+    periodMonth?: string;
+    periodYear?: string;
   }>();
   const { primaryColor } = usePreferenceStore();
   const [loading, setLoading] = useState(true);
@@ -140,7 +144,11 @@ export default function DocumentViewerScreen() {
         reader.readAsDataURL(response);
       });
 
-      await saveToVault(base64Data, safeFileName);
+      await saveToVault(base64Data, safeFileName, {
+        displayName: title,
+        periodMonth: periodMonth,
+        periodYear: periodYear,
+      });
       showToast.success("Guardado en Bóveda", "El documento está disponible offline.");
     } catch (error) {
       console.error("Error guardando en bóveda:", error);
