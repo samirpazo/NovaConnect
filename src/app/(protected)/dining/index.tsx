@@ -8,7 +8,7 @@ export default function DiningScreen() {
   const { primaryColor } = usePreferenceStore();
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+    <View className="flex-1 bg-background">
       <View className="flex-1 items-center justify-center px-8">
         <View
           className="w-20 h-20 rounded-2xl items-center justify-center mb-5"
@@ -23,6 +23,6 @@ export default function DiningScreen() {
           Consulta el menú del día, horarios y realiza tus reservas al comedor.
         </Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

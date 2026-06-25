@@ -5,7 +5,7 @@ import { processedDocumentService } from "@/services/processedDocumentService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { ProcessedDocument } from "@/types/document";
 import { Stack, useLocalSearchParams, router, usePathname } from "expo-router";
-import { Calendar, CheckCircle2, FileText } from "lucide-react-native";
+import { Calendar, CheckCircle2, FileText, ChevronLeft } from "lucide-react-native";
 import { useMemo } from "react";
 import {
   ActivityIndicator,
@@ -13,6 +13,7 @@ import {
   Pressable,
   RefreshControl,
   View,
+  TouchableOpacity,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -76,8 +77,8 @@ export default function HistoryMonthDocumentsScreen() {
             <Text className="text-sm font-poppins-semibold text-foreground mb-0.5 tracking-tight">
               {item.DprDisplayName || "Documento"}
             </Text>
-            <View className="flex-row items-center">
-              <Calendar size={12} color="#71717a" className="mr-1" />
+            <View className="flex-row items-center gap-1.5">
+              <Calendar size={12} color="#71717a" />
               <Text className="text-[11px] font-poppins-medium text-muted-foreground capitalize">
                 {item.PdcPeriodMonth} {item.PdcPeriodYear}
               </Text>
@@ -97,8 +98,22 @@ export default function HistoryMonthDocumentsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: "Detalles por mes" }} />
-      <View className="flex-1 bg-background pt-4">
+      <Stack.Screen options={{ headerShown: false }} />
+      <View className="flex-1 bg-background">
+        {/* Custom Header */}
+        <View className="flex-row items-center px-4 py-3 border-b border-border/40">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 items-center justify-center rounded-full bg-secondary/50"
+          >
+            <ChevronLeft size={24} color={primaryColor} />
+          </TouchableOpacity>
+          <View className="flex-1 px-4">
+            <Text className="text-xl font-poppins-semibold text-foreground">
+              Detalles por mes
+            </Text>
+          </View>
+        </View>
         {isLoading && !isRefreshing ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color={primaryColor} />
@@ -112,7 +127,8 @@ export default function HistoryMonthDocumentsScreen() {
             keyExtractor={(item) => item.PdcID.toString()}
             renderItem={renderItem}
             contentContainerStyle={{
-              padding: 24,
+              paddingHorizontal: 24,
+              paddingTop: 8,
               paddingBottom: 100,
               flexGrow: 1,
             }}

@@ -4,8 +4,9 @@ import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { Calendar, ChevronRight } from "lucide-react-native";
 import { useMemo } from "react";
-import { FlatList, Pressable, View } from "react-native";
+import { FlatList, Pressable, View, TouchableOpacity } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { ChevronLeft } from "lucide-react-native";
 
 export default function HistoryMonthsScreen() {
   const { year } = useLocalSearchParams<{ year: string }>();
@@ -54,12 +55,26 @@ export default function HistoryMonthsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: `Año ${year}` }} />
+      <Stack.Screen options={{ headerShown: false }} />
       <View className="flex-1 bg-background">
+        {/* Custom Header */}
+        <View className="flex-row items-center px-4 py-3 border-b border-border/40">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="w-10 h-10 items-center justify-center rounded-full bg-secondary/50"
+          >
+            <ChevronLeft size={24} color={primaryColor} />
+          </TouchableOpacity>
+          <View className="flex-1 px-4">
+            <Text className="text-xl font-poppins-semibold text-foreground">
+              Año {year}
+            </Text>
+          </View>
+        </View>
         <FlatList
           data={monthsInfo}
           keyExtractor={(item) => item.month}
-          contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100, paddingTop: 8 }}
           renderItem={({ item, index }) => (
             <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
               <Pressable

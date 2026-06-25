@@ -78,8 +78,8 @@ export default function DocumentsScreen() {
             <Text className="text-sm font-poppins-semibold text-foreground mb-0.5 tracking-tight">
               {item.DprDisplayName || "Documento"}
             </Text>
-            <View className="flex-row items-center">
-              <Calendar size={12} className="text-muted-foreground mr-1" />
+            <View className="flex-row items-center gap-1.5">
+              <Calendar size={12} color="#71717a" />
               <Text className="text-[11px] font-poppins-medium text-muted-foreground capitalize">
                 {item.PdcPeriodMonth} {item.PdcPeriodYear}
               </Text>
@@ -95,7 +95,7 @@ export default function DocumentsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+    <View className="flex-1 bg-background">
       <View className="px-6 pt-4 pb-2">
         <Text className="text-3xl font-poppins-bold text-foreground tracking-tight">
           Pendientes
@@ -191,6 +191,6 @@ export default function DocumentsScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }

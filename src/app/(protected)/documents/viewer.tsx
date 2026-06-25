@@ -151,7 +151,7 @@ export default function DocumentViewerScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "bottom"]}>
+    <View className="flex-1 bg-background">
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-border/40">
         <TouchableOpacity
@@ -240,6 +240,6 @@ export default function DocumentViewerScreen() {
           <PDFViewer uri={pdfUrl || undefined} pdfBase64={pdfBase64 || undefined} />
         ) : null}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
