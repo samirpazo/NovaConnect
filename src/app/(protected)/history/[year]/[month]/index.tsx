@@ -64,22 +64,25 @@ export default function HistoryMonthDocumentsScreen() {
       <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
         <Pressable
           onPress={() => handleOpenPdf(item.PdcFilePath, item.DprDisplayName)}
-          className="bg-card rounded-[18px] p-3.5 mb-3 border border-border/40 shadow-sm flex-row items-center active:opacity-70"
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.7 : 1,
+          })}
+          className="bg-card rounded-2xl p-3.5 mb-3 border border-border/40 shadow-sm flex-row items-center"
         >
           <View
-            className="w-11 h-11 rounded-[14px] items-center justify-center mr-3.5"
+            className="w-11 h-11 rounded-xl items-center justify-center mr-3.5"
             style={{ backgroundColor: `${primaryColor}15` }}
           >
-            <FileText size={20} color={primaryColor} />
+            <FileText size={22} color={primaryColor} />
           </View>
 
           <View className="flex-1 justify-center">
-            <Text className="text-sm font-poppins-semibold text-foreground mb-0.5 tracking-tight">
+            <Text className="text-base font-poppins-semibold text-foreground mb-0.5 tracking-tight">
               {item.DprDisplayName || "Documento"}
             </Text>
             <View className="flex-row items-center gap-1.5">
-              <Calendar size={12} color="#71717a" />
-              <Text className="text-[11px] font-poppins-medium text-muted-foreground capitalize">
+              <Calendar size={14} color="#71717a" />
+              <Text className="text-sm font-poppins-medium text-muted-foreground capitalize">
                 {item.PdcPeriodMonth} {item.PdcPeriodYear}
               </Text>
             </View>
@@ -101,15 +104,18 @@ export default function HistoryMonthDocumentsScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <View className="flex-1 bg-background">
         {/* Custom Header */}
-        <View className="flex-row items-center px-4 py-3 border-b border-border/40">
-          <TouchableOpacity
+        <View className="flex-row items-center px-4 py-2.5 border-b border-border">
+          <Pressable
             onPress={() => router.back()}
-            className="w-10 h-10 items-center justify-center rounded-full bg-secondary/50"
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.7 : 1,
+            })}
+            className="w-8 h-8 items-center justify-center rounded-full bg-secondary"
           >
-            <ChevronLeft size={24} color={primaryColor} />
-          </TouchableOpacity>
-          <View className="flex-1 px-4">
-            <Text className="text-xl font-poppins-semibold text-foreground">
+            <ChevronLeft size={20} color={primaryColor} />
+          </Pressable>
+          <View className="flex-1 px-3">
+            <Text className="text-lg font-poppins-semibold text-foreground">
               Detalles por mes
             </Text>
           </View>
@@ -128,7 +134,7 @@ export default function HistoryMonthDocumentsScreen() {
             renderItem={renderItem}
             contentContainerStyle={{
               paddingHorizontal: 24,
-              paddingTop: 8,
+              paddingTop: 12,
               paddingBottom: 100,
               flexGrow: 1,
             }}

@@ -95,71 +95,71 @@ export default function HomeScreen() {
           {/* Personal Info */}
           <Animated.View
             entering={FadeInDown.duration(400).delay(100).springify()}
-            className="bg-card rounded-[24px] border border-border/40 overflow-hidden shadow-sm"
+            className="bg-card rounded-[20px] border border-border/40 overflow-hidden shadow-sm"
           >
-            <View className="flex-row items-center gap-4 px-5 py-4">
+            <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
-                className="w-10 h-10 rounded-2xl items-center justify-center"
+                className="w-8 h-8 rounded-xl items-center justify-center"
                 style={{ backgroundColor: `${primaryColor}15` || "#002aff15" }}
               >
-                <IdCard size={20} color={primaryColor || "#002aff"} />
+                <IdCard size={16} color={primaryColor || "#002aff"} />
               </View>
               <View className="flex-1">
-                <Text className="text-[11px] font-poppins-semibold text-muted-foreground uppercase tracking-widest mb-0.5">
+                <Text className="text-[10px] font-poppins-semibold text-muted-foreground uppercase tracking-widest mb-0.5">
                   Documento de Identidad
                 </Text>
-                <Text className="text-base font-poppins-semibold text-foreground">
+                <Text className="text-sm font-poppins-semibold text-foreground">
                   {user?.PrsDocumentNumber || "No registrado"}
                 </Text>
               </View>
             </View>
-            <View className="h-[1px] bg-border/40 mx-5" />
-            <View className="flex-row items-center gap-4 px-5 py-4">
+            <View className="h-[1px] bg-border/40 mx-4" />
+            <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
-                className="w-10 h-10 rounded-2xl items-center justify-center"
+                className="w-8 h-8 rounded-xl items-center justify-center"
                 style={{ backgroundColor: `${primaryColor}15` || "#002aff15" }}
               >
-                <Building2 size={20} color={primaryColor || "#002aff"} />
+                <Building2 size={16} color={primaryColor || "#002aff"} />
               </View>
               <View className="flex-1">
-                <Text className="text-[11px] font-poppins-semibold text-muted-foreground uppercase tracking-widest mb-0.5">
+                <Text className="text-[10px] font-poppins-semibold text-muted-foreground uppercase tracking-widest mb-0.5">
                   Área
                 </Text>
-                <Text className="text-base font-poppins-medium text-foreground capitalize">
+                <Text className="text-sm font-poppins-medium text-foreground capitalize">
                   {(user?.AreName || "No registrado").toLowerCase()}
                 </Text>
               </View>
             </View>
-            <View className="h-[1px] bg-border/40 mx-5" />
-            <View className="flex-row items-center gap-4 px-5 py-4">
+            <View className="h-[1px] bg-border/40 mx-4" />
+            <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
-                className="w-10 h-10 rounded-2xl items-center justify-center"
+                className="w-8 h-8 rounded-xl items-center justify-center"
                 style={{ backgroundColor: `${primaryColor}15` || "#002aff15" }}
               >
-                <Mail size={20} color={primaryColor || "#002aff"} />
+                <Mail size={16} color={primaryColor || "#002aff"} />
               </View>
               <View className="flex-1">
-                <Text className="text-[11px] font-poppins-semibold text-muted-foreground uppercase tracking-widest mb-0.5">
+                <Text className="text-[10px] font-poppins-semibold text-muted-foreground uppercase tracking-widest mb-0.5">
                   Correo Electrónico
                 </Text>
-                <Text className="text-base font-poppins-medium text-foreground">
+                <Text className="text-sm font-poppins-medium text-foreground">
                   {user?.UsrEmail || "No registrado"}
                 </Text>
               </View>
             </View>
-            <View className="h-[1px] bg-border/40 mx-5" />
-            <View className="flex-row items-center gap-4 px-5 py-4">
+            <View className="h-[1px] bg-border/40 mx-4" />
+            <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
-                className="w-10 h-10 rounded-2xl items-center justify-center"
+                className="w-8 h-8 rounded-xl items-center justify-center"
                 style={{ backgroundColor: `${primaryColor}15` || "#002aff15" }}
               >
-                <Phone size={20} color={primaryColor || "#002aff"} />
+                <Phone size={16} color={primaryColor || "#002aff"} />
               </View>
               <View className="flex-1">
-                <Text className="text-[11px] font-poppins-semibold text-muted-foreground uppercase tracking-widest mb-0.5">
+                <Text className="text-[10px] font-poppins-semibold text-muted-foreground uppercase tracking-widest mb-0.5">
                   Teléfono
                 </Text>
-                <Text className="text-base font-poppins-medium text-foreground">
+                <Text className="text-sm font-poppins-medium text-foreground">
                   {user?.PrsPhone || "No registrado"}
                 </Text>
               </View>

@@ -65,22 +65,25 @@ export default function DocumentsScreen() {
       <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
         <Pressable
           onPress={() => handleDocumentPress(item)}
-          className="bg-card rounded-[18px] p-3.5 mb-3 border border-border/40 shadow-sm flex-row items-center active:opacity-70"
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.7 : 1,
+          })}
+          className="bg-card rounded-2xl p-3.5 mb-3 border border-border/40 shadow-sm flex-row items-center"
         >
           <View 
-            className="w-11 h-11 rounded-[14px] items-center justify-center mr-3.5"
+            className="w-11 h-11 rounded-xl items-center justify-center mr-3.5"
             style={{ backgroundColor: `${primaryColor}15` }}
           >
-            <FileText size={20} color={primaryColor} />
+            <FileText size={22} color={primaryColor} />
           </View>
           
           <View className="flex-1 justify-center">
-            <Text className="text-sm font-poppins-semibold text-foreground mb-0.5 tracking-tight">
+            <Text className="text-base font-poppins-semibold text-foreground mb-0.5 tracking-tight">
               {item.DprDisplayName || "Documento"}
             </Text>
             <View className="flex-row items-center gap-1.5">
-              <Calendar size={12} color="#71717a" />
-              <Text className="text-[11px] font-poppins-medium text-muted-foreground capitalize">
+              <Calendar size={14} color="#71717a" />
+              <Text className="text-sm font-poppins-medium text-muted-foreground capitalize">
                 {item.PdcPeriodMonth} {item.PdcPeriodYear}
               </Text>
             </View>
@@ -97,10 +100,10 @@ export default function DocumentsScreen() {
   return (
     <View className="flex-1 bg-background">
       <View className="px-6 pt-4 pb-2">
-        <Text className="text-3xl font-poppins-bold text-foreground tracking-tight">
+        <Text className="text-2xl font-poppins-bold text-foreground tracking-tight">
           Pendientes
         </Text>
-        <Text className="text-sm font-poppins-medium text-muted-foreground mt-1">
+        <Text className="text-xs font-poppins-medium text-muted-foreground mt-0.5">
           Documentos listos para tu revisión.
         </Text>
       </View>
@@ -117,7 +120,7 @@ export default function DocumentsScreen() {
           data={documents}
           keyExtractor={(item) => item.PdcID.toString()}
           renderItem={renderItem}
-          contentContainerStyle={{ padding: 24, paddingBottom: 100, flexGrow: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 12, paddingBottom: 100, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -159,17 +162,17 @@ export default function DocumentsScreen() {
           className="flex-1 justify-center items-center px-6" 
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
         >
-          <View className="w-full max-w-sm bg-card rounded-[24px] p-6 shadow-xl border border-border/40">
+          <View className="w-full max-w-sm bg-card rounded-[20px] p-4 shadow-xl border border-border/40">
             <View 
-              className="w-12 h-12 rounded-full items-center justify-center mb-4"
+              className="w-10 h-10 rounded-full items-center justify-center mb-3"
               style={{ backgroundColor: `${primaryColor}15` }}
             >
-              <FileText size={24} color={primaryColor} />
+              <FileText size={20} color={primaryColor} />
             </View>
-            <Text className="text-xl font-poppins-bold text-foreground mb-2">
+            <Text className="text-lg font-poppins-bold text-foreground mb-1.5">
               Confirmar recepción
             </Text>
-            <Text className="text-base font-poppins text-muted-foreground mb-8">
+            <Text className="text-sm font-poppins text-muted-foreground mb-6">
               ¿Deseas recepcionar el documento de {selectedDocument?.PdcPeriodMonth} {selectedDocument?.PdcPeriodYear}?
             </Text>
             

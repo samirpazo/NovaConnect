@@ -58,15 +58,18 @@ export default function HistoryMonthsScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <View className="flex-1 bg-background">
         {/* Custom Header */}
-        <View className="flex-row items-center px-4 py-3 border-b border-border/40">
-          <TouchableOpacity
+        <View className="flex-row items-center px-4 py-2.5 border-b border-border">
+          <Pressable
             onPress={() => router.back()}
-            className="w-10 h-10 items-center justify-center rounded-full bg-secondary/50"
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.7 : 1,
+            })}
+            className="w-8 h-8 items-center justify-center rounded-full bg-secondary"
           >
-            <ChevronLeft size={24} color={primaryColor} />
-          </TouchableOpacity>
-          <View className="flex-1 px-4">
-            <Text className="text-xl font-poppins-semibold text-foreground">
+            <ChevronLeft size={20} color={primaryColor} />
+          </Pressable>
+          <View className="flex-1 px-3">
+            <Text className="text-lg font-poppins-semibold text-foreground">
               Año {year}
             </Text>
           </View>
@@ -74,15 +77,18 @@ export default function HistoryMonthsScreen() {
         <FlatList
           data={monthsInfo}
           keyExtractor={(item) => item.month}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100, paddingTop: 8 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100, paddingTop: 12 }}
           renderItem={({ item, index }) => (
             <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
               <Pressable
                 onPress={() => router.push(`/history/${year}/${item.month}`)}
-                className="bg-card rounded-[18px] p-4 mb-3 border border-border/40 flex-row items-center active:opacity-70"
+                style={({ pressed }) => ({
+                  opacity: pressed ? 0.7 : 1,
+                })}
+                className="bg-card rounded-2xl p-3.5 mb-3 border border-border/40 flex-row items-center"
               >
-                <View className="w-12 h-12 rounded-[14px] items-center justify-center bg-background border border-border/40 mr-4">
-                  <Calendar size={24} color={primaryColor} />
+                <View className="w-11 h-11 rounded-xl items-center justify-center bg-background border border-border/40 mr-3.5">
+                  <Calendar size={22} color={primaryColor} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-lg font-poppins-bold text-foreground">

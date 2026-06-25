@@ -34,10 +34,13 @@ export default function HistoryYearsScreen() {
     <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
       <Pressable
         onPress={() => router.push(`/history/${item}`)}
-        className="bg-card rounded-[18px] p-4 mb-3 border border-border/40 flex-row items-center active:opacity-70"
+        style={({ pressed }) => ({
+          opacity: pressed ? 0.7 : 1,
+        })}
+        className="bg-card rounded-2xl p-3.5 mb-3 border border-border/40 flex-row items-center"
       >
-        <View className="w-12 h-12 rounded-[14px] items-center justify-center bg-background border border-border/40 mr-4">
-          <Folder size={24} color={primaryColor} />
+        <View className="w-11 h-11 rounded-xl items-center justify-center bg-background border border-border/40 mr-3.5">
+          <Folder size={22} color={primaryColor} />
         </View>
         <View className="flex-1">
           <Text className="text-lg font-poppins-bold text-foreground">
@@ -54,12 +57,12 @@ export default function HistoryYearsScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <View className="px-6 py-4 relative justify-center">
+      <View className="px-6 py-3.5 relative justify-center">
         <View className="absolute left-10 top-0 bottom-0 justify-center z-10">
-          <Search size={20} color="#71717a" />
+          <Search size={18} color="#71717a" />
         </View>
         <Input
-          className="pl-11 h-12 rounded-[18px] bg-card border-border/40 font-poppins text-base"
+          className="pl-11 h-11 rounded-2xl bg-card border-border/40 font-poppins text-base"
           placeholder="Buscar año..."
           placeholderTextColor="#71717a"
           value={search}
@@ -81,8 +84,8 @@ export default function HistoryYearsScreen() {
           keyExtractor={(item) => item.toString()}
           renderItem={renderYearItem}
           contentContainerStyle={{
-            padding: 24,
-            paddingTop: 8,
+            paddingHorizontal: 24,
+            paddingTop: 12,
             paddingBottom: 100,
             flexGrow: 1,
           }}

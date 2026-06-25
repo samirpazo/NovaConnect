@@ -205,18 +205,18 @@ export default function SettingsScreen() {
     <>
       <View className="flex-1 bg-background">
         {/* Custom Header */}
-        <View className="flex-row items-center px-5 py-4 border-b border-border">
+        <View className="flex-row items-center px-4 py-2.5 border-b border-border">
           <Pressable
             onPress={() => router.back()}
             style={({ pressed }) => ({
               opacity: pressed ? 0.7 : 1,
             })}
-            className="w-10 h-10 items-center justify-center rounded-full bg-secondary"
+            className="w-8 h-8 items-center justify-center rounded-full bg-secondary"
           >
-            <ChevronLeft size={24} color={primaryColor} />
+            <ChevronLeft size={20} color={primaryColor} />
           </Pressable>
-          <View className="flex-1 px-4">
-            <Text className="text-xl font-poppins-semibold text-foreground">
+          <View className="flex-1 px-3">
+            <Text className="text-lg font-poppins-semibold text-foreground">
               Configuración
             </Text>
           </View>
@@ -224,32 +224,32 @@ export default function SettingsScreen() {
 
         <ScrollView
           className="flex-1 bg-background"
-          contentContainerClassName="px-5 pt-6"
+          contentContainerClassName="px-4 pt-4"
           contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 100, 100) }}
           showsVerticalScrollIndicator={false}
         >
           <Animated.View
             entering={FadeInDown.duration(400).springify()}
-            className="mb-6"
+            className="mb-4"
           >
-            <View className="mb-6">
-              <Text className="text-2xl font-poppins-bold text-foreground mb-1 tracking-tight">
+            <View className="mb-4">
+              <Text className="text-xl font-poppins-bold text-foreground mb-0.5 tracking-tight">
                 Apariencia
               </Text>
-              <Text className="text-muted-foreground font-poppins-medium text-sm">
+              <Text className="text-muted-foreground font-poppins-medium text-xs">
                 Personaliza tu experiencia visual.
               </Text>
             </View>
 
             {/* Theme Selector */}
-            <View className="mb-8">
-              <View className="flex-row items-center mb-3 px-1">
-                <MoonStarIcon size={18} className="text-foreground mr-2" />
-                <Text className="text-base font-poppins-bold text-foreground">
+            <View className="mb-5">
+              <View className="flex-row items-center mb-2 px-1 gap-2">
+                <MoonStarIcon size={16} className="text-foreground" />
+                <Text className="text-sm font-poppins-bold text-foreground">
                   Tema Visual
                 </Text>
               </View>
-              <View className="bg-secondary rounded-[20px] p-1 flex-row border border-border">
+              <View className="bg-secondary rounded-[16px] p-0.5 flex-row border border-border">
                 {THEME_OPTIONS.map((option) => {
                   const isSelected = theme === option.value;
                   return (
@@ -266,7 +266,7 @@ export default function SettingsScreen() {
                       style={({ pressed }) => ({
                         opacity: pressed ? 0.7 : 1,
                       })}
-                      className={`flex-1 flex-row items-center justify-center gap-1.5 py-2.5 rounded-[16px] ${
+                      className={`flex-1 flex-row items-center justify-center gap-1.5 py-1.5 rounded-[12px] ${
                         isSelected
                           ? "bg-card border border-border"
                           : ""
@@ -274,7 +274,7 @@ export default function SettingsScreen() {
                     >
                       <Icon
                         as={option.icon}
-                        size={16}
+                        size={14}
                         color={isSelected ? primaryColor : undefined}
                         className={
                           isSelected
@@ -283,7 +283,7 @@ export default function SettingsScreen() {
                         }
                       />
                       <Text
-                        className={`text-xs font-poppins-bold ${
+                        className={`text-[11px] font-poppins-bold ${
                           isSelected
                             ? "text-foreground"
                             : "text-muted-foreground"
@@ -298,19 +298,19 @@ export default function SettingsScreen() {
             </View>
 
             {/* Color Picker */}
-            <View className="mb-6">
-              <View className="flex-row items-center mb-3 px-1">
-                <Palette size={18} className="text-foreground mr-2" />
-                <Text className="text-base font-poppins-bold text-foreground">
+            <View className="mb-4">
+              <View className="flex-row items-center mb-2 px-1 gap-2">
+                <Palette size={16} className="text-foreground" />
+                <Text className="text-sm font-poppins-bold text-foreground">
                   Color Principal
                 </Text>
               </View>
 
-              <View className="bg-card rounded-[24px] p-5 border border-border">
-                <Text className="text-[10px] font-poppins-bold text-muted-foreground uppercase tracking-widest mb-3 text-center">
+              <View className="bg-card rounded-[20px] p-4 border border-border">
+                <Text className="text-[10px] font-poppins-bold text-muted-foreground uppercase tracking-widest mb-2 text-center">
                   Predefinidos
                 </Text>
-                <View className="flex-row flex-wrap gap-3 justify-center mb-6">
+                <View className="flex-row flex-wrap gap-2 justify-center mb-4">
                   {COLORS.map((color) => {
                     const isSelected =
                       primaryColor.toLowerCase() === color.value.toLowerCase();
@@ -333,7 +333,7 @@ export default function SettingsScreen() {
                         className="items-center justify-center"
                       >
                         <View
-                          className="w-10 h-10 rounded-full items-center justify-center"
+                          className="w-8 h-8 rounded-full items-center justify-center"
                           style={{
                             backgroundColor: color.value,
                             borderWidth: isSelected ? 3 : 0,
@@ -351,9 +351,9 @@ export default function SettingsScreen() {
                   })}
                 </View>
 
-                <View className="h-[1px] w-full bg-border mb-5" />
+                <View className="h-[1px] w-full bg-border mb-4" />
 
-                <Text className="text-[10px] font-poppins-bold text-muted-foreground uppercase tracking-widest mb-4 text-center">
+                <Text className="text-[10px] font-poppins-bold text-muted-foreground uppercase tracking-widest mb-3 text-center">
                   Personalizado Libre
                 </Text>
 
@@ -376,15 +376,15 @@ export default function SettingsScreen() {
                     })
                   ) : (
                     <View className="flex-row items-center gap-4 w-full">
-                      <View className="w-12 h-12 rounded-full border-[3px] border-card" style={{ backgroundColor: primaryColor }} />
+                      <View className="w-8 h-8 rounded-full border-[3px] border-card" style={{ backgroundColor: primaryColor }} />
                       <Pressable 
                         onPress={() => setIsColorPickerVisible(true)}
                         style={({ pressed }) => ({
                           opacity: pressed ? 0.7 : 1,
                         })}
-                        className="flex-1 bg-secondary rounded-xl px-4 py-3 border border-border items-center justify-center"
+                        className="flex-1 bg-secondary rounded-lg px-3 py-2.5 border border-border items-center justify-center"
                       >
-                        <Text className="text-foreground font-poppins-semibold">
+                        <Text className="text-foreground font-poppins-semibold text-xs">
                           Seleccionar Color
                         </Text>
                       </Pressable>
@@ -398,26 +398,26 @@ export default function SettingsScreen() {
           {/* Security Section */}
           <Animated.View
             entering={FadeInDown.duration(400).delay(100).springify()}
-            className="mb-6"
+            className="mb-4"
           >
-            <View className="mb-6">
-              <Text className="text-2xl font-poppins-bold text-foreground mb-1 tracking-tight">
+            <View className="mb-4">
+              <Text className="text-xl font-poppins-bold text-foreground mb-0.5 tracking-tight">
                 Seguridad
               </Text>
-              <Text className="text-muted-foreground font-poppins-medium text-sm">
+              <Text className="text-muted-foreground font-poppins-medium text-xs">
                 Protege el acceso a tu cuenta.
               </Text>
             </View>
 
-            <View className="bg-card rounded-[24px] border border-border overflow-hidden mb-4">
+            <View className="bg-card rounded-[20px] border border-border overflow-hidden mb-3">
               {hasHardware && Platform.OS !== "web" && (
                 <>
-                  <View className="flex-row items-center justify-between px-5 py-4">
+                  <View className="flex-row items-center justify-between px-4 py-3">
                     <View className="flex-1 mr-4">
-                      <Text className="text-base font-poppins-semibold text-foreground">
+                      <Text className="text-sm font-poppins-semibold text-foreground">
                         Acceso Biométrico
                       </Text>
-                      <Text className="text-[12px] font-poppins text-muted-foreground mt-0.5">
+                      <Text className="text-[11px] font-poppins text-muted-foreground mt-0.5">
                         Usa FaceID o Huella para iniciar sesión rápidamente.
                       </Text>
                     </View>
@@ -427,7 +427,7 @@ export default function SettingsScreen() {
                       trackColor={{ false: "#71717a", true: primaryColor }}
                     />
                   </View>
-                  <View className="h-[1px] bg-border mx-5" />
+                  <View className="h-[1px] bg-border mx-4" />
                 </>
               )}
 
@@ -436,20 +436,20 @@ export default function SettingsScreen() {
                 style={({ pressed }) => ({
                   opacity: pressed ? 0.8 : 1,
                 })}
-                className="flex-row items-center bg-secondary py-3 px-4 rounded-xl"
+                className="flex-row items-center bg-secondary py-2.5 px-3.5 rounded-xl"
               >
                 <View className="flex-1">
-                  <Text className="text-base font-poppins-semibold text-foreground">
+                  <Text className="text-sm font-poppins-semibold text-foreground">
                     Cambiar PIN
                   </Text>
-                  <Text className="text-[12px] font-poppins text-muted-foreground mt-0.5">
+                  <Text className="text-[11px] font-poppins text-muted-foreground mt-0.5">
                     Actualiza tu código de acceso de 6 dígitos.
                   </Text>
                 </View>
-                <View className="bg-secondary p-2 rounded-full">
+                <View className="bg-secondary p-1.5 rounded-full">
                   <Icon
                     as={CloudUploadIcon}
-                    size={16}
+                    size={14}
                     className="text-muted-foreground"
                   />
                 </View>
