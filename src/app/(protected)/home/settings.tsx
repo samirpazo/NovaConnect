@@ -20,8 +20,10 @@ import {
   X,
   Fingerprint,
   ScanFace,
+  ChevronLeft,
 } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
+import { router } from "expo-router";
 import * as React from "react";
 import {
   ActivityIndicator,
@@ -32,9 +34,10 @@ import {
   Switch,
   View,
   KeyboardAvoidingView,
+  TextInput,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown, runOnJS } from "react-native-reanimated";
 import ColorPicker, { HueSlider, Panel1 } from "reanimated-color-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -84,6 +87,9 @@ export default function SettingsScreen() {
   const [bioSetupModalVisible, setBioSetupModalVisible] = React.useState(false);
   const [bioSetupPin, setBioSetupPin] = React.useState("");
   const [isActivatingBio, setIsActivatingBio] = React.useState(false);
+
+  // Color picker state
+  const [isColorPickerVisible, setIsColorPickerVisible] = React.useState(false);
 
   React.useEffect(() => {
     const checkBiometric = async () => {
@@ -212,16 +218,36 @@ export default function SettingsScreen() {
     };
   }, [theme, primaryColor]);
 
+  const applyColor = (hex: string) => {
+    setPreferences(theme, hex);
+  };
+
   const onColorComplete = (color: { hex: string }) => {
-    setPreferences(theme, color.hex);
+    "worklet";
+    runOnJS(applyColor)(color.hex);
   };
 
   return (
     <>
       <View className="flex-1 bg-background">
+        {/* Custom Header */}
+        <View className="flex-row items-center px-5 py-4 border-b border-border/40">
+          <Pressable
+            onPress={() => router.back()}
+            className="w-10 h-10 items-center justify-center rounded-full bg-secondary/50"
+          >
+            <ChevronLeft size={24} color={primaryColor} />
+          </Pressable>
+          <View className="flex-1 px-4">
+            <Text className="text-xl font-poppins-semibold text-foreground">
+              Configuración
+            </Text>
+          </View>
+        </View>
+
         <ScrollView
           className="flex-1 bg-background"
-          contentContainerClassName="px-5 pt-2"
+          contentContainerClassName="px-5 pt-6"
           contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 100, 100) }}
           showsVerticalScrollIndicator={false}
         >
@@ -353,14 +379,17 @@ export default function SettingsScreen() {
                       },
                     })
                   ) : (
-                    <ColorPicker
-                      style={{ width: "100%", gap: 16 }}
-                      value={primaryColor}
-                      onComplete={onColorComplete}
-                    >
-                      <Panel1 style={{ height: 160, borderRadius: 16 }} />
-                      <HueSlider style={{ borderRadius: 12, height: 24 }} />
-                    </ColorPicker>
+                    <View className="flex-row items-center gap-4 w-full">
+                      <View className="w-12 h-12 rounded-full shadow-sm border-[3px] border-card" style={{ backgroundColor: primaryColor }} />
+                      <Pressable 
+                        onPress={() => setIsColorPickerVisible(true)}
+                        className="flex-1 bg-secondary/50 rounded-xl px-4 py-3 border border-border/40 items-center justify-center"
+                      >
+                        <Text className="text-foreground font-poppins-semibold">
+                          Seleccionar Color
+                        </Text>
+                      </Pressable>
+                    </View>
                   )}
                 </View>
               </View>
@@ -567,6 +596,52 @@ export default function SettingsScreen() {
             </Pressable>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Color Picker Modal */}
+      <Modal
+        visible={isColorPickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsColorPickerVisible(false)}
+      >
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <View
+            className="flex-1 justify-center items-center px-6"
+            style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+          >
+            <View className="w-full max-w-sm bg-card rounded-[24px] p-6 shadow-xl border border-border/40">
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-xl font-poppins-bold text-foreground">
+                  Elige un color
+                </Text>
+                <Pressable onPress={() => setIsColorPickerVisible(false)} className="p-2 bg-secondary/50 rounded-full">
+                  <X size={20} className="text-foreground" />
+                </Pressable>
+              </View>
+
+              <ColorPicker
+                style={{ width: "100%", gap: 20 }}
+                value={primaryColor}
+                onComplete={onColorComplete}
+              >
+                <Panel1 style={{ height: 200, borderRadius: 16 }} />
+                <HueSlider style={{ borderRadius: 12, height: 28 }} />
+              </ColorPicker>
+
+              <Button
+                className="w-full mt-8"
+                variant="default"
+                onPress={() => setIsColorPickerVisible(false)}
+                style={{ backgroundColor: primaryColor }}
+              >
+                <Text className="text-white font-poppins-semibold text-base">
+                  Aceptar
+                </Text>
+              </Button>
+            </View>
+          </View>
+        </GestureHandlerRootView>
       </Modal>
     </>
   );
