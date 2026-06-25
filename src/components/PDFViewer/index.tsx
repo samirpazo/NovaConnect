@@ -28,7 +28,7 @@ export default function PDFViewer({ uri, pdfBase64 }: PDFViewerProps) {
       <html>
       <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
         <style>
           body { 
@@ -119,6 +119,8 @@ export default function PDFViewer({ uri, pdfBase64 }: PDFViewerProps) {
           allowUniversalAccessFromFileURLs={true}
           bounces={false}
           scalesPageToFit={true}
+          builtInZoomControls={true}
+          displayZoomControls={false}
         />
       </View>
     );
@@ -137,6 +139,9 @@ export default function PDFViewer({ uri, pdfBase64 }: PDFViewerProps) {
         allowFileAccess={true}
         allowUniversalAccessFromFileURLs={true}
         bounces={false}
+        scalesPageToFit={true}
+        builtInZoomControls={true}
+        displayZoomControls={false}
       />
     </View>
   );
