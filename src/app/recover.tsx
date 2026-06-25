@@ -139,6 +139,14 @@ export default function RecoverPinScreen() {
     setIsLoading(false);
 
     if (result.success) {
+      // Actualizar la biometría si el usuario la tiene activa para el mismo documento
+      const isBioEnabled = await storage.getItem("isBiometricEnabled");
+      const savedDoc = await storage.getItem("savedDocumentNumber");
+      
+      if (isBioEnabled === "true" && savedDoc === documentNumber) {
+        await storage.setItem("savedHashedPin", newPasswordHash);
+      }
+
       showToast.success("Éxito", "Tu PIN ha sido recuperado correctamente.");
       router.replace("/");
     } else {

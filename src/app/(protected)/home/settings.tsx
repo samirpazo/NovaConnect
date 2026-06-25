@@ -8,6 +8,7 @@ import { storage } from "@/lib/storage";
 import { showToast } from "@/lib/toast";
 import { authService } from "@/services/authService";
 import { secCollaboratorPreferenceService } from "@/services/secCollaboratorPreferenceService";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import * as LocalAuthentication from "expo-local-authentication";
 import {
@@ -16,6 +17,9 @@ import {
   MoonStarIcon,
   Palette,
   SunIcon,
+  X,
+  Fingerprint,
+  ScanFace,
 } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
 import * as React from "react";
@@ -27,10 +31,12 @@ import {
   ScrollView,
   Switch,
   View,
+  KeyboardAvoidingView,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import ColorPicker, { HueSlider, Panel1 } from "reanimated-color-picker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const THEME_OPTIONS = [
   { value: "light", label: "Claro", icon: SunIcon },
@@ -48,12 +54,14 @@ const COLORS = [
 ] as const;
 
 export default function SettingsScreen() {
+  const { user, login } = useAuthStore();
   const {
     theme,
     primaryColor: storePrimaryColor,
     setPreferences,
   } = usePreferenceStore();
   const { setColorScheme } = useColorScheme();
+  const insets = useSafeAreaInsets();
 
   const primaryColor =
     storePrimaryColor?.toLowerCase() === "#ff0000" ||
@@ -71,6 +79,11 @@ export default function SettingsScreen() {
   const [newPin, setNewPin] = React.useState("");
   const [confirmPin, setConfirmPin] = React.useState("");
   const [isChangingPin, setIsChangingPin] = React.useState(false);
+
+  // Biometric setup states
+  const [bioSetupModalVisible, setBioSetupModalVisible] = React.useState(false);
+  const [bioSetupPin, setBioSetupPin] = React.useState("");
+  const [isActivatingBio, setIsActivatingBio] = React.useState(false);
 
   React.useEffect(() => {
     const checkBiometric = async () => {
@@ -91,19 +104,47 @@ export default function SettingsScreen() {
 
   const toggleBiometric = async (value: boolean) => {
     if (value) {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Activar acceso biométrico",
-        fallbackLabel: "Usar PIN",
-      });
-      if (result.success) {
-        await storage.setItem("isBiometricEnabled", "true");
-        setIsBiometricEnabled(true);
-        showToast.success("Éxito", "Acceso biométrico activado.");
-      }
+      setBioSetupModalVisible(true);
     } else {
       await storage.removeItem("isBiometricEnabled");
       setIsBiometricEnabled(false);
       showToast.info("Ajustes", "Acceso biométrico desactivado.");
+    }
+  };
+
+  const handleConfirmBioSetup = async () => {
+    if (!user?.PrsDocumentNumber || bioSetupPin.length < 6) return;
+    setIsActivatingBio(true);
+    try {
+      const hashedPassword = await hashPassword(bioSetupPin);
+      const result = await login({
+        DocumentNumber: user.PrsDocumentNumber,
+        Password: hashedPassword,
+      });
+      
+      if (result.success) {
+        const bioResult = await LocalAuthentication.authenticateAsync({
+          promptMessage: "Activar acceso biométrico",
+          fallbackLabel: "Usar PIN",
+        });
+        if (bioResult.success) {
+          // Guardar el hash del PIN para el inicio de sesión biométrico futuro
+          await storage.setItem("savedHashedPin", hashedPassword);
+          await storage.setItem("isBiometricEnabled", "true");
+          setIsBiometricEnabled(true);
+          showToast.success("Éxito", "Acceso biométrico activado.");
+          setBioSetupModalVisible(false);
+          setBioSetupPin("");
+        } else {
+          showToast.info("Cancelado", "Autenticación biométrica cancelada.");
+        }
+      } else {
+        showToast.error("Error", "PIN incorrecto.");
+      }
+    } catch (e) {
+      showToast.error("Error", "Ocurrió un error al verificar el PIN.");
+    } finally {
+      setIsActivatingBio(false);
     }
   };
 
@@ -124,6 +165,10 @@ export default function SettingsScreen() {
     setIsChangingPin(false);
 
     if (result.success) {
+      // Actualizar el PIN hasheado guardado si la biometría está habilitada
+      if (isBiometricEnabled) {
+        await storage.setItem("savedHashedPin", newHash);
+      }
       showToast.success("Éxito", "Tu PIN ha sido actualizado correctamente.");
       setPinModalVisible(false);
       setOldPin("");
@@ -135,31 +180,49 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await secCollaboratorPreferenceService.savePreferences({
-        Theme: theme,
-        PrimaryColor: primaryColor,
-      });
-      showToast.success("Éxito", "Tus preferencias se han guardado.");
-    } catch (error) {
-      showToast.error("Error", "No se pudieron guardar las preferencias.");
-    } finally {
-      setIsSaving(false);
+  const isFirstMount = React.useRef(true);
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
     }
-  };
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      secCollaboratorPreferenceService
+        .savePreferences({
+          Theme: theme,
+          PrimaryColor: primaryColor,
+        })
+        .then(() => {
+          showToast.success("Guardado", "Tus preferencias se han guardado automáticamente.");
+        })
+        .catch(() => {
+          showToast.error("Error", "No se pudieron guardar las preferencias.");
+        });
+    }, 2000);
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [theme, primaryColor]);
 
   const onColorComplete = (color: { hex: string }) => {
     setPreferences(theme, color.hex);
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <>
       <View className="flex-1 bg-background">
         <ScrollView
           className="flex-1 bg-background"
-          contentContainerClassName="p-5 pb-24"
+          contentContainerClassName="px-5 pt-2"
+          contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 100, 100) }}
           showsVerticalScrollIndicator={false}
         >
           <Animated.View
@@ -363,31 +426,7 @@ export default function SettingsScreen() {
             </View>
           </Animated.View>
 
-          {/* Sync Button */}
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(200).springify()}
-            className="mt-2"
-          >
-            <Pressable
-              onPress={handleSave}
-              disabled={isSaving}
-              className="w-full h-12 rounded-[16px] flex-row items-center justify-center gap-2 active:opacity-80 shadow-md"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {isSaving ? (
-                <ActivityIndicator color="#ffffff" size="small" />
-              ) : (
-                <CloudUploadIcon size={20} color="#ffffff" strokeWidth={2.5} />
-              )}
-              <Text className="text-white font-poppins-bold text-sm">
-                {isSaving ? "Guardando..." : "Sincronizar"}
-              </Text>
-            </Pressable>
-            <Text className="text-center text-[10px] font-poppins text-muted-foreground mt-3 px-6">
-              Los cambios se guardan localmente. Sincroniza para aplicarlos en
-              todos tus dispositivos.
-            </Text>
-          </Animated.View>
+
         </ScrollView>
       </View>
 
@@ -474,6 +513,61 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
-    </GestureHandlerRootView>
+
+      {/* Biometric Setup Modal */}
+      <Modal visible={bioSetupModalVisible} transparent animationType="fade">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1 justify-center items-center p-6"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <View className="bg-card w-full max-w-[320px] rounded-[24px] p-6 shadow-xl relative border border-border/40">
+            <Pressable
+              onPress={() => setBioSetupModalVisible(false)}
+              className="absolute top-4 right-4 p-2 z-10"
+            >
+              <X size={20} className="text-muted-foreground" />
+            </Pressable>
+
+            <View className="items-center mb-4 mt-2">
+              <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center mb-3">
+                {Platform.OS === "ios" ? (
+                  <ScanFace size={24} color={primaryColor} />
+                ) : (
+                  <Fingerprint size={24} color={primaryColor} />
+                )}
+              </View>
+              <Text className="text-xl font-poppins-bold text-foreground text-center">
+                Activar Biometría
+              </Text>
+              <Text className="text-sm text-muted-foreground font-poppins text-center mt-2">
+                Ingresa tu PIN para confirmar tu identidad.
+              </Text>
+            </View>
+
+            <View className="mb-6 mt-4">
+              <PinKeypad
+                pin={bioSetupPin}
+                onPinChange={setBioSetupPin}
+                primaryColor={primaryColor}
+                maxLength={6}
+              />
+            </View>
+
+            <Pressable
+              onPress={handleConfirmBioSetup}
+              disabled={isActivatingBio || bioSetupPin.length < 4}
+              className={`w-full h-12 rounded-[16px] flex-row items-center justify-center ${bioSetupPin.length >= 4 ? "bg-primary" : "bg-muted opacity-60"}`}
+            >
+              <Text
+                className={`font-poppins-bold text-base ${bioSetupPin.length >= 4 ? "text-primary-foreground" : "text-muted-foreground"}`}
+              >
+                {isActivatingBio ? "Activando..." : "Confirmar"}
+              </Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    </>
   );
 }

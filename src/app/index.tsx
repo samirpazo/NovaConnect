@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PinKeypad } from "@/components/ui/pin-keypad";
 import { Text } from "@/components/ui/text";
 import { hashPassword } from "@/lib/security";
 import { storage } from "@/lib/storage";
@@ -17,6 +18,7 @@ import {
   ChevronLeft,
   Delete,
   Fingerprint,
+  ScanFace,
   Headset,
   IdCard,
   LogOut,
@@ -56,7 +58,6 @@ export default function LoginScreen() {
   const [step, setStep] = React.useState<1 | 2>(1);
   const [PrsDocumentNumber, setPrsDocumentNumber] = React.useState("");
   const [pin, setPin] = React.useState("");
-  const [shuffledNumbers, setShuffledNumbers] = React.useState<number[]>([]);
 
   const [isBiometricSupported, setIsBiometricSupported] = React.useState(false);
   const [isBiometricEnabled, setIsBiometricEnabled] = React.useState(false);
@@ -78,9 +79,6 @@ export default function LoginScreen() {
         setHelpData(data);
       }
     });
-
-    const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-    setShuffledNumbers([...numbers].sort(() => Math.random() - 0.5));
 
     (async () => {
       try {
@@ -118,11 +116,6 @@ export default function LoginScreen() {
       }
     })();
   }, []);
-
-  const keypadItems = React.useMemo(() => {
-    if (shuffledNumbers.length === 0) return [];
-    return [...shuffledNumbers.slice(0, 9), "bio", shuffledNumbers[9], "del"];
-  }, [shuffledNumbers]);
 
   const opacity = useSharedValue(1);
   const translateX = useSharedValue(0);
@@ -330,16 +323,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handlePinPress = (num: string) => {
-    if (pin.length < 6) {
-      setPin((prev) => prev + num);
-    }
-  };
-
-  const handleDeletePin = () => {
-    setPin((prev) => prev.slice(0, -1));
-  };
-
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -501,67 +484,24 @@ export default function LoginScreen() {
 
                     {/* Card Wrapper for PIN */}
                     <View className="bg-card w-full max-w-[300px] mt-2 self-center rounded-3xl p-6 shadow-sm dark:shadow-xl">
-                      {/* PIN Dots */}
-                      <View className="flex-row gap-3 mb-6 justify-center">
-                        {[...Array(6)].map((_, i) => (
-                          <View
-                            key={i}
-                            className={`size-3 rounded-full ${i < pin.length ? "" : "bg-muted"}`}
-                            style={
-                              i < pin.length
-                                ? { backgroundColor: primaryColor || "#002aff" }
-                                : {}
-                            }
-                          />
-                        ))}
-                      </View>
-
                       {/* Keypad */}
-                      <View className="w-full flex-row flex-wrap justify-center gap-3 mb-5">
-                        {keypadItems.map((item, i) => (
-                          <Pressable
-                            key={i}
-                            onPress={() => {
-                              if (item === "del") handleDeletePin();
-                              else if (item === "bio") {
-                                if (isBiometricEnabled) {
-                                  handleBiometricAuth();
-                                } else {
-                                  setShowBiometricModal(true);
-                                }
-                              } else handlePinPress(item.toString());
-                            }}
-                            disabled={item === "bio" && !isBiometricSupported}
-                            className={`w-[30%] h-10 items-center justify-center rounded-lg ${item !== "bio" ? "bg-secondary active:bg-muted" : ""} ${item === "bio" && !isBiometricSupported ? "opacity-0" : ""}`}
-                          >
-                            {item === "del" ? (
-                              <Delete
-                                size={20}
-                                className="text-muted-foreground"
-                              />
-                            ) : item === "bio" ? (
-                              isBiometricSupported ? (
-                                <Fingerprint
-                                  size={24}
-                                  className={
-                                    isBiometricEnabled
-                                      ? "text-primary"
-                                      : "text-muted-foreground"
-                                  }
-                                  color={
-                                    isBiometricEnabled
-                                      ? primaryColor || "#002aff"
-                                      : undefined
-                                  }
-                                />
-                              ) : null
-                            ) : (
-                              <Text className="text-xl font-bold text-foreground font-poppins select-none">
-                                {item}
-                              </Text>
-                            )}
-                          </Pressable>
-                        ))}
+                      <View className="w-full mb-5">
+                        <PinKeypad
+                          pin={pin}
+                          onPinChange={setPin}
+                          primaryColor={primaryColor || "#002aff"}
+                          maxLength={6}
+                          showBiometric={true}
+                          isBiometricSupported={isBiometricSupported}
+                          isBiometricEnabled={isBiometricEnabled}
+                          onBiometric={() => {
+                            if (isBiometricEnabled) {
+                              handleBiometricAuth();
+                            } else {
+                              setShowBiometricModal(true);
+                            }
+                          }}
+                        />
                       </View>
 
                       <Pressable
@@ -828,7 +768,11 @@ export default function LoginScreen() {
 
             <View className="items-center mb-4 mt-2">
               <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center mb-3">
-                <Fingerprint size={24} className="text-primary" />
+                {Platform.OS === "ios" ? (
+                  <ScanFace size={24} className="text-primary" />
+                ) : (
+                  <Fingerprint size={24} className="text-primary" />
+                )}
               </View>
               <Text className="text-xl font-bold text-foreground font-poppins text-center">
                 Activar Biometría
@@ -839,18 +783,14 @@ export default function LoginScreen() {
               </Text>
             </View>
 
-            <TextInput
-              secureTextEntry
-              autoFocus
-              keyboardType="numeric"
-              maxLength={6}
-              value={biometricSetupPin}
-              onChangeText={setBiometricSetupPin}
-              placeholder="Tu PIN"
-              placeholderTextColor="#94a3b8"
-              style={{ outlineStyle: "none" } as any}
-              className="w-full h-12 bg-secondary rounded-xl px-4 text-center text-foreground font-poppins text-lg tracking-widest mb-6"
-            />
+            <View className="mb-6 mt-4">
+              <PinKeypad
+                pin={biometricSetupPin}
+                onPinChange={setBiometricSetupPin}
+                primaryColor={primaryColor || "#002aff"}
+                maxLength={6}
+              />
+            </View>
 
             <Pressable
               onPress={handleBiometricSetupSubmit}

@@ -19,10 +19,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initializeAuth: async () => {
     try {
-      const user = await authService.getSession();
-      if (user) {
-        set({ user });
-      }
+      // Evitamos el auto-login automático para forzar siempre el uso de PIN o Biometría
+      // const user = await authService.getSession();
+      // if (user) {
+      //   set({ user });
+      // }
     } catch (error) {
       console.error('Error initializing auth', error);
     } finally {

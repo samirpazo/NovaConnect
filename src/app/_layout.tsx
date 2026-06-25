@@ -1,4 +1,4 @@
-import "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "@/global.css";
 
 import { hexToNativeWindHsl } from "@/lib/colorUtils";
@@ -13,6 +13,7 @@ import { StatusBar } from "expo-status-bar";
 import { useColorScheme, vars } from "nativewind";
 import { useEffect, useState } from "react";
 import { Platform, View, Dimensions, Appearance, useColorScheme as useRNColorScheme } from "react-native";
+import * as SystemUI from "expo-system-ui";
 import { Toaster } from "@/lib/sonner";
 import SessionWrapper from "@/components/SessionWrapper";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -68,7 +69,10 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (isReady) {
-      setColorScheme(theme === "system" ? (rnColorScheme === "dark" ? "dark" : "light") : theme);
+      const activeTheme = theme === "system" ? (rnColorScheme === "dark" ? "dark" : "light") : theme;
+      setColorScheme(activeTheme);
+      
+      SystemUI.setBackgroundColorAsync(activeTheme === "dark" ? "#1a1a1c" : "#ffffff").catch(() => {});
     }
   }, [theme, rnColorScheme, isReady]);
 
@@ -89,7 +93,10 @@ export default function RootLayout() {
 
       // Aplicar el tema recuperado inmediatamente antes de renderizar
       const currentTheme = usePreferenceStore.getState().theme;
-      setColorScheme(currentTheme === "system" ? (Appearance.getColorScheme() === "dark" ? "dark" : "light") : currentTheme);
+      const activeTheme = currentTheme === "system" ? (Appearance.getColorScheme() === "dark" ? "dark" : "light") : currentTheme;
+      setColorScheme(activeTheme);
+
+      SystemUI.setBackgroundColorAsync(activeTheme === "dark" ? "#1a1a1c" : "#ffffff").catch(() => {});
 
       setIsReady(true);
       await SplashScreen.hideAsync();
@@ -111,7 +118,8 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
       <ThemeProvider value={NAV_THEME[colorScheme === "dark" ? "dark" : "light"]}>
       <Head>
         <title>Nova Connect</title>
@@ -149,7 +157,8 @@ export default function RootLayout() {
           />
         </View>
       </SessionWrapper>
-    </ThemeProvider>
-    </QueryClientProvider>
+      </ThemeProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -8,7 +8,8 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Image } from "expo-image";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { ChevronLeft, Delete } from "lucide-react-native";
+import { PinKeypad } from "@/components/ui/pin-keypad";
+import { ChevronLeft } from "lucide-react-native";
 import * as React from "react";
 import {
   KeyboardAvoidingView,
@@ -130,16 +131,6 @@ export default function RegisterScreen() {
     }
   };
 
-  const handlePinPress = (num: string) => {
-    if (pin.length < 6) {
-      setPin((prev) => prev + num);
-    }
-  };
-
-  const handleDeletePin = () => {
-    setPin((prev) => prev.slice(0, -1));
-  };
-
   const handleBack = () => {
     if (step === 2) {
       setStep(1);
@@ -152,8 +143,6 @@ export default function RegisterScreen() {
       }
     }
   };
-
-  const keypadItems = [1, 2, 3, 4, 5, 6, 7, 8, 9, "", 0, "del"];
 
   return (
     <>
@@ -207,42 +196,15 @@ export default function RegisterScreen() {
                 {step === 1 ? "Crea tu PIN" : "Confirma tu PIN"}
               </Text>
 
-              {/* Custom PIN Dots */}
-              <View className="flex-row gap-3 mb-6 justify-center">
-                {[...Array(6)].map((_, i) => (
-                  <View
-                    key={i}
-                    className={`size-3 rounded-full ${i < pin.length ? "" : "bg-muted"}`}
-                    style={
-                      i < pin.length
-                        ? { backgroundColor: primaryColor || "#002aff" }
-                        : {}
-                    }
-                  />
-                ))}
-              </View>
-
-              {/* Custom Keypad */}
-              <View className="w-full flex-row flex-wrap justify-center gap-3 mb-5">
-                {keypadItems.map((item, i) => (
-                  <Pressable
-                    key={i}
-                    onPress={() => {
-                      if (item === "del") handleDeletePin();
-                      else if (item !== "") handlePinPress(item.toString());
-                    }}
-                    className={`w-[30%] h-10 items-center justify-center rounded-lg ${item !== "" ? "bg-secondary active:bg-muted" : "opacity-0"}`}
-                    disabled={item === ""}
-                  >
-                    {item === "del" ? (
-                      <Delete size={20} className="text-muted-foreground" />
-                    ) : item !== "" ? (
-                      <Text className="text-xl font-bold text-foreground font-poppins select-none">
-                        {item}
-                      </Text>
-                    ) : null}
-                  </Pressable>
-                ))}
+              {/* Keypad */}
+              <View className="w-full mb-5 mt-2">
+                <PinKeypad
+                  pin={pin}
+                  onPinChange={setPin}
+                  primaryColor={primaryColor || "#002aff"}
+                  maxLength={6}
+                  shuffle={false}
+                />
               </View>
 
               {step === 1 ? (

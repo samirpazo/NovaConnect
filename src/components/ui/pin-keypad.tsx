@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Pressable, Text } from "react-native";
-import { Delete, Fingerprint } from "lucide-react-native";
+import { View, Pressable, Text, Platform } from "react-native";
+import { Delete, Fingerprint, ScanFace } from "lucide-react-native";
+import { useColorScheme } from "nativewind";
 
 interface PinKeypadProps {
   pin: string;
@@ -25,6 +26,7 @@ export function PinKeypad({
   onBiometric,
   shuffle = false,
 }: PinKeypadProps) {
+  const { colorScheme } = useColorScheme();
   const [shuffledNumbers, setShuffledNumbers] = React.useState<number[]>([]);
 
   React.useEffect(() => {
@@ -96,20 +98,24 @@ export function PinKeypad({
               } ${item === "bio" && !isBiometricSupported ? "opacity-0" : ""}`}
             >
               {item === "del" ? (
-                <Delete size={24} className="text-muted-foreground" />
+                <Delete size={24} color={colorScheme === "dark" ? "#a1a1aa" : "#71717a"} />
               ) : item === "bio" ? (
                 isBiometricSupported ? (
-                  <Fingerprint
-                    size={28}
-                    className={
-                      isBiometricEnabled
-                        ? "text-primary"
-                        : "text-muted-foreground"
-                    }
-                    color={
-                      isBiometricEnabled ? primaryColor || "#002aff" : undefined
-                    }
-                  />
+                  Platform.OS === "ios" ? (
+                    <ScanFace
+                      size={28}
+                      color={
+                        isBiometricEnabled ? primaryColor || "#002aff" : (colorScheme === "dark" ? "#a1a1aa" : "#71717a")
+                      }
+                    />
+                  ) : (
+                    <Fingerprint
+                      size={28}
+                      color={
+                        isBiometricEnabled ? primaryColor || "#002aff" : (colorScheme === "dark" ? "#a1a1aa" : "#71717a")
+                      }
+                    />
+                  )
                 ) : null
               ) : item !== "" ? (
                 <Text className="text-2xl font-bold text-foreground font-poppins select-none">
