@@ -1,73 +1,138 @@
-# Minimal Template
+# Nova Connect
 
-This is a [React Native](https://reactnative.dev/) project built with [Expo](https://expo.dev/) and [React Native Reusables](https://reactnativereusables.com).
+App móvil del ecosistema **Nova Core Platform** — construida con [Expo](https://expo.dev/) + [React Native](https://reactnative.dev/) y [Nativewind](https://www.nativewind.dev/).
 
-It was initialized using the following command, then the `Minimal (Nativewind)` template was selected when prompted:
-
-```bash
-npx @react-native-reusables/cli@latest init
-```
-
-## Getting Started
-
-To run the development server:
-
-```bash
-    npm run dev
-    # or
-    yarn dev
-    # or
-    pnpm dev
-    # or
-    bun dev
-```
-
-This will start the Expo Dev Server. Open the app in:
-
-- **iOS**: press `i` to launch in the iOS simulator _(Mac only)_
-- **Android**: press `a` to launch in the Android emulator
-- **Web**: press `w` to run in a browser
-
-You can also scan the QR code using the [Expo Go](https://expo.dev/go) app on your device. This project fully supports running in Expo Go for quick testing on physical devices.
-
-## Adding components
-
-You can add more reusable components using the CLI:
-
-```bash
-npx react-native-reusables/cli@latest add [...components]
-```
-
-> e.g. `npx react-native-reusables/cli@latest add input textarea`
-
-If you don't specify any component names, you'll be prompted to select which components to add interactively. Use the `--all` flag to install all available components at once.
-
-## Project Features
-
-- ⚛️ Built with [Expo Router](https://expo.dev/router)
-- 🎨 Styled with [Tailwind CSS](https://tailwindcss.com/) via [Nativewind](https://www.nativewind.dev/)
-- 📦 UI powered by [React Native Reusables](https://github.com/founded-labs/react-native-reusables)
-- 🚀 New Architecture enabled
-- 🔥 Edge to Edge enabled
-- 📱 Runs on iOS, Android, and Web
-
-## Learn More
-
-To dive deeper into the technologies used:
-
-- [React Native Docs](https://reactnative.dev/docs/getting-started)
-- [Expo Docs](https://docs.expo.dev/)
-- [Nativewind Docs](https://www.nativewind.dev/)
-- [React Native Reusables](https://reactnativereusables.com)
-
-## Deploy with EAS
-
-The easiest way to deploy your app is with [Expo Application Services (EAS)](https://expo.dev/eas).
-
-- [EAS Build](https://docs.expo.dev/build/introduction/)
-- [EAS Updates](https://docs.expo.dev/eas-update/introduction/)
-- [EAS Submit](https://docs.expo.dev/submit/introduction/)
+- **Bundle ID iOS**: `com.novateam.novaconnect`
+- **Package Android**: `com.novateam.novaconnect`
+- **EAS Project ID**: `8da81d81-4793-4bcd-b2c2-bf4771f0c1a7`
 
 ---
 
-If you enjoy using React Native Reusables, please consider giving it a ⭐ on [GitHub](https://github.com/founded-labs/react-native-reusables). Your support means a lot!
+## 🚀 Desarrollo
+
+```bash
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo (Expo Go)
+npx expo start
+
+# Iniciar en dispositivo/emulador específico
+npx expo start --android
+npx expo start --ios
+```
+
+---
+
+## 📦 Compilar para Producción
+
+### 🤖 Android — APK (instalación directa)
+
+Genera un `.apk` que puedes instalar directamente en el dispositivo sin pasar por la Play Store:
+
+```bash
+# 1. Pre-build nativo (genera la carpeta android/)
+npx expo prebuild --platform android --clean
+
+# 2. Compilar APK en modo Release
+cd android && ./gradlew assembleRelease && cd ..
+
+# El APK queda en:
+# android/app/build/outputs/apk/release/app-release.apk
+```
+
+### 🤖 Android — AAB (Google Play Store)
+
+Genera un `.aab` optimizado para subir a la Play Store:
+
+```bash
+npx expo prebuild --platform android --clean
+cd android && ./gradlew bundleRelease && cd ..
+
+# El AAB queda en:
+# android/app/build/outputs/bundle/release/app-release.aab
+```
+
+### 🍎 iOS — Build local (requiere Mac + Xcode)
+
+```bash
+npx expo prebuild --platform ios --clean
+cd ios && xcodebuild -workspace NovaConnect.xcworkspace -scheme NovaConnect -configuration Release -archivePath build/NovaConnect.xcarchive archive && cd ..
+```
+
+---
+
+## ☁️ Compilar con EAS Build (Recomendado)
+
+[EAS Build](https://docs.expo.dev/build/introduction/) compila en la nube sin necesidad de Android Studio ni Xcode:
+
+```bash
+# Instalar EAS CLI (solo la primera vez)
+npm install -g eas-cli
+
+# Login en Expo
+eas login
+
+# APK para pruebas (sin firma de Play Store)
+eas build --platform android --profile preview
+
+# AAB firmado para Play Store
+eas build --platform android --profile production
+
+# IPA para App Store
+eas build --platform ios --profile production
+
+# Ambas plataformas a la vez
+eas build --platform all --profile production
+```
+
+> Los perfiles (`preview`, `production`) se configuran en `eas.json`.
+
+---
+
+## 🔄 Actualización OTA con EAS Update
+
+Actualiza el código JS sin necesidad de publicar una nueva versión en las tiendas:
+
+```bash
+eas update --branch production --message "Fix: descripción del cambio"
+```
+
+---
+
+## 🌐 Compilar para Web (SmarterASP / Hosting estático)
+
+El proyecto usa `"output": "static"` en `app.json`, lo que genera archivos HTML/JS/CSS estáticos listos para cualquier hosting.
+
+### Exportar y comprimir
+
+```bash
+# 1. Exportar la versión web estática (genera la carpeta dist/)
+npx expo export --platform web
+
+# 2. Comprimir el contenido de dist/ directamente (sin carpeta dist/ envolvente)
+cd dist && zip -r ../nova-connect-web.zip . && cd ..
+```
+
+> El archivo `nova-connect-web.zip` se guarda en la raíz del proyecto.  
+> Descomprimir en la **raíz del sitio web** en SmarterASP (donde va el `index.html`).
+
+### Verificar localmente antes de subir
+
+```bash
+# Previsualizar el build estático con un servidor local
+npx serve dist
+# o
+npx http-server dist -p 8080
+```
+
+---
+
+## 📋 Stack Técnico
+
+- ⚛️ [Expo Router](https://expo.dev/router) — navegación basada en archivos
+- 🎨 [Nativewind](https://www.nativewind.dev/) — Tailwind CSS para React Native
+- 📦 [React Native Reusables](https://reactnativereusables.com) — componentes UI
+- 🔐 `expo-local-authentication` — Face ID / Huella dactilar
+- 💾 `expo-secure-store` — almacenamiento seguro de tokens
+- 🆕 New Architecture habilitada
