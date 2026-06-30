@@ -22,13 +22,11 @@ export default function DocumentViewerScreen() {
   const {
     fileName,
     title,
-    returnTo,
     periodMonth,
     periodYear,
   } = useLocalSearchParams<{
     fileName: string;
     title: string;
-    returnTo?: string;
     periodMonth?: string;
     periodYear?: string;
   }>();
@@ -165,13 +163,12 @@ export default function DocumentViewerScreen() {
         <TouchableOpacity
           onPress={() => {
             if (Platform.OS === "web") {
-              if (returnTo) {
-                router.replace(returnTo as any);
+              if (periodYear && periodMonth) {
+                router.replace(`/(protected)/history/${periodYear}/${periodMonth}` as any);
               } else {
                 const segments = pathname.split("/").filter(Boolean);
                 segments.pop();
-                const parentPath = "/" + segments.join("/");
-                router.replace(parentPath as any);
+                router.replace("/" + segments.join("/") as any);
               }
             } else {
               router.back();

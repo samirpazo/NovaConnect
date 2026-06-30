@@ -1,23 +1,13 @@
-import { Stack, router, usePathname } from "expo-router";
+import { Stack, router } from "expo-router";
 import { useTheme } from "@react-navigation/native";
 import { TouchableOpacity, Platform } from "react-native";
 import { ChevronLeft } from "lucide-react-native";
 
 function CustomBackButton() {
   const { colors } = useTheme();
-  const pathname = usePathname();
   return (
     <TouchableOpacity
-      onPress={() => {
-        if (Platform.OS === "web") {
-          const segments = pathname.split("/").filter(Boolean);
-          segments.pop();
-          const parentPath = "/" + segments.join("/");
-          router.replace(parentPath as any);
-        } else {
-          router.back();
-        }
-      }}
+      onPress={() => router.back()}
       className="mr-1 ml-1 active:opacity-70"
     >
       <ChevronLeft size={28} color={colors.primary} />
@@ -26,8 +16,6 @@ function CustomBackButton() {
 }
 
 export default function HistoryLayout() {
-  const pathname = usePathname();
-
   return (
     <Stack
       screenOptions={{
