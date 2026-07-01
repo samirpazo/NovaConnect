@@ -46,3 +46,6 @@ example
 # Google Services / Firebase
 google-services.json
 GoogleService-Info.plist
+
+# Zips
+nova-connect-web.zip
