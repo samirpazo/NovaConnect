@@ -2,7 +2,6 @@ import { Text } from "@/components/ui/text";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Calendar, ChevronRight, FileText } from "lucide-react-native";
 import { View, FlatList, Pressable, RefreshControl, ActivityIndicator, Modal } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { processedDocumentService } from "@/services/processedDocumentService";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -22,7 +21,7 @@ export default function DocumentsScreen() {
   const handleOpenPdf = async (fileName: string, title?: string, periodMonth?: string, periodYear?: string) => {
     try {
       router.push({
-        pathname: "/(protected)/documents/viewer" as any,
+        pathname: "/(protected)/documents/viewer",
         params: { fileName, title: title || "Documento", returnTo: pathname, periodMonth, periodYear },
       });
     } catch (error) {

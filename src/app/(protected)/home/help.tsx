@@ -1,5 +1,7 @@
 import { Text } from "@/components/ui/text";
 import { showToast } from "@/lib/toast";
+import { sanitizePrimaryColor } from "@/lib/colorUtils";
+import { logger } from "@/lib/logger";
 import { genParameterService, HelpData } from "@/services/genParameterService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import * as Clipboard from "expo-clipboard";
@@ -13,10 +15,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 export default function HelpScreen() {
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
   
-  // Garantizar que primaryColor sea un color hexadecimal válido con prefijo '#' y no sea rojo genérico
-  const rawColor = storePrimaryColor || "#002aff";
-  const cleanColor = rawColor.startsWith("#") ? rawColor : `#${rawColor}`;
-  const primaryColor = cleanColor.toLowerCase() === "#ff0000" ? "#002aff" : cleanColor;
+  const primaryColor = sanitizePrimaryColor(storePrimaryColor);
 
   const [helpData, setHelpData] = React.useState<HelpData | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -27,7 +26,7 @@ export default function HelpScreen() {
         const data = await genParameterService.getHelpInfo();
         setHelpData(data);
       } catch (error) {
-        console.error("Error fetching help data:", error);
+        logger.error("Error fetching help data:", error);
       } finally {
         setLoading(false);
       }

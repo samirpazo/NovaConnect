@@ -1,4 +1,5 @@
 import { VaultFile, useVault } from "@/hooks/useVault";
+import { logger } from "@/lib/logger";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { DateTime } from "luxon";
 import { router } from "expo-router";
@@ -33,7 +34,7 @@ export default function VaultScreen() {
       const fetchedFiles = await getVaultFiles();
       setFiles(fetchedFiles);
     } catch (error) {
-      console.error("Error loading vault:", error);
+      logger.error("Error loading vault:", error);
     } finally {
       setLoading(false);
     }

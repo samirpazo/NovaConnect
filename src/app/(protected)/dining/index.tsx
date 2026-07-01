@@ -2,8 +2,6 @@ import { Text } from "@/components/ui/text";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Utensils } from "lucide-react-native";
 import { View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 export default function DiningScreen() {
   const { primaryColor } = usePreferenceStore();
 

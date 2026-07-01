@@ -35,7 +35,7 @@ export {
   ErrorBoundary
 } from "expo-router";
 
-function useProtectedRoute(user: any, loading: boolean, isReady: boolean) {
+function useProtectedRoute(user: any, loading: boolean, isReady: boolean, pinLocked: boolean) {
   const segments = useSegments();
   const router = useRouter();
 
@@ -46,10 +46,12 @@ function useProtectedRoute(user: any, loading: boolean, isReady: boolean) {
 
     if (!user && inProtectedGroup) {
       router.replace("/");
-    } else if (user && !inProtectedGroup) {
+    } else if (user && !inProtectedGroup && !pinLocked) {
       router.replace("/(protected)/home");
+    } else if (user && pinLocked && !inProtectedGroup && segments[0] !== undefined) {
+      router.replace("/");
     }
-  }, [user, segments, loading, isReady]);
+  }, [user, segments, loading, isReady, pinLocked]);
 }
 
 function ThemeEffects() {
@@ -120,10 +122,10 @@ export default function RootLayout() {
     Poppins_700Bold,
   });
 
-  const { user, loading: authLoading, initializeAuth } = useAuthStore();
+  const { user, loading: authLoading, initializeAuth, pinLocked } = useAuthStore();
   const [isReady, setIsReady] = useState(false);
 
-  useProtectedRoute(user, authLoading, isReady);
+  useProtectedRoute(user, authLoading, isReady, pinLocked);
 
   useEffect(() => {
     const initApp = async () => {

@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { logger } from "@/lib/logger";
 
 export const pushNotificationService = {
   async saveToken(prsId: number, token: string): Promise<boolean> {
@@ -11,7 +12,7 @@ export const pushNotificationService = {
       const { data } = await api.post("/GenPushNotification/Save", payload);
       return data.Succeeded || data.Data;
     } catch (error) {
-      console.error("Error guardando el token de notificaciones:", error);
+      logger.error("Error guardando el token de notificaciones:", error);
       return false;
     }
   },

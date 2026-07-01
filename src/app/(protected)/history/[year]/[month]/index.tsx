@@ -1,10 +1,9 @@
 import { Text } from "@/components/ui/text";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { showToast } from "@/lib/toast";
-import { processedDocumentService } from "@/services/processedDocumentService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { ProcessedDocument } from "@/types/document";
-import { Stack, useLocalSearchParams, router } from "expo-router";
+import { Stack, useLocalSearchParams, router, RelativePathString } from "expo-router";
 import { Calendar, CheckCircle2, FileText, ChevronLeft } from "lucide-react-native";
 import { useMemo } from "react";
 import {
@@ -14,7 +13,6 @@ import {
   Pressable,
   RefreshControl,
   View,
-  TouchableOpacity,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -45,7 +43,7 @@ export default function HistoryMonthDocumentsScreen() {
   const handleOpenPdf = async (fileName: string, title?: string, periodMonth?: string, periodYear?: string) => {
     try {
       router.push({
-        pathname: "/(protected)/history/viewer" as any,
+        pathname: "/(protected)/history/viewer",
         params: { fileName, title: title || "Documento", periodMonth, periodYear },
       });
     } catch (error) {
@@ -108,7 +106,7 @@ export default function HistoryMonthDocumentsScreen() {
           <Pressable
             onPress={() => {
               if (Platform.OS === "web") {
-                router.replace(`/(protected)/history/${year}` as any);
+                router.replace(`/(protected)/history/${year}` as unknown as RelativePathString);
               } else {
                 router.back();
               }

@@ -36,7 +36,7 @@ export const AlertHelper = {
       }
     } else {
       // Native platforms use the standard Alert API
-      NativeAlert.alert(title, message, buttons as any);
+      NativeAlert.alert(title, message, buttons);
     }
   },
 };

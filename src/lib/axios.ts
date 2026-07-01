@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { storage } from "@/lib/storage";
 import axios from "axios";
 import { Platform } from "react-native";
@@ -55,7 +56,7 @@ api.interceptors.request.use(
         config.headers["X-Mobile-Api-Key"] = mobileApiKey;
       }
     } catch (error) {
-      console.error("Error getting token from SecureStore", error);
+      logger.error("Error getting token from SecureStore", error);
     }
     return config;
   },
@@ -67,13 +68,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const status = error.response?.status;
+
+    // Solo errores 401 disparan el flujo de refresh
+    if (status !== 401) {
+      return Promise.reject(error);
+    }
+
     const originalRequest = error.config;
 
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      !isLoggingOut
-    ) {
+    if (!originalRequest._retry && !isLoggingOut) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
@@ -114,6 +118,7 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         processQueue(refreshError, null);
+        logger.warn("Token refresh failed, logging out", refreshError);
         isLoggingOut = true;
         if (globalLogoutCallback) {
           globalLogoutCallback();

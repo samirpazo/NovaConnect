@@ -1,6 +1,7 @@
 import { NImage } from "@/components/custom/NImage";
 import { Text } from "@/components/ui/text";
 import { AlertHelper } from "@/lib/alert";
+import { sanitizePrimaryColor } from "@/lib/colorUtils";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { LinearGradient } from "expo-linear-gradient";
@@ -20,17 +21,12 @@ import * as React from "react";
 import { Modal, Platform, Pressable, ScrollView, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import Animated, { FadeInDown, FadeOut, ZoomIn } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const { user, logout } = useAuthStore();
   const [photoVisible, setPhotoVisible] = React.useState(false);
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
-  const primaryColor =
-    storePrimaryColor?.toLowerCase() === "#ff0000" ||
-    storePrimaryColor?.toLowerCase() === "ff0000"
-      ? "#002aff"
-      : storePrimaryColor;
+  const primaryColor = sanitizePrimaryColor(storePrimaryColor);
 
   const handleSettings = () => {
     router.push("/(protected)/home/settings");
@@ -100,7 +96,7 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
                 className="w-8 h-8 rounded-xl items-center justify-center"
-                style={{ backgroundColor: `${primaryColor}15` || "#002aff15" }}
+                style={{ backgroundColor: primaryColor ? `${primaryColor}15` : "#002aff15" }}
               >
                 <IdCard size={16} color={primaryColor || "#002aff"} />
               </View>
@@ -117,7 +113,7 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
                 className="w-8 h-8 rounded-xl items-center justify-center"
-                style={{ backgroundColor: `${primaryColor}15` || "#002aff15" }}
+                style={{ backgroundColor: primaryColor ? `${primaryColor}15` : "#002aff15" }}
               >
                 <Building2 size={16} color={primaryColor || "#002aff"} />
               </View>
@@ -134,7 +130,7 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
                 className="w-8 h-8 rounded-xl items-center justify-center"
-                style={{ backgroundColor: `${primaryColor}15` || "#002aff15" }}
+                style={{ backgroundColor: primaryColor ? `${primaryColor}15` : "#002aff15" }}
               >
                 <Mail size={16} color={primaryColor || "#002aff"} />
               </View>
@@ -151,7 +147,7 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
                 className="w-8 h-8 rounded-xl items-center justify-center"
-                style={{ backgroundColor: `${primaryColor}15` || "#002aff15" }}
+                style={{ backgroundColor: primaryColor ? `${primaryColor}15` : "#002aff15" }}
               >
                 <Phone size={16} color={primaryColor || "#002aff"} />
               </View>
@@ -202,7 +198,7 @@ export default function HomeScreen() {
 
               {Platform.OS !== "web" && (
                 <Pressable
-                  onPress={() => router.push("/(protected)/home/vault" as any)}
+                  onPress={() => router.push({ pathname: "/(protected)/home/vault" })}
                   className="flex-row items-center gap-3.5 py-2 px-4 rounded-[16px] bg-card border border-border/40 active:bg-secondary/50"
                 >
                   <View className="w-9 h-9 rounded-[12px] bg-secondary/80 items-center justify-center">

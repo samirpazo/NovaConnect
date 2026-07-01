@@ -1,5 +1,7 @@
 import { Text } from "@/components/ui/text";
 import { showToast } from "@/lib/toast";
+import { sanitizePrimaryColor } from "@/lib/colorUtils";
+import { logger } from "@/lib/logger";
 import { hashPassword } from "@/lib/security";
 import { storage } from "@/lib/storage";
 import { authService } from "@/services/authService";
@@ -26,11 +28,7 @@ export default function RegisterScreen() {
   const { login } = useAuthStore();
   const { setPreferences, primaryColor: storePrimaryColor } =
     usePreferenceStore();
-  const primaryColor =
-    storePrimaryColor?.toLowerCase() === "#ff0000" ||
-    storePrimaryColor?.toLowerCase() === "ff0000"
-      ? "#002aff"
-      : storePrimaryColor;
+  const primaryColor = sanitizePrimaryColor(storePrimaryColor);
   const [step, setStep] = React.useState<1 | 2>(1);
   const [firstPin, setFirstPin] = React.useState("");
   const [pin, setPin] = React.useState("");
@@ -106,12 +104,12 @@ export default function RegisterScreen() {
             await secCollaboratorPreferenceService.getMyPreferences();
           if (pref) {
             setPreferences(
-              (pref.Theme as any) || "system",
+              (pref.Theme ?? "system") as "light" | "dark" | "system",
               pref.PrimaryColor || "#002aff",
             );
           }
         } catch (e) {
-          console.log("Failed to load user preferences", e);
+          logger.log("Failed to load user preferences", e);
         }
 
         showToast.success("¡Éxito!", "Te has registrado correctamente.");

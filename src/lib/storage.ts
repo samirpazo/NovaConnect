@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
@@ -9,7 +10,7 @@ export const storage = {
           localStorage.setItem(key, value);
         }
       } catch (e) {
-        console.error('Local storage is unavailable:', e);
+        logger.error('Local storage is unavailable:', e);
       }
     } else {
       await SecureStore.setItemAsync(key, value);
@@ -23,7 +24,7 @@ export const storage = {
           return localStorage.getItem(key);
         }
       } catch (e) {
-        console.error('Local storage is unavailable:', e);
+        logger.error('Local storage is unavailable:', e);
       }
       return null;
     } else {
@@ -38,7 +39,7 @@ export const storage = {
           localStorage.removeItem(key);
         }
       } catch (e) {
-        console.error('Local storage is unavailable:', e);
+        logger.error('Local storage is unavailable:', e);
       }
     } else {
       await SecureStore.deleteItemAsync(key);

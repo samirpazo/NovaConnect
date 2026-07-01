@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { Platform } from "react-native";
@@ -38,7 +39,7 @@ export const useVault = () => {
         return JSON.parse(content);
       }
     } catch (e) {
-      console.error("Error reading vault metadata:", e);
+      logger.error("Error reading vault metadata:", e);
     }
     return {};
   };
@@ -47,7 +48,7 @@ export const useVault = () => {
     try {
       await FileSystem.writeAsStringAsync(METADATA_FILE, JSON.stringify(metadata));
     } catch (e) {
-      console.error("Error writing vault metadata:", e);
+      logger.error("Error writing vault metadata:", e);
     }
   };
 

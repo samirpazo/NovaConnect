@@ -1,4 +1,5 @@
 import { api, API_URL } from "@/lib/axios";
+import { logger } from "@/lib/logger";
 import { ProcessedDocument } from "@/types/document";
 import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
@@ -13,7 +14,7 @@ export const processedDocumentService = {
       );
       return data.Data || [];
     } catch (error) {
-      console.error("Error fetching processed documents:", error);
+      logger.error("Error fetching processed documents:", error);
       throw error;
     }
   },
@@ -27,7 +28,7 @@ export const processedDocumentService = {
       );
       return data.Succeeded || data.Data;
     } catch (error) {
-      console.error("Error updating document:", error);
+      logger.error("Error updating document:", error);
       throw error;
     }
   },
@@ -62,7 +63,7 @@ export const processedDocumentService = {
         });
       }
     } catch (error) {
-      console.error("Error opening PDF:", error);
+      logger.error("Error opening PDF:", error);
       throw error;
     }
   }

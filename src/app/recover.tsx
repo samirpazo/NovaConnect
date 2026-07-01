@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { OtpInput } from "@/components/ui/otp-input";
 import { Text } from "@/components/ui/text";
 import { AlertHelper } from "@/lib/alert";
+import { sanitizePrimaryColor } from "@/lib/colorUtils";
 import { hashPassword } from "@/lib/security";
 import { showToast } from "@/lib/toast";
 import { storage } from "@/lib/storage";
@@ -22,11 +23,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RecoverPinScreen() {
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
-  const primaryColor =
-    storePrimaryColor?.toLowerCase() === "#ff0000" ||
-    storePrimaryColor?.toLowerCase() === "ff0000"
-      ? "#002aff"
-      : storePrimaryColor || "#002aff";
+  const primaryColor = sanitizePrimaryColor(storePrimaryColor);
 
   const { document } = useLocalSearchParams<{ document?: string }>();
   const [step, setStep] = React.useState<1 | 2 | 3>(1);
@@ -321,7 +318,7 @@ export default function RecoverPinScreen() {
       <View className="w-full flex-row justify-between items-center p-4 min-h-[60px] z-10">
         <Pressable
           onPress={() =>
-            step > 1 ? setStep((prev) => (prev - 1) as any) : router.back()
+            step > 1 ? setStep((prev) => Math.max(1, prev - 1) as 1 | 2 | 3) : router.back()
           }
           className="p-2 w-12 h-12 justify-center items-center rounded-full bg-secondary/50 active:bg-secondary"
         >

@@ -2,11 +2,10 @@ import { Text } from "@/components/ui/text";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { Calendar, ChevronRight } from "lucide-react-native";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useMemo } from "react";
-import { FlatList, Platform, Pressable, View, TouchableOpacity } from "react-native";
+import { FlatList, Platform, Pressable, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { ChevronLeft } from "lucide-react-native";
 
 export default function HistoryMonthsScreen() {
   const { year } = useLocalSearchParams<{ year: string }>();
@@ -62,7 +61,7 @@ export default function HistoryMonthsScreen() {
           <Pressable
             onPress={() => {
               if (Platform.OS === "web") {
-                router.replace("/(protected)/history" as any);
+                router.replace({ pathname: "/(protected)/history" });
               } else {
                 router.back();
               }

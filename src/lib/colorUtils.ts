@@ -1,6 +1,15 @@
 /**
  * Convierte un color HEX (ej. #002aff) a formato HSL usado por NativeWind v4 (ej. "230 100% 50%")
  */
+const DEFAULT_PRIMARY_COLOR = "#002aff";
+
+export function sanitizePrimaryColor(color: string | undefined | null, fallback = DEFAULT_PRIMARY_COLOR): string {
+  if (!color) return fallback;
+  const normalized = color.toLowerCase();
+  if (normalized === "#ff0000" || normalized === "ff0000") return fallback;
+  return color;
+}
+
 export const hexToNativeWindHsl = (hex: string): string => {
   if (!hex) return '';
   

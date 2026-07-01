@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios';
+import { logger } from '@/lib/logger';
 
 export const fileService = {
   getFile: async (
@@ -15,7 +16,7 @@ export const fileService = {
       }
       return '';
     } catch (error) {
-      console.error('Error fetching file:', error);
+      logger.error('Error fetching file:', error);
       throw error;
     }
   }

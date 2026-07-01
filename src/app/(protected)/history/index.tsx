@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { Input } from "@/components/ui/input";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HistoryYearsScreen() {
   const { documents, isLoading, isRefreshing, refetch } =

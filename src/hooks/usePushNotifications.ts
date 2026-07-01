@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
@@ -58,7 +59,7 @@ export async function registerForPushNotificationsAsync() {
         Constants?.easConfig?.projectId;
         
       if (!projectId) {
-        console.warn("Project ID not found. Ensure app.json has expo.extra.eas.projectId");
+        logger.warn("Project ID not found. Ensure app.json has expo.extra.eas.projectId");
       }
 
       token = (
@@ -68,10 +69,10 @@ export async function registerForPushNotificationsAsync() {
       ).data;
       
     } catch (error) {
-      console.error("Error al obtener el push token de Expo", error);
+      logger.error("Error al obtener el push token de Expo", error);
     }
   } else {
-    console.log("Las notificaciones Push requieren un dispositivo físico.");
+    logger.log("Las notificaciones Push requieren un dispositivo físico.");
   }
 
   return token;

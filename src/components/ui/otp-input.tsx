@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { View, TextInput, Pressable, Text } from "react-native";
+import { sanitizePrimaryColor } from "@/lib/colorUtils";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 
 interface OtpInputProps {
@@ -19,11 +20,7 @@ export function OtpInput({
   const [isFocused, setIsFocused] = useState(false);
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
   
-  const primaryColor =
-    storePrimaryColor?.toLowerCase() === "#ff0000" ||
-    storePrimaryColor?.toLowerCase() === "ff0000"
-      ? "#002aff"
-      : storePrimaryColor || "#002aff";
+  const primaryColor = sanitizePrimaryColor(storePrimaryColor);
 
   const handlePress = () => {
     inputRef.current?.focus();

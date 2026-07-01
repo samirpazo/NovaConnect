@@ -1,8 +1,11 @@
+import { BioSetupModal } from "@/components/settings/BioSetupModal";
+import { ChangePinModal } from "@/components/settings/ChangePinModal";
+import { ColorPickerModal } from "@/components/settings/ColorPickerModal";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { PinKeypad } from "@/components/ui/pin-keypad";
-import { OtpInput } from "@/components/ui/otp-input";
 import { Text } from "@/components/ui/text";
+import { sanitizePrimaryColor } from "@/lib/colorUtils";
+import { logger } from "@/lib/logger";
 import { hashPassword } from "@/lib/security";
 import { storage } from "@/lib/storage";
 import { showToast } from "@/lib/toast";
@@ -18,28 +21,21 @@ import {
   MoonStarIcon,
   Palette,
   SunIcon,
-  X,
-  Fingerprint,
-  ScanFace,
   ChevronLeft,
 } from "lucide-react-native";
 import { router } from "expo-router";
 import * as React from "react";
 import {
   ActivityIndicator,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
   Switch,
   View,
-  KeyboardAvoidingView,
   TextInput,
   InteractionManager,
 } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { FadeInDown, runOnJS } from "react-native-reanimated";
-import ColorPicker, { HueSlider, Panel1 } from "reanimated-color-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const HealthCard = () => {
@@ -145,11 +141,7 @@ export default function SettingsScreen() {
   const [storePrimaryColor, setStorePrimaryColor] = React.useState(store.primaryColor);
   const insets = useSafeAreaInsets();
 
-  const primaryColor =
-    storePrimaryColor?.toLowerCase() === "#ff0000" ||
-    storePrimaryColor?.toLowerCase() === "ff0000"
-      ? "#002aff"
-      : storePrimaryColor || "#002aff";
+  const primaryColor = sanitizePrimaryColor(storePrimaryColor);
 
   const [isSaving, setIsSaving] = React.useState(false);
   const [isBiometricEnabled, setIsBiometricEnabled] = React.useState(false);
@@ -277,7 +269,7 @@ export default function SettingsScreen() {
         Theme: theme, 
         PrimaryColor: hex 
       }).catch((err) => {
-        console.error("Error saving preferences to cloud:", err?.response?.data || err.message);
+        logger.error("Error saving preferences to cloud:", err?.response?.data || err.message);
       });
     }, 100);
   };
@@ -342,16 +334,16 @@ export default function SettingsScreen() {
                     <Pressable
                       key={option.value}
                       onPress={() => {
-                        setTheme(option.value as any);
+                        setTheme(option.value);
                         setStorePrimaryColor(primaryColor);
                         setTimeout(() => {
-                          setPreferences(option.value as any, primaryColor);
+                          setPreferences(option.value, primaryColor);
                           secCollaboratorPreferenceService.savePreferences({ 
                             ColID: user?.ColID, 
-                            Theme: option.value as any, 
+                            Theme: option.value, 
                             PrimaryColor: primaryColor 
                           }).catch((err) => {
-                            console.error("Error saving preferences to cloud:", err?.response?.data || err.message);
+                            logger.error("Error saving preferences to cloud:", err?.response?.data || err.message);
                           });
                         }, 100);
                       }}
@@ -420,7 +412,7 @@ export default function SettingsScreen() {
                                 Theme: theme, 
                                 PrimaryColor: color.value 
                               }).catch((err) => {
-                                console.error("Error saving preferences to cloud:", err?.response?.data || err.message);
+                                logger.error("Error saving preferences to cloud:", err?.response?.data || err.message);
                               });
                             }, 100);
                           });
@@ -575,202 +567,36 @@ export default function SettingsScreen() {
         </ScrollView>
       </View>
 
-      {/* Change PIN Modal */}
-      <Modal
+      <ChangePinModal
         visible={pinModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => !isChangingPin && setPinModalVisible(false)}
-      >
-        <View
-          className="flex-1 justify-center items-center px-6"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
-          <View className="w-full max-w-sm bg-card rounded-[24px] p-6 border border-border">
-            <Text className="text-xl font-poppins-bold text-foreground mb-1">
-              Cambiar PIN
-            </Text>
-            <Text className="text-sm font-poppins text-muted-foreground mb-6">
-              Ingresa tu PIN actual y el nuevo código de 6 dígitos.
-            </Text>
+        onClose={() => setPinModalVisible(false)}
+        oldPin={oldPin}
+        onOldPinChange={setOldPin}
+        newPin={newPin}
+        onNewPinChange={setNewPin}
+        confirmPin={confirmPin}
+        onConfirmPinChange={setConfirmPin}
+        isChanging={isChangingPin}
+        primaryColor={primaryColor}
+        onChange={handleChangePin}
+      />
 
-            <View className="gap-4 mb-8">
-              <View>
-                <Text className="text-[12px] font-poppins-medium text-foreground mb-2 ml-1">
-                  PIN Actual
-                </Text>
-                <OtpInput
-                  value={oldPin}
-                  onChangeText={setOldPin}
-                  secureTextEntry
-                />
-              </View>
-              <View>
-                <Text className="text-[12px] font-poppins-medium text-foreground mb-2 ml-1">
-                  Nuevo PIN
-                </Text>
-                <OtpInput
-                  value={newPin}
-                  onChangeText={setNewPin}
-                  secureTextEntry
-                />
-              </View>
-              <View>
-                <Text className="text-[12px] font-poppins-medium text-foreground mb-2 ml-1">
-                  Confirmar Nuevo PIN
-                </Text>
-                <OtpInput
-                  value={confirmPin}
-                  onChangeText={setConfirmPin}
-                  secureTextEntry
-                />
-              </View>
-            </View>
+      <BioSetupModal
+        visible={bioSetupModalVisible}
+        onClose={() => setBioSetupModalVisible(false)}
+        pin={bioSetupPin}
+        onPinChange={setBioSetupPin}
+        isActivating={isActivatingBio}
+        primaryColor={primaryColor}
+        onConfirm={handleConfirmBioSetup}
+      />
 
-            <View className="flex-row justify-end gap-3">
-              <Button
-                variant="ghost"
-                onPress={() => setPinModalVisible(false)}
-                disabled={isChangingPin}
-                className="px-6 h-12"
-              >
-                <Text>Cancelar</Text>
-              </Button>
-              <Button
-                onPress={handleChangePin}
-                disabled={
-                  isChangingPin ||
-                  oldPin.length < 6 ||
-                  newPin.length < 6 ||
-                  confirmPin.length < 6
-                }
-                className="px-6 h-12"
-                style={{
-                  backgroundColor:
-                    newPin.length >= 6 ? primaryColor : undefined,
-                }}
-              >
-                <Text className="font-poppins-bold text-white">
-                  {isChangingPin ? "Guardando..." : "Cambiar"}
-                </Text>
-              </Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Biometric Setup Modal */}
-      <Modal visible={bioSetupModalVisible} transparent animationType="fade">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 justify-center items-center p-6"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
-          <View className="bg-card w-full max-w-[320px] rounded-[24px] p-6 relative border border-border">
-            <Pressable
-              onPress={() => setBioSetupModalVisible(false)}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.7 : 1,
-              })}
-              className="absolute top-4 right-4 p-2 z-10"
-            >
-              <X size={20} className="text-muted-foreground" />
-            </Pressable>
-
-            <View className="items-center mb-4 mt-2">
-              <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center mb-3">
-                {Platform.OS === "ios" ? (
-                  <ScanFace size={24} color={primaryColor} />
-                ) : (
-                  <Fingerprint size={24} color={primaryColor} />
-                )}
-              </View>
-              <Text className="text-xl font-poppins-bold text-foreground text-center">
-                Activar Biometría
-              </Text>
-              <Text className="text-sm text-muted-foreground font-poppins text-center mt-2">
-                Ingresa tu PIN para confirmar tu identidad.
-              </Text>
-            </View>
-
-            <View className="mb-6 mt-4">
-              <PinKeypad
-                pin={bioSetupPin}
-                onPinChange={setBioSetupPin}
-                primaryColor={primaryColor}
-                maxLength={6}
-              />
-            </View>
-
-            <Pressable
-              onPress={handleConfirmBioSetup}
-              disabled={isActivatingBio || bioSetupPin.length < 4}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.7 : 1,
-              })}
-              className={`w-full h-12 rounded-[16px] flex-row items-center justify-center ${bioSetupPin.length >= 4 ? "bg-primary" : "bg-muted opacity-60"}`}
-            >
-              <Text
-                className={`font-poppins-bold text-base ${bioSetupPin.length >= 4 ? "text-primary-foreground" : "text-muted-foreground"}`}
-              >
-                {isActivatingBio ? "Activando..." : "Confirmar"}
-              </Text>
-            </Pressable>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Color Picker Modal */}
-      <Modal
+      <ColorPickerModal
         visible={isColorPickerVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsColorPickerVisible(false)}
-      >
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <View
-            className="flex-1 justify-center items-center px-6"
-            style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-          >
-            <View className="w-full max-w-sm bg-card rounded-[24px] p-6 border border-border">
-              <View className="flex-row justify-between items-center mb-6">
-                <Text className="text-xl font-poppins-bold text-foreground">
-                  Elige un color
-                </Text>
-                <Pressable
-                  onPress={() => setIsColorPickerVisible(false)}
-                  style={({ pressed }) => ({
-                    opacity: pressed ? 0.7 : 1,
-                  })}
-                  className="p-2 bg-secondary rounded-full"
-                >
-                  <X size={20} className="text-foreground" />
-                </Pressable>
-              </View>
-
-              <ColorPicker
-                style={{ width: "100%", gap: 20 }}
-                value={primaryColor}
-                onComplete={onColorComplete}
-              >
-                <Panel1 style={{ height: 200, borderRadius: 16 }} />
-                <HueSlider style={{ borderRadius: 12, height: 28 }} />
-              </ColorPicker>
-
-              <Button
-                className="w-full mt-8"
-                variant="default"
-                onPress={() => setIsColorPickerVisible(false)}
-                style={{ backgroundColor: primaryColor }}
-              >
-                <Text className="text-white font-poppins-semibold text-base">
-                  Aceptar
-                </Text>
-              </Button>
-            </View>
-          </View>
-        </GestureHandlerRootView>
-      </Modal>
+        onClose={() => setIsColorPickerVisible(false)}
+        primaryColor={primaryColor}
+        onColorComplete={onColorComplete}
+      />
     </>
   );
 }

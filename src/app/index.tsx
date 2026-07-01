@@ -1,7 +1,13 @@
+import { BiometricModal } from "@/components/login/BiometricModal";
+import { ConfirmLogoutModal } from "@/components/login/ConfirmLogoutModal";
+import { HelpModal } from "@/components/login/HelpModal";
+import { RegisterModal } from "@/components/login/RegisterModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PinKeypad } from "@/components/ui/pin-keypad";
 import { Text } from "@/components/ui/text";
+import { sanitizePrimaryColor } from "@/lib/colorUtils";
+import { logger } from "@/lib/logger";
 import { hashPassword } from "@/lib/security";
 import { storage } from "@/lib/storage";
 import { showToast } from "@/lib/toast";
@@ -17,21 +23,15 @@ import {
   ArrowRight,
   ChevronLeft,
   Delete,
-  Fingerprint,
-  ScanFace,
   Headset,
   IdCard,
   LogOut,
-  Mail,
-  Phone,
   ShieldCheck,
-  X,
 } from "lucide-react-native";
 import * as React from "react";
 import {
   Alert,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -47,14 +47,10 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
-  const { login, isAuthenticating } = useAuthStore();
+  const { login, isAuthenticating, user, pinLocked, unlock } = useAuthStore();
   const { setPreferences, primaryColor: storePrimaryColor } =
     usePreferenceStore();
-  const primaryColor =
-    storePrimaryColor?.toLowerCase() === "#ff0000" ||
-    storePrimaryColor?.toLowerCase() === "ff0000"
-      ? "#002aff"
-      : storePrimaryColor;
+  const primaryColor = sanitizePrimaryColor(storePrimaryColor);
   const [step, setStep] = React.useState<1 | 2>(1);
   const [PrsDocumentNumber, setPrsDocumentNumber] = React.useState("");
   const [pin, setPin] = React.useState("");
@@ -112,10 +108,20 @@ export default function LoginScreen() {
           }
         }
       } catch (e) {
-        console.error("Error initializing auth state", e);
+        logger.error("Error initializing auth state", e);
       }
     })();
   }, []);
+
+  // Cuando el usuario se restaura desde persistencia (recarga web),
+  // mostrar pantalla de desbloqueo PIN
+  React.useEffect(() => {
+    if (pinLocked && user?.PrsDocumentNumber) {
+      setHasStoredDocument(true);
+      setPrsDocumentNumber(user.PrsDocumentNumber);
+      setStep(2);
+    }
+  }, [pinLocked, user]);
 
   const opacity = useSharedValue(1);
   const translateX = useSharedValue(0);
@@ -237,12 +243,12 @@ export default function LoginScreen() {
       const pref = await secCollaboratorPreferenceService.getMyPreferences();
       if (pref) {
         setPreferences(
-          (pref.Theme as any) || "system",
+          (pref.Theme ?? "system") as "light" | "dark" | "system",
           pref.PrimaryColor || "#002aff",
         );
       }
     } catch (e) {
-      console.error("Failed to load user preferences from cloud:", e);
+      logger.error("Failed to load user preferences from cloud:", e);
     }
   };
 
@@ -274,7 +280,7 @@ export default function LoginScreen() {
         }
       }
     } catch (e) {
-      console.log("Biometric auth cancelled or failed", e);
+      logger.log("Biometric auth cancelled or failed", e);
     }
   };
 
@@ -461,30 +467,32 @@ export default function LoginScreen() {
                     </View>
 
                     <Text className="text-2xl font-bold font-poppins text-center text-foreground mb-1">
-                      Ingresa tu PIN
+                      {pinLocked && user ? "Desbloquear acceso" : "Ingresa tu PIN"}
                     </Text>
 
                     <View className="flex-row items-center justify-center gap-3 mb-6">
                       <Text className="text-sm font-poppins text-muted-foreground select-none">
-                        Documento :{" "}
-                        {"*".repeat(Math.max(0, PrsDocumentNumber.length - 4))}
-                        {PrsDocumentNumber.slice(-4)}
+                        {pinLocked && user
+                          ? user.FullName || user.PrsName || ""
+                          : `Documento : ${"*".repeat(Math.max(0, PrsDocumentNumber.length - 4))}${PrsDocumentNumber.slice(-4)}`}
                       </Text>
-                      <Pressable
-                        onPress={() => setShowConfirmLogoutModal(true)}
-                        className="flex-row items-center bg-secondary px-3.5 py-1.5 rounded-full active:bg-secondary/80 gap-1.5"
-                      >
-                        <LogOut
-                          size={13}
-                          color={primaryColor}
-                        />
-                        <Text 
-                          style={{ color: primaryColor }}
-                          className="text-xs font-poppins-bold select-none"
+                      {!pinLocked && (
+                        <Pressable
+                          onPress={() => setShowConfirmLogoutModal(true)}
+                          className="flex-row items-center bg-secondary px-3.5 py-1.5 rounded-full active:bg-secondary/80 gap-1.5"
                         >
-                          Cambiar
-                        </Text>
-                      </Pressable>
+                          <LogOut
+                            size={13}
+                            color={primaryColor}
+                          />
+                          <Text 
+                            style={{ color: primaryColor }}
+                            className="text-xs font-poppins-bold select-none"
+                          >
+                            Cambiar
+                          </Text>
+                        </Pressable>
+                      )}
                     </View>
 
                     {/* Card Wrapper for PIN */}
@@ -532,19 +540,21 @@ export default function LoginScreen() {
                     </View>
 
                     {/* Footer Links */}
-                    <View className="mt-8 flex-row justify-center items-center">
-                      <Text className="text-muted-foreground font-poppins text-sm select-none">
-                        ¿Olvidaste tu PIN?{" "}
-                      </Text>
-                      <Pressable onPress={() => router.push({ pathname: "/recover", params: { document: PrsDocumentNumber } })}>
-                        <Text
-                          className="font-bold font-poppins text-sm select-none"
-                          style={{ color: primaryColor || "#002aff" }}
-                        >
-                          Recuperar
+                    {!pinLocked && (
+                      <View className="mt-8 flex-row justify-center items-center">
+                        <Text className="text-muted-foreground font-poppins text-sm select-none">
+                          ¿Olvidaste tu PIN?{" "}
                         </Text>
-                      </Pressable>
-                    </View>
+                        <Pressable onPress={() => router.push({ pathname: "/recover", params: { document: PrsDocumentNumber } })}>
+                          <Text
+                            className="font-bold font-poppins text-sm select-none"
+                            style={{ color: primaryColor || "#002aff" }}
+                          >
+                            Recuperar
+                          </Text>
+                        </Pressable>
+                      </View>
+                    )}
                   </View>
                 )}
               </Animated.View>
@@ -558,259 +568,41 @@ export default function LoginScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-        {/* Confirm Logout Modal */}
-        <Modal
-          visible={showConfirmLogoutModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowConfirmLogoutModal(false)}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            className="flex-1 justify-center items-center bg-black/50 p-6"
-          >
-            <View className="bg-card w-full max-w-[320px] rounded-3xl p-6 shadow-xl relative">
-              <View className="items-center mb-4 mt-2">
-                <View className="w-12 h-12 rounded-full bg-destructive/10 items-center justify-center mb-3">
-                  <LogOut size={24} className="text-destructive" />
-                </View>
-                <Text className="text-xl font-bold text-foreground font-poppins text-center">
-                  Eliminar Registro
-                </Text>
-                <Text className="text-sm text-muted-foreground font-poppins text-center mt-3">
-                  ¿Estás seguro de que deseas eliminar este documento guardado y
-                  usar otro diferente?
-                </Text>
-              </View>
-
-              <View className="flex-row items-center justify-between gap-3 mt-4">
-                <Pressable
-                  onPress={() => setShowConfirmLogoutModal(false)}
-                  className="flex-1 h-12 rounded-2xl flex-row items-center justify-center bg-secondary"
-                >
-                  <Text className="font-bold font-poppins text-base text-foreground">
-                    Cancelar
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={handleForgetDocument}
-                  className="flex-1 h-12 rounded-2xl flex-row items-center justify-center bg-destructive"
-                >
-                  <Text className="font-bold font-poppins text-base text-foreground">
-                    Sí, Eliminar
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
-        </Modal>
-
-        {/* Register Modal */}
-        <Modal
-          visible={showRegisterModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowRegisterModal(false)}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            className="flex-1 justify-center items-center bg-black/50 p-6"
-          >
-            <View className="bg-card w-full max-w-sm rounded-3xl p-6 items-center shadow-xl">
-              <View className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center mb-4">
-                <IdCard size={32} color={primaryColor || "#002aff"} />
-              </View>
-              <Text className="text-xl font-bold font-poppins text-foreground text-center mb-2">
-                Validar Documento
-              </Text>
-              <Text className="text-muted-foreground text-center mb-6 px-2 text-sm font-poppins">
-                Ingresa tu documento para verificar si tienes un contrato activo
-                y proceder con el registro.
-              </Text>
-              <View className="w-full mb-6">
-                <Input
-                  value={registerDoc}
-                  onChangeText={(text) => {
-                    setRegisterDoc(text);
-                    if (registerError) setRegisterError("");
-                  }}
-                  placeholder="Número de documento"
-                  keyboardType="number-pad"
-                  maxLength={20}
-                  className={`w-full h-12 bg-muted/50 rounded-2xl text-center text-lg font-bold font-poppins ${registerError ? "border border-destructive" : "border-transparent"}`}
-                />
-                {registerError ? (
-                  <Text className="text-destructive text-sm font-poppins text-center mt-2">
-                    {registerError}
-                  </Text>
-                ) : null}
-              </View>
-              <View className="flex-row gap-3 w-full">
-                <Button
-                  variant="outline"
-                  onPress={() => {
-                    setShowRegisterModal(false);
-                    setRegisterDoc("");
-                    setRegisterError("");
-                  }}
-                  className="flex-1 h-12 rounded-2xl"
-                  disabled={isRegistering}
-                >
-                  <Text className="text-foreground font-poppins text-base font-medium">
-                    Cancelar
-                  </Text>
-                </Button>
-                <Button
-                  onPress={handleValidateRegistration}
-                  className="flex-1 h-12 rounded-2xl"
-                  style={{ backgroundColor: primaryColor || "#002aff" }}
-                  disabled={isRegistering || registerDoc.length < 8}
-                >
-                  <Text className="text-primary-foreground font-poppins text-base font-bold">
-                    {isRegistering ? "Validando..." : "Validar"}
-                  </Text>
-                </Button>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
-        </Modal>
-
-        {/* Help Modal */}
-        <Modal
-          visible={showHelpModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowHelpModal(false)}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            className="flex-1 justify-center items-center bg-black/50 p-6"
-          >
-            <View className="bg-card w-full max-w-[320px] rounded-3xl p-6 shadow-xl relative">
-              <Pressable
-                onPress={() => setShowHelpModal(false)}
-                className="absolute top-4 right-4 p-2 z-10"
-              >
-                <X size={20} className="text-muted-foreground" />
-              </Pressable>
-
-              <View className="items-center mb-4 mt-2">
-                <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center mb-3">
-                  <Headset size={24} color={primaryColor || "#002aff"} />
-                </View>
-                <Text className="text-xl font-bold text-foreground font-poppins">
-                  Centro de Ayuda
-                </Text>
-                <Text className="text-sm text-muted-foreground font-poppins text-center mt-3 mb-2">
-                  Si tienes problemas para acceder a tu cuenta, por favor
-                  comunícate con tu administrador o contáctanos:
-                </Text>
-
-                {helpData ? (
-                  <View className="w-full mt-2">
-                    {helpData.emails?.map((email, idx) => (
-                      <View
-                        key={`email-${idx}`}
-                        className="flex-row items-center justify-center mb-2"
-                      >
-                        <Mail
-                          size={14}
-                          color={primaryColor || "#002aff"}
-                        />
-                        <Text className="text-sm font-bold font-poppins text-center text-foreground ml-2">
-                          {email}
-                        </Text>
-                      </View>
-                    ))}
-                    {helpData.phones?.map((phone, idx) => (
-                      <View
-                        key={`phone-${idx}`}
-                        className="flex-row items-center justify-center mb-1"
-                      >
-                        <Phone
-                          size={14}
-                          color={primaryColor || "#002aff"}
-                        />
-                        <Text className="text-sm font-bold font-poppins text-center text-foreground ml-2">
-                          {phone}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                ) : (
-                  <Text className="text-sm font-bold text-primary font-poppins text-center mt-2">
-                    Cargando información...
-                  </Text>
-                )}
-              </View>
-
-              <Pressable
-                onPress={() => setShowHelpModal(false)}
-                className="w-full h-12 rounded-2xl flex-row items-center justify-center bg-secondary mt-2"
-              >
-                <Text className="font-bold font-poppins text-base text-foreground">
-                  Entendido
-                </Text>
-              </Pressable>
-            </View>
-          </KeyboardAvoidingView>
-        </Modal>
       </SafeAreaView>
 
-      {/* Biometric Setup Modal */}
-      <Modal visible={showBiometricModal} transparent animationType="fade">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 justify-center items-center bg-black/50 p-6"
-        >
-          <View className="bg-card w-full max-w-[320px] rounded-3xl p-6 shadow-xl relative">
-            <Pressable
-              onPress={() => setShowBiometricModal(false)}
-              className="absolute top-4 right-4 p-2 z-10"
-            >
-              <X size={20} className="text-muted-foreground" />
-            </Pressable>
+      <ConfirmLogoutModal
+        visible={showConfirmLogoutModal}
+        onClose={() => setShowConfirmLogoutModal(false)}
+        onConfirm={handleForgetDocument}
+      />
 
-            <View className="items-center mb-4 mt-2">
-              <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center mb-3">
-                {Platform.OS === "ios" ? (
-                  <ScanFace size={24} className="text-primary" />
-                ) : (
-                  <Fingerprint size={24} className="text-primary" />
-                )}
-              </View>
-              <Text className="text-xl font-bold text-foreground font-poppins text-center">
-                Activar Biometría
-              </Text>
-              <Text className="text-sm text-muted-foreground font-poppins text-center mt-2">
-                Ingresa tu PIN para vincular tu huella o rostro y usarlo la
-                próxima vez.
-              </Text>
-            </View>
+      <RegisterModal
+        visible={showRegisterModal}
+        onClose={() => { setShowRegisterModal(false); setRegisterDoc(""); setRegisterError(""); }}
+        registerDoc={registerDoc}
+        onRegisterDocChange={(text) => { setRegisterDoc(text); if (registerError) setRegisterError(""); }}
+        registerError={registerError}
+        isRegistering={isRegistering}
+        primaryColor={primaryColor || "#002aff"}
+        onValidate={handleValidateRegistration}
+      />
 
-            <View className="mb-6 mt-4">
-              <PinKeypad
-                pin={biometricSetupPin}
-                onPinChange={setBiometricSetupPin}
-                primaryColor={primaryColor || "#002aff"}
-                maxLength={6}
-              />
-            </View>
+      <HelpModal
+        visible={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        primaryColor={primaryColor || "#002aff"}
+        helpData={helpData}
+      />
 
-            <Pressable
-              onPress={handleBiometricSetupSubmit}
-              disabled={isAuthenticating || biometricSetupPin.length < 4}
-              className={`w-full h-12 rounded-2xl flex-row items-center justify-center ${biometricSetupPin.length >= 4 ? "bg-primary" : "bg-muted opacity-60"}`}
-            >
-              <Text
-                className={`font-bold font-poppins text-base ${biometricSetupPin.length >= 4 ? "text-primary-foreground" : "text-muted-foreground"}`}
-              >
-                {isAuthenticating ? "Activando..." : "Confirmar"}
-              </Text>
-            </Pressable>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <BiometricModal
+        visible={showBiometricModal}
+        onClose={() => setShowBiometricModal(false)}
+        pin={biometricSetupPin}
+        onPinChange={setBiometricSetupPin}
+        isAuthenticating={isAuthenticating}
+        primaryColor={primaryColor || "#002aff"}
+        onSubmit={handleBiometricSetupSubmit}
+      />
     </>
   );
 }

@@ -1,9 +1,11 @@
 import PDFViewer from "@/components/PDFViewer";
+import { blobToBase64 } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 import { showToast } from "@/lib/toast";
 import { processedDocumentService } from "@/services/processedDocumentService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import * as FileSystem from "expo-file-system/legacy";
-import { router, useLocalSearchParams, usePathname } from "expo-router";
+import { router, useLocalSearchParams, usePathname, RelativePathString } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { useVault } from "@/hooks/useVault";
 import { ChevronLeft, Download, HardDriveDownload } from "lucide-react-native";
@@ -15,8 +17,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 export default function DocumentViewerScreen() {
   const pathname = usePathname();
   const {
@@ -60,15 +60,7 @@ export default function DocumentViewerScreen() {
       } else if (Platform.OS === "android") {
         // En Android, descargamos el PDF de forma autenticada y lo pasamos como base64
         const response = await processedDocumentService.getPdfBlob(fileName);
-        const base64Data = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            resolve(result.split(",")[1]);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(response);
-        });
+        const base64Data = await blobToBase64(response);
         setPdfBase64(base64Data);
       } else {
         // En iOS, react-native-webview puede cargar la URL directamente
@@ -76,7 +68,7 @@ export default function DocumentViewerScreen() {
         setPdfUrl(url);
       }
     } catch (err) {
-      console.error("Error cargando PDF:", err);
+      logger.error("Error cargando PDF:", err);
       setError("No se pudo cargar el documento.");
     } finally {
       setLoading(false);
@@ -98,15 +90,7 @@ export default function DocumentViewerScreen() {
         window.URL.revokeObjectURL(blobUrl);
       } else {
         const response = await processedDocumentService.getPdfBlob(fileName);
-        const base64Data = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            resolve(result.split(",")[1]);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(response);
-        });
+        const base64Data = await blobToBase64(response);
 
         const fileUri = `${FileSystem.cacheDirectory}${safeFileName}`;
         await FileSystem.writeAsStringAsync(fileUri, base64Data, {
@@ -120,7 +104,7 @@ export default function DocumentViewerScreen() {
         });
       }
     } catch (error) {
-      console.error("Error al descargar:", error);
+      logger.error("Error al descargar:", error);
       showToast.error("Error", "No se pudo descargar el documento.");
     }
   };
@@ -132,15 +116,7 @@ export default function DocumentViewerScreen() {
       const safeFileName = fileName.split("/").pop() || "Documento.pdf";
       
       const response = await processedDocumentService.getPdfBlob(fileName);
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result.split(",")[1]);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(response);
-      });
+      const base64Data = await blobToBase64(response);
 
       await saveToVault(base64Data, safeFileName, {
         displayName: title,
@@ -149,7 +125,7 @@ export default function DocumentViewerScreen() {
       });
       showToast.success("Guardado en Bóveda", "El documento está disponible offline.");
     } catch (error) {
-      console.error("Error guardando en bóveda:", error);
+      logger.error("Error guardando en bóveda:", error);
       showToast.error("Error", "No se pudo guardar en la bóveda.");
     } finally {
       setIsSaving(false);
@@ -164,11 +140,11 @@ export default function DocumentViewerScreen() {
           onPress={() => {
             if (Platform.OS === "web") {
               if (periodYear && periodMonth) {
-                router.replace(`/(protected)/history/${periodYear}/${periodMonth}` as any);
+                router.replace(`/(protected)/history/${periodYear}/${periodMonth}` as unknown as RelativePathString);
               } else {
                 const segments = pathname.split("/").filter(Boolean);
                 segments.pop();
-                router.replace("/" + segments.join("/") as any);
+                router.replace("/" + segments.join("/") as unknown as RelativePathString);
               }
             } else {
               router.back();

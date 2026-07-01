@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { logger } from "@/lib/logger";
 
 export type HelpData = {
   emails: string[];
@@ -36,7 +37,7 @@ export const genParameterService = {
       }
       return null;
     } catch (error) {
-      console.error("Error fetching help data:", error);
+      logger.error("Error fetching help data:", error);
       return null;
     }
   },
