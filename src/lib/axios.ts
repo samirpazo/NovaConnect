@@ -133,3 +133,16 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+// Helper to create AbortController tied to AbortSignal
+// Usage in components:
+//   const { signal, cancel } = createAbortController();
+//   await api.get('/endpoint', { signal });
+//   cancel(); // on unmount
+export function createAbortController() {
+  const controller = new AbortController();
+  return {
+    signal: controller.signal,
+    cancel: () => controller.abort(),
+  };
+}

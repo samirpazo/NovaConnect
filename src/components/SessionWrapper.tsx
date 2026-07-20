@@ -1,7 +1,8 @@
 import { showToast } from "@/lib/toast";
 import { useAuthStore } from "@/stores/useAuthStore";
-import React, { useEffect, useRef } from "react";
-import { AppState, AppStateStatus, PanResponder, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { AppState, AppStateStatus, PanResponder, View, StyleSheet } from "react-native";
+import { BlurView } from "expo-blur";
 
 const TIMEOUT_MINUTES = Number(
   process.env.EXPO_PUBLIC_INACTIVITY_TIMEOUT_MINUTES || 2,
@@ -16,6 +17,7 @@ export default function SessionWrapper({
   const { user, logout } = useAuthStore();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const backgroundTimeRef = useRef<number | null>(null);
+  const [isBlurred, setIsBlurred] = useState(false);
 
   const performLogout = () => {
     if (user) {
@@ -49,16 +51,21 @@ export default function SessionWrapper({
         if (nextAppState.match(/inactive|background/)) {
           // App fue enviada a segundo plano
           backgroundTimeRef.current = Date.now();
+          if (user) setIsBlurred(true);
         } else if (nextAppState === "active") {
           // App volvió al primer plano
           if (backgroundTimeRef.current) {
             const timeElapsed = Date.now() - backgroundTimeRef.current;
             if (timeElapsed >= TIMEOUT_MS) {
               performLogout();
+              // Mantenemos el blur si vamos a desloguear
             } else {
+              setIsBlurred(false);
               resetTimer();
             }
             backgroundTimeRef.current = null;
+          } else {
+            setIsBlurred(false);
           }
         }
       },
@@ -88,6 +95,14 @@ export default function SessionWrapper({
   return (
     <View style={{ flex: 1 }} {...panResponder.panHandlers}>
       {children}
+      {isBlurred && user && (
+        <BlurView 
+          intensity={100} 
+          tint="dark" 
+          style={StyleSheet.absoluteFill} 
+          className="z-50"
+        />
+      )}
     </View>
   );
 }
