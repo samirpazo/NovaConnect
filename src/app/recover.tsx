@@ -34,33 +34,20 @@ export default function RecoverPinScreen() {
   const [isLoading, setIsLoading] = React.useState(false);
 
   // Reenviar contador
-  const [resendCount, setResendCount] = React.useState(0);
   const [countdown, setCountdown] = React.useState(0);
-  const RESEND_INTERVALS = process.env.EXPO_PUBLIC_OTP_RESEND_INTERVALS
-    ? process.env.EXPO_PUBLIC_OTP_RESEND_INTERVALS.split(",").map(Number)
-    : [1, 2, 5, 15, 30, 60, 120, 1440];
 
   React.useEffect(() => {
     const initTimer = async () => {
-      const savedCount = await storage.getItem("otp_resend_count");
       const savedTime = await storage.getItem("otp_resend_time");
       
-      if (savedCount && savedTime) {
+      if (savedTime) {
         const timeMs = parseInt(savedTime, 10);
-        const count = parseInt(savedCount, 10);
-        
         const now = Date.now();
-        const maxInterval = RESEND_INTERVALS[RESEND_INTERVALS.length - 1] || 1440;
         
-        if (now > timeMs + (maxInterval * 60 * 1000)) {
-          await storage.removeItem("otp_resend_count");
+        if (now > timeMs) {
           await storage.removeItem("otp_resend_time");
-          setResendCount(0);
-        } else if (now < timeMs) {
-          setResendCount(count);
-          setCountdown(Math.ceil((timeMs - now) / 1000));
         } else {
-          setResendCount(count);
+          setCountdown(Math.ceil((timeMs - now) / 1000));
         }
       }
     };
@@ -81,21 +68,15 @@ export default function RecoverPinScreen() {
     const doc = docToUse || documentNumber;
     if (!doc || doc.length < 8) return;
 
-    if (forceResend) {
-      const nextCount = Math.min(resendCount + 1, RESEND_INTERVALS.length);
-      const intervalMinutes = RESEND_INTERVALS[nextCount - 1];
-      const nextTime = Date.now() + (intervalMinutes * 60 * 1000);
-      
-      await storage.setItem("otp_resend_count", nextCount.toString());
-      await storage.setItem("otp_resend_time", nextTime.toString());
-      
-      setResendCount(nextCount);
-      setCountdown(intervalMinutes * 60);
-    }
-
     setIsLoading(true);
     const result = await authService.requestPinReset(doc, forceResend);
     setIsLoading(false);
+
+    if (result.secondsToWait) {
+       const nextTime = Date.now() + (result.secondsToWait * 1000);
+       await storage.setItem("otp_resend_time", nextTime.toString());
+       setCountdown(result.secondsToWait);
+    }
 
     if (result.success) {
       setStep(2);
@@ -106,7 +87,7 @@ export default function RecoverPinScreen() {
         "No tienes un correo registrado. Por favor, acércate a Recursos Humanos para actualizar tus datos.",
       );
     } else {
-      showToast.error("Error", result.error || "Ocurrió un error inesperado.");
+      AlertHelper.alert("Error", result.error || "Ocurrió un error.");
     }
   };
 

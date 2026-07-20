@@ -189,7 +189,7 @@ export const authService = {
   async requestPinReset(
     documentNumber: string,
     forceResend: boolean = false,
-  ): Promise<{ success: boolean; error?: string; noEmail?: boolean }> {
+  ): Promise<{ success: boolean; error?: string; noEmail?: boolean; secondsToWait?: number }> {
     try {
       const { data } = await api.post("/SecCollaborator/RequestPinReset", {
         DocumentNumber: documentNumber,
@@ -203,9 +203,13 @@ export const authService = {
     } catch (error: any) {
       if (error.response?.data?.Message === "NO_EMAIL")
         return { success: false, noEmail: true };
+      
+      const secondsToWait = error.response?.data?.Data?.secondsToWait;
+
       return {
         success: false,
         error: error.response?.data?.Message || "Ocurrió un error inesperado.",
+        secondsToWait: secondsToWait
       };
     }
   },

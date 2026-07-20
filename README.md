@@ -8,17 +8,17 @@ App móvil del ecosistema **Nova Core Platform** — construida con [Expo](https
 
 ## 🚀 Stack Técnico
 
-| Capa | Tecnología |
-|---|---|
-| Framework | Expo SDK 55 + React Native 0.83 + React 19 |
-| Navegación | Expo Router (file-based) |
-| Estilos | NativeWind 4 (Tailwind CSS v3) + CSS variables HSL |
-| Estado global | Zustand 5 + TanStack React Query 5 |
-| HTTP | Axios 1.17 con interceptors JWT + API Key |
-| UI | shadcn/ui (reactnativereusables.com) + lucide-react-native + sonner-native |
-| Seguridad | expo-secure-store, expo-local-authentication, crypto-js (SHA512 + pepper) |
-| Fuente | Poppins (4 pesos vía Google Fonts) |
-| Animaciones | react-native-reanimated 4 |
+| Capa          | Tecnología                                                                 |
+| ------------- | -------------------------------------------------------------------------- |
+| Framework     | Expo SDK 55 + React Native 0.83 + React 19                                 |
+| Navegación    | Expo Router (file-based)                                                   |
+| Estilos       | NativeWind 4 (Tailwind CSS v3) + CSS variables HSL                         |
+| Estado global | Zustand 5 + TanStack React Query 5                                         |
+| HTTP          | Axios 1.17 con interceptors JWT + API Key                                  |
+| UI            | shadcn/ui (reactnativereusables.com) + lucide-react-native + sonner-native |
+| Seguridad     | expo-secure-store, expo-local-authentication, crypto-js (SHA512 + pepper)  |
+| Fuente        | Poppins (4 pesos vía Google Fonts)                                         |
+| Animaciones   | react-native-reanimated 4                                                  |
 
 ## 📁 Estructura del Proyecto
 
@@ -72,6 +72,7 @@ Los ZIPs generados se guardan en la raíz del proyecto (`/nova-connect/`). Al de
 ### 🌐 Web — Exportar Estático y Comprimir (SmarterASP)
 
 > **Antes de compilar**: verifica que `.env` tenga la URL del backend correcta:
+>
 > ```env
 > EXPO_PUBLIC_API_URL=https://novateam-001-site2.itempurl.com
 > EXPO_PUBLIC_PASSWORD_SECRET=nova_premium_pepper_2026_x77
@@ -185,22 +186,22 @@ npx expo export --platform web && cd dist && zip -r ../nova-connect-web.zip . &&
 
 ## 🌐 Navegación (Rutas)
 
-| Ruta | Pantalla |
-|---|---|
-| `/` | Login (PIN + biometría) |
-| `/register` | Registro de nuevo colaborador |
-| `/recover` | Recuperación de PIN vía OTP |
-| `/(protected)/home` | Perfil y dashboard |
-| `/(protected)/home/settings` | Configuración (tema, color, PIN, biometría) |
-| `/(protected)/home/help` | Centro de ayuda |
-| `/(protected)/home/vault` | Bóveda offline de documentos |
-| `/(protected)/documents` | Documentos pendientes |
-| `/(protected)/documents/viewer` | Visor PDF |
-| `/(protected)/history` | Historial por años |
-| `/(protected)/history/[year]` | Meses de un año |
-| `/(protected)/history/[year]/[month]` | Documentos de un mes |
-| `/(protected)/history/viewer` | Visor PDF (historial) |
-| `/(protected)/dining` | Comedor (Coming Soon) |
+| Ruta                                  | Pantalla                                    |
+| ------------------------------------- | ------------------------------------------- |
+| `/`                                   | Login (PIN + biometría)                     |
+| `/register`                           | Registro de nuevo colaborador               |
+| `/recover`                            | Recuperación de PIN vía OTP                 |
+| `/(protected)/home`                   | Perfil y dashboard                          |
+| `/(protected)/home/settings`          | Configuración (tema, color, PIN, biometría) |
+| `/(protected)/home/help`              | Centro de ayuda                             |
+| `/(protected)/home/vault`             | Bóveda offline de documentos                |
+| `/(protected)/documents`              | Documentos pendientes                       |
+| `/(protected)/documents/viewer`       | Visor PDF                                   |
+| `/(protected)/history`                | Historial por años                          |
+| `/(protected)/history/[year]`         | Meses de un año                             |
+| `/(protected)/history/[year]/[month]` | Documentos de un mes                        |
+| `/(protected)/history/viewer`         | Visor PDF (historial)                       |
+| `/(protected)/dining`                 | Comedor (Coming Soon)                       |
 
 ## 🔐 Variables de Entorno (`.env`)
 
@@ -209,7 +210,6 @@ EXPO_PUBLIC_API_URL=            # URL del backend (https://...)
 EXPO_PUBLIC_PASSWORD_SECRET=    # Pepper para hash de PIN
 EXPO_PUBLIC_MOBILE_API_KEY=     # API Key para endpoints pre-login
 EXPO_PUBLIC_INACTIVITY_TIMEOUT_MINUTES=  # Minutos de inactividad antes de auto-logout
-EXPO_PUBLIC_OTP_RESEND_INTERVALS=       # Intervalos de reenvío OTP (backoff exponencial)
 ```
 
 ## 📄 Licencia
