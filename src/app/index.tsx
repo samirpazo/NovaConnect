@@ -467,14 +467,12 @@ export default function LoginScreen() {
                     </View>
 
                     <Text className="text-2xl font-bold font-poppins text-center text-foreground mb-1">
-                      {pinLocked && user ? "Desbloquear acceso" : "Ingresa tu PIN"}
+                      Ingresa tu PIN
                     </Text>
 
                     <View className="flex-row items-center justify-center gap-3 mb-6">
                       <Text className="text-sm font-poppins text-muted-foreground select-none">
-                        {pinLocked && user
-                          ? user.FullName || user.PrsName || ""
-                          : `Documento : ${"*".repeat(Math.max(0, PrsDocumentNumber.length - 4))}${PrsDocumentNumber.slice(-4)}`}
+                        {`Documento : ${"*".repeat(Math.max(0, PrsDocumentNumber.length - 4))}${PrsDocumentNumber.slice(-4)}`}
                       </Text>
                       {!pinLocked && (
                         <Pressable
