@@ -1,6 +1,6 @@
-import React from 'react';
-import { Platform, View, StyleSheet } from 'react-native';
-import { WebView } from 'react-native-webview';
+import React from "react";
+import { Platform, StyleSheet, View } from "react-native";
+import { WebView } from "react-native-webview";
 
 interface PDFViewerProps {
   uri?: string;
@@ -8,15 +8,15 @@ interface PDFViewerProps {
 }
 
 export default function PDFViewer({ uri, pdfBase64 }: PDFViewerProps) {
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     return (
       <iframe
         src={uri}
         title="PDF Viewer"
         style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
+          width: "100%",
+          height: "100%",
+          border: "none",
         }}
       />
     );
@@ -114,7 +114,7 @@ export default function PDFViewer({ uri, pdfBase64 }: PDFViewerProps) {
         <WebView
           source={{ html: htmlContent }}
           style={styles.webview}
-          originWhitelist={['*']}
+          originWhitelist={["*"]}
           allowFileAccess={true}
           allowUniversalAccessFromFileURLs={true}
           bounces={false}
@@ -135,7 +135,7 @@ export default function PDFViewer({ uri, pdfBase64 }: PDFViewerProps) {
       <WebView
         source={{ uri }}
         style={styles.webview}
-        originWhitelist={['*']}
+        originWhitelist={["*"]}
         allowFileAccess={true}
         allowUniversalAccessFromFileURLs={true}
         bounces={false}
@@ -150,10 +150,10 @@ export default function PDFViewer({ uri, pdfBase64 }: PDFViewerProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   webview: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
 });

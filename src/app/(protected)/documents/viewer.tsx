@@ -82,12 +82,20 @@ export default function DocumentViewerScreen() {
 
       if (Platform.OS === "web") {
         const response = await processedDocumentService.getPdfBlob(fileName);
-        const blobUrl = window.URL.createObjectURL(response);
+        
+        // Forzar descarga en Safari cambiando el tipo a octet-stream
+        const forceDownloadBlob = new Blob([response], { type: "application/octet-stream" });
+        const blobUrl = window.URL.createObjectURL(forceDownloadBlob);
+        
         const link = document.createElement("a");
         link.href = blobUrl;
         link.download = safeFileName;
+        
+        document.body.appendChild(link);
         link.click();
-        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(link);
+        
+        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
       } else {
         const response = await processedDocumentService.getPdfBlob(fileName);
         const base64Data = await blobToBase64(response);

@@ -186,21 +186,35 @@ export const authService = {
     }
   },
 
-  async requestPinReset(documentNumber: string, forceResend: boolean = false): Promise<{ success: boolean; error?: string; noEmail?: boolean }> {
+  async requestPinReset(
+    documentNumber: string,
+    forceResend: boolean = false,
+  ): Promise<{ success: boolean; error?: string; noEmail?: boolean }> {
     try {
-      const { data } = await api.post("/SecCollaborator/RequestPinReset", { 
+      const { data } = await api.post("/SecCollaborator/RequestPinReset", {
         DocumentNumber: documentNumber,
-        ForceResend: forceResend
+        ForceResend: forceResend,
       });
       if (data.Succeeded) return { success: true };
-      return { success: false, error: data.Message || "Error al solicitar el código." };
+      return {
+        success: false,
+        error: data.Message || "Error al solicitar el código.",
+      };
     } catch (error: any) {
-      if (error.response?.data?.Message === "NO_EMAIL") return { success: false, noEmail: true };
-      return { success: false, error: error.response?.data?.Message || "Ocurrió un error inesperado." };
+      if (error.response?.data?.Message === "NO_EMAIL")
+        return { success: false, noEmail: true };
+      return {
+        success: false,
+        error: error.response?.data?.Message || "Ocurrió un error inesperado.",
+      };
     }
   },
 
-  async confirmPinReset(documentNumber: string, otp: string, newPasswordHash: string): Promise<{ success: boolean; error?: string }> {
+  async confirmPinReset(
+    documentNumber: string,
+    otp: string,
+    newPasswordHash: string,
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const { data } = await api.post("/SecCollaborator/ConfirmPinReset", {
         DocumentNumber: documentNumber,
@@ -208,26 +222,49 @@ export const authService = {
         NewPasswordHash: newPasswordHash,
       });
       if (data.Succeeded) return { success: true };
-      return { success: false, error: data.Message || "No se pudo actualizar el PIN." };
+      return {
+        success: false,
+        error: data.Message || "No se pudo actualizar el PIN.",
+      };
     } catch (error: any) {
-      return { success: false, error: error.response?.data?.Message || "Código incorrecto o ha expirado." };
+      return {
+        success: false,
+        error:
+          error.response?.data?.Message || "Código incorrecto o ha expirado.",
+      };
     }
   },
 
-  async changePassword(oldPasswordHash: string, newPasswordHash: string): Promise<{ success: boolean; error?: string }> {
+  async changePassword(
+    oldPasswordHash: string,
+    newPasswordHash: string,
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const { data } = await api.post("/SecCollaborator/ChangePassword", {
         OldPasswordHash: oldPasswordHash,
         NewPasswordHash: newPasswordHash,
       });
       if (data.Succeeded) return { success: true };
-      return { success: false, error: data.Message || "No se pudo actualizar el PIN." };
+      return {
+        success: false,
+        error: data.Message || "No se pudo actualizar el PIN.",
+      };
     } catch (error: any) {
-      return { success: false, error: error.response?.data?.Message || "Hubo un problema al contactar con el servidor." };
+      return {
+        success: false,
+        error:
+          error.response?.data?.Message ||
+          "Hubo un problema al contactar con el servidor.",
+      };
     }
   },
 
   async logout(): Promise<void> {
+    try {
+      await api.post("/Token/Logout");
+    } catch {
+      // Silenciar errores: el logout local debe ejecutarse aunque falle la llamada
+    }
     await Promise.all([
       storage.removeItem("token"),
       storage.removeItem("refreshToken"),

@@ -66,7 +66,7 @@ export function PinKeypad({
         {[...Array(maxLength)].map((_, i) => (
           <View
             key={i}
-            className={`size-2.5 rounded-full ${i < pin.length ? "" : "bg-muted"}`}
+            className={`size-3.5 rounded-full ${i < pin.length ? "" : "bg-muted"}`}
             style={
               i < pin.length ? { backgroundColor: primaryColor || "#002aff" } : {}
             }
