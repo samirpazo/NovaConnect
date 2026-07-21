@@ -81,11 +81,29 @@ Los ZIPs generados se guardan en la raíz del proyecto (`/nova-connect/`). Al de
 > ```
 
 ```bash
-# 1. Exportar la versión web estática (genera la carpeta dist/)
-npx expo export --platform web
+# 1. Cambiar a entorno de producción
+cat << 'EOF' > .env
+EXPO_PUBLIC_API_URL=https://novateam-001-site2.itempurl.com
+# EXPO_PUBLIC_API_URL=http://localhost:8080
+EXPO_PUBLIC_PASSWORD_SECRET=nova_premium_pepper_2026_x77
+EXPO_PUBLIC_MOBILE_API_KEY=NC-2026-a8f3d1e7b2c94f05ad6e82b7f31c9d4a
+EXPO_PUBLIC_INACTIVITY_TIMEOUT_MINUTES=2
+EOF
 
-# 2. Comprimir el contenido de dist/ directamente (sin carpeta dist/ envolvente)
+# 2. Exportar la versión web estática (limpiando caché)
+npx expo export --platform web -c
+
+# 3. Comprimir el contenido de dist/ directamente
 cd dist && zip -r ../nova-connect-web.zip . && cd ..
+
+# 4. Restaurar el .env a desarrollo local
+cat << 'EOF' > .env
+# EXPO_PUBLIC_API_URL=https://novateam-001-site2.itempurl.com
+EXPO_PUBLIC_API_URL=http://localhost:8080
+EXPO_PUBLIC_PASSWORD_SECRET=nova_premium_pepper_2026_x77
+EXPO_PUBLIC_MOBILE_API_KEY=NC-2026-a8f3d1e7b2c94f05ad6e82b7f31c9d4a
+EXPO_PUBLIC_INACTIVITY_TIMEOUT_MINUTES=2
+EOF
 ```
 
 > El archivo `nova-connect-web.zip` se guarda en la raíz del proyecto.  
