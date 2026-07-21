@@ -1,6 +1,6 @@
 import { Text } from "@/components/ui/text";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
-import { Calendar, ChevronRight, FileText } from "lucide-react-native";
+import { Calendar, ChevronRight, FileText, RefreshCw } from "lucide-react-native";
 import { View, FlatList, Pressable, RefreshControl, ActivityIndicator, Modal } from "react-native";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { processedDocumentService } from "@/services/processedDocumentService";
@@ -98,21 +98,36 @@ export default function DocumentsScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <View className="px-6 pt-4 pb-2">
-        <Text className="text-2xl font-poppins-bold text-foreground tracking-tight">
-          Pendientes
-        </Text>
-        <Text className="text-xs font-poppins-medium text-muted-foreground mt-0.5">
-          Documentos listos para tu revisión.
-        </Text>
+      <View className="px-6 pt-4 pb-2 flex-row justify-between items-start">
+        <View className="flex-1">
+          <Text className="text-2xl font-poppins-bold text-foreground tracking-tight">
+            Pendientes
+          </Text>
+          <Text className="text-xs font-poppins-medium text-muted-foreground mt-0.5">
+            Documentos listos para tu revisión.
+          </Text>
+        </View>
+        <Pressable 
+          onPress={() => refetch()}
+          className="w-11 h-11 bg-card rounded-2xl items-center justify-center border border-border/40 ml-4 mt-1"
+          style={({pressed}) => ({ opacity: pressed ? 0.7 : 1 })}
+        >
+          <RefreshCw size={20} color={primaryColor} />
+        </Pressable>
       </View>
 
       {isLoading && !isRefreshing ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={primaryColor} />
-          <Text className="mt-4 font-poppins text-muted-foreground text-sm">
-            Buscando documentos...
-          </Text>
+        <View className="flex-1 px-6 pt-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <View key={i} className="bg-card/50 rounded-2xl p-3.5 mb-3 border border-border/20 flex-row items-center shadow-sm">
+              <View className="w-11 h-11 rounded-xl bg-muted/40 mr-3.5" />
+              <View className="flex-1 justify-center">
+                <View className="h-5 bg-muted/40 rounded w-32 mb-1.5" />
+                <View className="h-4 bg-muted/40 rounded w-20" />
+              </View>
+              <View className="w-8 h-8 rounded-full bg-muted/40" />
+            </View>
+          ))}
         </View>
       ) : (
         <FlatList

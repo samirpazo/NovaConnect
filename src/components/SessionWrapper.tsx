@@ -38,6 +38,7 @@ export default function SessionWrapper({
 
   useEffect(() => {
     if (!user) {
+      setIsBlurred(false);
       if (timerRef.current) clearTimeout(timerRef.current);
       return;
     }

@@ -2,7 +2,7 @@ import { Text } from "@/components/ui/text";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { router } from "expo-router";
-import { ChevronRight, Folder, Search } from "lucide-react-native";
+import { ChevronRight, Folder, Search, RefreshCw } from "lucide-react-native";
 import { useMemo, useState, useCallback } from "react";
 import {
   FlatList,
@@ -56,26 +56,41 @@ export default function HistoryYearsScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <View className="px-6 py-3.5 relative justify-center">
-        <View className="absolute left-10 top-0 bottom-0 justify-center z-10">
-          <Search size={18} color="#71717a" />
+      <View className="px-6 py-3.5 flex-row items-center gap-3">
+        <View className="flex-1 relative justify-center">
+          <View className="absolute left-4 top-0 bottom-0 justify-center z-10">
+            <Search size={18} color="#71717a" />
+          </View>
+          <Input
+            className="pl-11 h-11 rounded-2xl bg-card border-border/40 font-poppins text-base"
+            placeholder="Buscar año..."
+            placeholderTextColor="#71717a"
+            value={search}
+            onChangeText={setSearch}
+            keyboardType="numeric"
+          />
         </View>
-        <Input
-          className="pl-11 h-11 rounded-2xl bg-card border-border/40 font-poppins text-base"
-          placeholder="Buscar año..."
-          placeholderTextColor="#71717a"
-          value={search}
-          onChangeText={setSearch}
-          keyboardType="numeric"
-        />
+        <Pressable 
+          onPress={() => refetch()}
+          className="w-11 h-11 bg-card rounded-2xl items-center justify-center border border-border/40"
+          style={({pressed}) => ({ opacity: pressed ? 0.7 : 1 })}
+        >
+          <RefreshCw size={20} color={primaryColor} />
+        </Pressable>
       </View>
 
       {isLoading && !isRefreshing ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={primaryColor} />
-          <Text className="mt-4 font-poppins text-muted-foreground text-sm">
-            Buscando historial...
-          </Text>
+        <View className="flex-1 px-6 pt-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <View key={i} className="bg-card/50 rounded-2xl p-3.5 mb-3 border border-border/20 flex-row items-center">
+              <View className="w-11 h-11 rounded-xl bg-muted/40 mr-3.5" />
+              <View className="flex-1">
+                <View className="h-5 bg-muted/40 rounded w-16 mb-2" />
+                <View className="h-4 bg-muted/40 rounded w-24" />
+              </View>
+              <View className="w-5 h-5 bg-muted/40 rounded-full" />
+            </View>
+          ))}
         </View>
       ) : (
         <FlatList

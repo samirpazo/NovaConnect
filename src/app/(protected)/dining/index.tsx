@@ -112,8 +112,17 @@ export default function DiningScreen() {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {isLoading ? (
-          <View className="py-10 items-center justify-center">
-            <Text className="text-muted-foreground font-poppins">Cargando menú...</Text>
+          <View className="pb-10">
+            {[1, 2, 3].map((i) => (
+              <View key={i} className="mb-3 bg-card p-3.5 rounded-2xl border-l-4 border-l-muted/40 border-y border-r border-border shadow-sm">
+                <View className="flex-row justify-between items-center mb-1">
+                  <View className="h-4 bg-muted/40 rounded w-20" />
+                  <View className="h-3 bg-muted/40 rounded w-16" />
+                </View>
+                <View className="h-3 bg-muted/40 rounded w-full mb-1 mt-2" />
+                <View className="h-3 bg-muted/40 rounded w-2/3" />
+              </View>
+            ))}
           </View>
         ) : details.length === 0 ? (
           <View className="py-10 items-center justify-center">
