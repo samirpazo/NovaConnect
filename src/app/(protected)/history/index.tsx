@@ -3,7 +3,7 @@ import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { router } from "expo-router";
 import { ChevronRight, Folder, Search, RefreshCw } from "lucide-react-native";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import {
   FlatList,
   Pressable,
@@ -12,13 +12,34 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Input } from "@/components/ui/input";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, cancelAnimation } from "react-native-reanimated";
 
 export default function HistoryYearsScreen() {
   const { documents, isLoading, isRefreshing, refetch } =
     useProcessedDocuments(true);
   const primaryColor = usePreferenceStore((s) => s.primaryColor) || "#002aff";
   const [search, setSearch] = useState("");
+
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    if (isRefreshing) {
+      rotation.value = withRepeat(
+        withTiming(360, { duration: 1000, easing: Easing.linear }),
+        -1
+      );
+    } else {
+      cancelAnimation(rotation);
+      rotation.value = 0;
+    }
+  }, [isRefreshing]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${rotation.value}deg` }],
+    };
+  });
+
 
   const years = useMemo(() => {
     const uniqueYears = Array.from(
@@ -72,10 +93,13 @@ export default function HistoryYearsScreen() {
         </View>
         <Pressable 
           onPress={() => refetch()}
+          disabled={isRefreshing}
           className="w-11 h-11 bg-card rounded-2xl items-center justify-center border border-border/40"
           style={({pressed}) => ({ opacity: pressed ? 0.7 : 1 })}
         >
-          <RefreshCw size={20} color={primaryColor} />
+          <Animated.View style={animatedStyle}>
+            <RefreshCw size={20} color={primaryColor} />
+          </Animated.View>
         </Pressable>
       </View>
 

@@ -4,11 +4,11 @@ import { Calendar, ChevronRight, FileText, RefreshCw } from "lucide-react-native
 import { View, FlatList, Pressable, RefreshControl, ActivityIndicator, Modal } from "react-native";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { processedDocumentService } from "@/services/processedDocumentService";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, cancelAnimation } from "react-native-reanimated";
 import { ProcessedDocument } from "@/types/document";
 import { showToast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { router, usePathname } from "expo-router";
 
 export default function DocumentsScreen() {
@@ -17,6 +17,27 @@ export default function DocumentsScreen() {
   const pathname = usePathname();
   
   const { documents, isLoading, isRefreshing, refetch } = useProcessedDocuments(false);
+
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    if (isRefreshing) {
+      rotation.value = withRepeat(
+        withTiming(360, { duration: 1000, easing: Easing.linear }),
+        -1
+      );
+    } else {
+      cancelAnimation(rotation);
+      rotation.value = 0;
+    }
+  }, [isRefreshing]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${rotation.value}deg` }],
+    };
+  });
+
 
   const handleOpenPdf = async (fileName: string, title?: string, periodMonth?: string, periodYear?: string) => {
     try {
@@ -109,10 +130,13 @@ export default function DocumentsScreen() {
         </View>
         <Pressable 
           onPress={() => refetch()}
+          disabled={isRefreshing}
           className="w-11 h-11 bg-card rounded-2xl items-center justify-center border border-border/40 ml-4 mt-1"
           style={({pressed}) => ({ opacity: pressed ? 0.7 : 1 })}
         >
-          <RefreshCw size={20} color={primaryColor} />
+          <Animated.View style={animatedStyle}>
+            <RefreshCw size={20} color={primaryColor} />
+          </Animated.View>
         </Pressable>
       </View>
 
