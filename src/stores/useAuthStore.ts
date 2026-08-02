@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { authService } from '@/services/authService';
 import { AuthResponse } from '@/types/auth';
-import { setGlobalLogoutCallback } from '@/lib/axios';
+import { setGlobalLogoutCallback, initCsrf } from '@/lib/axios';
 import { storage } from '@/lib/storage';
 
 interface AuthState {
@@ -27,6 +27,9 @@ export const useAuthStore = create<AuthState>()(
 
       initializeAuth: async () => {
         try {
+          // Inicializa el token CSRF antes del login (los POST pre-login de
+          // /SecCollaborator/* exigen header+cookie CSRF en el backend)
+          initCsrf();
           const user = await authService.getSession();
           if (user) {
             set({ user, loading: false, pinLocked: true });

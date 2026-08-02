@@ -12,7 +12,7 @@ export const fileService = {
         params: { genParameter, nameFile, isImg },
       });
       if (isImg) {
-        return response.data.base64;
+        return response.data.Data;
       }
       return '';
     } catch (error) {

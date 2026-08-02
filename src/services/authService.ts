@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios";
+import { api, fetchTokensFromResponse, initCsrf, isValidToken } from "@/lib/axios";
 import { storage } from "@/lib/storage";
 import { AuthResponse } from "@/types/auth";
 
@@ -7,18 +7,27 @@ export const authService = {
     credentials: any,
   ): Promise<{ success: boolean; data?: AuthResponse; error?: string }> {
     try {
-      const { data } = await api.post(
+      const response = await api.post(
         "/Token/AuthenticationCollaborator",
         credentials,
       );
+      const data = response.data;
       const isSuccess = data.Succeeded;
       const rawData = data.Data;
       const message = data.Message;
 
       if (isSuccess) {
+        // El backend entrega los tokens en cookies HttpOnly. En native leemos el
+        // header Set-Cookie de la respuesta (visible solo en RN) para reconstruir
+        // el Bearer; en web (site3) la auth es por cookies (withCredentials) y aquí
+        // el Set-Cookie viene filtrado por el navegador → no se guarda nada.
+        const { token: cookieToken, refreshToken: cookieRefreshToken } = await fetchTokensFromResponse(response);
+        const accessToken = cookieToken || rawData.Token;
+        const refreshToken = cookieRefreshToken || rawData.RefreshToken;
+
         const authData: AuthResponse = {
-          Token: rawData.Token,
-          RefreshToken: rawData.RefreshToken,
+          Token: accessToken || "",
+          RefreshToken: refreshToken || "",
           AccessTokenExpiration: rawData.AccessTokenExpiration,
           SsnID: rawData.SsnID,
           User: {
@@ -82,12 +91,19 @@ export const authService = {
           },
         };
 
-        // Guardar Tokens de forma segura
+        // Guardar Tokens de forma segura (solo si son válidos; en web se limpian
+        // para no enviar Bearer obsoleto — ahí la auth es por cookies)
         await Promise.all([
-          storage.setItem("token", authData.Token),
-          storage.setItem("refreshToken", authData.RefreshToken),
+          isValidToken(accessToken)
+            ? storage.setItem("token", accessToken)
+            : storage.removeItem("token"),
+          isValidToken(refreshToken)
+            ? storage.setItem("refreshToken", refreshToken)
+            : storage.removeItem("refreshToken"),
           storage.setItem("user", JSON.stringify(authData.User)),
         ]);
+
+        initCsrf();
 
         return { success: true, data: authData };
       } else {
