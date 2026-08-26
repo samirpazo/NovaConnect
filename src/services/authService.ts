@@ -1,6 +1,8 @@
-import { api, fetchTokensFromResponse, initCsrf, isValidToken } from "@/lib/axios";
+import { api, API_URL, fetchTokensFromResponse, initCsrf, isValidToken } from "@/lib/axios";
 import { storage } from "@/lib/storage";
 import { AuthResponse } from "@/types/auth";
+import axios from "axios";
+import { Platform } from "react-native";
 
 export const authService = {
   async loginCollaborator(
@@ -294,9 +296,41 @@ export const authService = {
 
   async getSession(): Promise<AuthResponse["User"] | null> {
     const userStr = await storage.getItem("user");
-    if (userStr) {
-      return JSON.parse(userStr);
+    if (!userStr) return null;
+
+    try {
+      const refreshToken = await storage.getItem("refreshToken");
+      const response = await axios.post(
+        `${API_URL}/Token/Refresh`,
+        Platform.OS === "web" || !isValidToken(refreshToken)
+          ? {}
+          : { RefreshToken: refreshToken },
+        { withCredentials: true },
+      );
+
+      if (!response.data?.Succeeded || !response.data?.Data) {
+        throw new Error("La sesión no pudo renovarse");
+      }
+
+      const { token, refreshToken: newRefreshToken } =
+        await fetchTokensFromResponse(response);
+
+      if (Platform.OS !== "web") {
+        if (!isValidToken(token)) throw new Error("Access token ausente");
+        await storage.setItem("token", token);
+        if (isValidToken(newRefreshToken)) {
+          await storage.setItem("refreshToken", newRefreshToken);
+        }
+      }
+
+      return JSON.parse(userStr) as AuthResponse["User"];
+    } catch {
+      await Promise.all([
+        storage.removeItem("token"),
+        storage.removeItem("refreshToken"),
+        storage.removeItem("user"),
+      ]);
+      return null;
     }
-    return null;
   },
 };

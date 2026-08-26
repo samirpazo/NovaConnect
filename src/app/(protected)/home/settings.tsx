@@ -10,7 +10,6 @@ import { hashPassword } from "@/lib/security";
 import { storage } from "@/lib/storage";
 import { showToast } from "@/lib/toast";
 import { authService } from "@/services/authService";
-import { healthService, HealthStatus } from "@/services/healthService";
 import { secCollaboratorPreferenceService } from "@/services/secCollaboratorPreferenceService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
@@ -26,7 +25,6 @@ import {
 import { router } from "expo-router";
 import * as React from "react";
 import {
-  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -37,85 +35,6 @@ import {
 } from "react-native";
 import Animated, { FadeInDown, runOnJS } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const HealthCard = () => {
-  const [status, setStatus] = React.useState<HealthStatus | null>(null);
-  const [checking, setChecking] = React.useState(true);
-  const primaryColor = usePreferenceStore((s) => s.primaryColor) || "#002aff";
-
-  const runCheck = React.useCallback(async () => {
-    setChecking(true);
-    const result = await healthService.check();
-    setStatus(result);
-    setChecking(false);
-  }, []);
-
-  React.useEffect(() => {
-    runCheck();
-  }, [runCheck]);
-
-  const isOk = status?.ready && status?.live;
-
-  return (
-    <View className="bg-card rounded-[20px] border border-border overflow-hidden p-4">
-      <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-sm font-poppins-semibold text-foreground">
-          Estado del servidor
-        </Text>
-        {checking ? (
-          <ActivityIndicator size="small" color={primaryColor} />
-        ) : (
-          <Pressable onPress={runCheck} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
-            <Text className="text-xs font-poppins-semibold" style={{ color: primaryColor }}>
-              Reintentar
-            </Text>
-          </Pressable>
-        )}
-      </View>
-
-      {status && (
-        <>
-          <View className="flex-row items-center gap-3 mb-2">
-            <View
-              className={`w-3 h-3 rounded-full ${isOk ? "bg-green-500" : "bg-red-500"}`}
-            />
-            <Text className={`text-sm font-poppins-semibold ${isOk ? "text-green-600" : "text-red-500"}`}>
-              {isOk ? "Operativo" : "Problemas de conexión"}
-            </Text>
-          </View>
-
-          <View className="flex-row gap-4">
-            <View className="flex-1 bg-secondary rounded-xl p-3">
-              <Text className="text-[10px] font-poppins-bold text-muted-foreground uppercase">Ready</Text>
-              <View className="flex-row items-center gap-1.5 mt-1">
-                <View className={`w-2 h-2 rounded-full ${status.ready ? "bg-green-500" : "bg-red-500"}`} />
-                <Text className="text-xs font-poppins-semibold text-foreground">
-                  {status.ready ? "DB conectada" : "Falló"}
-                </Text>
-              </View>
-            </View>
-
-            <View className="flex-1 bg-secondary rounded-xl p-3">
-              <Text className="text-[10px] font-poppins-bold text-muted-foreground uppercase">Live</Text>
-              <View className="flex-row items-center gap-1.5 mt-1">
-                <View className={`w-2 h-2 rounded-full ${status.live ? "bg-green-500" : "bg-red-500"}`} />
-                <Text className="text-xs font-poppins-semibold text-foreground">
-                  {status.live ? "Respondiendo" : "Caído"}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {status.error && (
-            <Text className="text-xs font-poppins text-muted-foreground mt-2 leading-4">
-              {status.error}
-            </Text>
-          )}
-        </>
-      )}
-    </View>
-  );
-};
 
 const THEME_OPTIONS = [
   { value: "light", label: "Claro", icon: SunIcon },
@@ -285,7 +204,7 @@ export default function SettingsScreen() {
         {/* Custom Header */}
         <View className="flex-row items-center px-4 py-2.5 border-b border-border">
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => router.replace("/(protected)/home")}
             style={({ pressed }) => ({
               opacity: pressed ? 0.7 : 1,
             })}
@@ -545,23 +464,6 @@ export default function SettingsScreen() {
                 </View>
               </Pressable>
             </View>
-          </Animated.View>
-
-          {/* System Section */}
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(200).springify()}
-            className="mb-4"
-          >
-            <View className="mb-4">
-              <Text className="text-xl font-poppins-bold text-foreground mb-0.5 tracking-tight">
-                Sistema
-              </Text>
-              <Text className="text-muted-foreground font-poppins-medium text-xs">
-                Estado del servidor y conectividad.
-              </Text>
-            </View>
-
-            <HealthCard />
           </Animated.View>
 
         </ScrollView>

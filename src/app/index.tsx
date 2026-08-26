@@ -474,7 +474,7 @@ export default function LoginScreen() {
                       <Text className="text-sm font-poppins text-muted-foreground select-none">
                         {`Documento : ${"*".repeat(Math.max(0, PrsDocumentNumber.length - 4))}${PrsDocumentNumber.slice(-4)}`}
                       </Text>
-                      {!pinLocked && (
+                      {step === 2 && (
                         <Pressable
                           onPress={() => setShowConfirmLogoutModal(true)}
                           className="flex-row items-center bg-secondary px-3.5 py-1.5 rounded-full active:bg-secondary/80 gap-1.5"
@@ -538,7 +538,7 @@ export default function LoginScreen() {
                     </View>
 
                     {/* Footer Links */}
-                    {!pinLocked && (
+                    {step === 2 && (
                       <View className="mt-8 flex-row justify-center items-center">
                         <Text className="text-muted-foreground font-poppins text-sm select-none">
                           ¿Olvidaste tu PIN?{" "}
