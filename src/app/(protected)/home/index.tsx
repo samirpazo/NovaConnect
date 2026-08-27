@@ -65,8 +65,7 @@ export default function HomeScreen() {
                 style={{ borderColor: `${primaryColor}` }}
               >
                 <NImage
-                  genParameter="ROUTE_PERSONS"
-                  fileName={user?.PrsPhoto}
+                  personId={user?.PrsID}
                   className="w-full h-full"
                   fallbackText={user?.PrsName?.[0] || "U"}
                 />
@@ -288,8 +287,7 @@ export default function HomeScreen() {
               }}
             >
               <NImage
-                genParameter="ROUTE_PERSONS"
-                fileName={user?.PrsPhoto}
+                personId={user?.PrsID}
                 className="w-full h-full rounded-lg"
                 fallbackText={user?.PrsName?.[0] || "U"}
               />

@@ -20,12 +20,12 @@ import {
 export default function DocumentViewerScreen() {
   const pathname = usePathname();
   const {
-    fileName,
+    fileId,
     title,
     periodMonth,
     periodYear,
   } = useLocalSearchParams<{
-    fileName: string;
+    fileId: string;
     title: string;
     periodMonth?: string;
     periodYear?: string;
@@ -40,7 +40,7 @@ export default function DocumentViewerScreen() {
 
   useEffect(() => {
     loadPdf();
-  }, [fileName]);
+  }, [fileId]);
 
   const loadPdf = async () => {
     try {
@@ -48,24 +48,21 @@ export default function DocumentViewerScreen() {
       setError(null);
       setPdfUrl(null);
       setPdfBase64(null);
-      if (!fileName || typeof fileName !== "string") {
-        throw new Error("Nombre de archivo no válido");
+      const managedFileId = Number(fileId);
+      if (!Number.isInteger(managedFileId) || managedFileId <= 0) {
+        throw new Error("Identificador de archivo no válido");
       }
 
       if (Platform.OS === "web") {
         // En web, descargamos el blob y creamos un object URL para el iframe
-        const response = await processedDocumentService.getPdfBlob(fileName);
+        const response = await processedDocumentService.getPdfBlob(managedFileId);
         const blobUrl = window.URL.createObjectURL(response);
         setPdfUrl(blobUrl);
-      } else if (Platform.OS === "android") {
-        // En Android, descargamos el PDF de forma autenticada y lo pasamos como base64
-        const response = await processedDocumentService.getPdfBlob(fileName);
+      } else {
+        // En native, descargamos con Bearer y entregamos base64 al visor.
+        const response = await processedDocumentService.getPdfBlob(managedFileId);
         const base64Data = await blobToBase64(response);
         setPdfBase64(base64Data);
-      } else {
-        // En iOS, react-native-webview puede cargar la URL directamente
-        const url = processedDocumentService.getPdfUrl(fileName);
-        setPdfUrl(url);
       }
     } catch (err) {
       logger.error("Error cargando PDF:", err);
@@ -76,12 +73,13 @@ export default function DocumentViewerScreen() {
   };
 
   const handleDownload = async () => {
-    if (!fileName || typeof fileName !== "string") return;
+    const managedFileId = Number(fileId);
+    if (!Number.isInteger(managedFileId) || managedFileId <= 0) return;
     try {
-      const safeFileName = fileName.split("/").pop() || "Documento.pdf";
+      const safeFileName = `Documento_${managedFileId}.pdf`;
 
       if (Platform.OS === "web") {
-        const response = await processedDocumentService.getPdfBlob(fileName);
+        const response = await processedDocumentService.getPdfBlob(managedFileId);
         
         // Forzar descarga en Safari cambiando el tipo a octet-stream
         const forceDownloadBlob = new Blob([response], { type: "application/octet-stream" });
@@ -97,7 +95,7 @@ export default function DocumentViewerScreen() {
         
         setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
       } else {
-        const response = await processedDocumentService.getPdfBlob(fileName);
+        const response = await processedDocumentService.getPdfBlob(managedFileId);
         const base64Data = await blobToBase64(response);
 
         const fileUri = `${FileSystem.cacheDirectory}${safeFileName}`;
@@ -118,12 +116,13 @@ export default function DocumentViewerScreen() {
   };
 
   const handleSaveToVault = async () => {
-    if (!fileName || typeof fileName !== "string") return;
+    const managedFileId = Number(fileId);
+    if (!Number.isInteger(managedFileId) || managedFileId <= 0) return;
     try {
       setIsSaving(true);
-      const safeFileName = fileName.split("/").pop() || "Documento.pdf";
+      const safeFileName = `Documento_${managedFileId}.pdf`;
       
-      const response = await processedDocumentService.getPdfBlob(fileName);
+      const response = await processedDocumentService.getPdfBlob(managedFileId);
       const base64Data = await blobToBase64(response);
 
       await saveToVault(base64Data, safeFileName, {
@@ -168,10 +167,7 @@ export default function DocumentViewerScreen() {
             className="text-base font-poppins-semibold text-foreground text-center"
             numberOfLines={1}
           >
-            {title ||
-              (typeof fileName === "string"
-                ? fileName.split("/").pop()
-                : "Documento")}
+            {title || `Documento #${fileId}`}
           </Text>
         </View>
 

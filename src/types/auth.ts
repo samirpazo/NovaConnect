@@ -7,7 +7,6 @@ export interface AuthResponse {
     UsrID: number;
     UsrName: string;
     UsrEmail: string;
-    PrsPhoto: string | null;
     UsrChangePassword: boolean;
     CreateDate: Date | string;
     PrsID: number;

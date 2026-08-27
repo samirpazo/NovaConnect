@@ -1,8 +1,6 @@
-import { api, API_URL } from "@/lib/axios";
+import { api } from "@/lib/axios";
 import { logger } from "@/lib/logger";
 import { ProcessedDocument } from "@/types/document";
-import * as WebBrowser from "expo-web-browser";
-import { Platform } from "react-native";
 
 export const processedDocumentService = {
   async getDocuments(
@@ -33,38 +31,12 @@ export const processedDocumentService = {
     }
   },
   
-  getPdfUrl(fileName: string): string {
-    if (!fileName) return "";
-    return `${API_URL}/GenUploadFiles/downloadFile?genParameter=ROUTE_BOLETAS&nameFile=${fileName}`;
-  },
-
-  async getPdfBlob(fileName: string): Promise<Blob> {
+  async getPdfBlob(fileId: number): Promise<Blob> {
     const { data } = await api.get(
-      `/GenUploadFiles/downloadFile?genParameter=ROUTE_BOLETAS&nameFile=${fileName}`,
+      `/GenFiles/${fileId}/download`,
       { responseType: "blob" }
     );
     return new Blob([data], { type: "application/pdf" });
   },
 
-  async openPdf(fileName: string, primaryColor: string): Promise<void> {
-    if (!fileName) return;
-    try {
-      if (Platform.OS === "web") {
-        const { data } = await api.get(
-          `/GenUploadFiles/downloadFile?genParameter=ROUTE_BOLETAS&nameFile=${fileName}`,
-          { responseType: "blob" }
-        );
-        const blobUrl = window.URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
-        window.open(blobUrl, "_blank");
-      } else {
-        const url = this.getPdfUrl(fileName);
-        await WebBrowser.openBrowserAsync(url, {
-          toolbarColor: primaryColor,
-        });
-      }
-    } catch (error) {
-      logger.error("Error opening PDF:", error);
-      throw error;
-    }
-  }
 };

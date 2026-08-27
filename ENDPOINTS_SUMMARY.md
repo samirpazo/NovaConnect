@@ -30,9 +30,9 @@ Este documento lista todas las rutas de la API del backend que actualmente son c
   - **Uso:** Obtener la lista de documentos. Se llama con `false` para la pestaña "Documentos Nuevos" y `true` para el "Historial".
 - **`PUT /MpwProcessedDocument/Update?id={id}`**
   - **Uso:** Se dispara cuando el usuario abre un documento nuevo para marcarlo como leído (cambia `PdcIsReceived` a `true`).
-- **`GET /GenUploadFiles/downloadFile?genParameter=ROUTE_BOLETAS&nameFile={fileName}`**
+- **`GET /GenFiles/{fileId}/download`**
   - **Uso:** Descargar o previsualizar el archivo PDF binario de la boleta desde el servidor.
-- **`GET /GenUploadFiles/downloadFile?genParameter=ROUTE_PERSONS&nameFile={fileName}&isImg=true`**
+- **`GET /GenPerson/GetPhotoHistory/{prsId}`** y **`GET /GenFiles/{fileId}/preview`**
   - **Uso:** Obtener la foto de perfil de la persona (base64 en JSON). Se dispara vía `NImage` en la pantalla Home (primer request tras el login). Endpoint `[Authorize]` — requiere token válido (Bearer en native / cookie en web).
 
 ## 3. Personalización (`secCollaboratorPreferenceService.ts`)

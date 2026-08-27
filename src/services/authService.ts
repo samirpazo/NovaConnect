@@ -37,7 +37,6 @@ export const authService = {
             UsrName: rawData.Collaborator?.PrsDocumentNumber,
             ColID: rawData.Collaborator?.ColID,
             UsrEmail: rawData.Collaborator?.PrsEmail,
-            PrsPhoto: rawData.Collaborator?.PrsPhoto,
             UsrChangePassword: false,
             CreateDate: new Date(),
             PrsID: rawData.Collaborator?.PrsID,

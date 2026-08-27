@@ -4,8 +4,7 @@ export interface ProcessedDocument {
   PdcPeriodYear: string;
   PdcPeriodMonth: string;
   PdcPeriodWeek: string | null;
-  PdcFileName: string;
-  PdcFilePath: string;
+  PdcFilID: number;
   SecStatus: number;
   CreateUserId: number;
   UpdateUserId: number | null;
