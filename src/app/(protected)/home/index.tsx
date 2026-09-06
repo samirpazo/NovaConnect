@@ -2,21 +2,29 @@ import { NImage } from "@/components/custom/NImage";
 import { Text } from "@/components/ui/text";
 import { AlertHelper } from "@/lib/alert";
 import { sanitizePrimaryColor } from "@/lib/colorUtils";
+import {
+  trainingAttendanceService,
+  type TrainingAttendance,
+} from "@/services/trainingAttendanceService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import {
   Building2,
+  ChevronDown,
   ChevronRight,
+  GraduationCap,
+  HardDrive,
   HelpCircle,
   IdCard,
   LogOut,
   Mail,
   Phone,
   Settings,
-  HardDrive,
+  X,
 } from "lucide-react-native";
+import { DateTime } from "luxon";
 import * as React from "react";
 import { Modal, Platform, Pressable, ScrollView, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
@@ -25,8 +33,48 @@ import Animated, { FadeInDown, FadeOut, ZoomIn } from "react-native-reanimated";
 export default function HomeScreen() {
   const { user, logout } = useAuthStore();
   const [photoVisible, setPhotoVisible] = React.useState(false);
+  const [pendingTrainings, setPendingTrainings] = React.useState<
+    TrainingAttendance[]
+  >([]);
+  const [trainingDismissed, setTrainingDismissed] = React.useState(false);
+  const [expandedSession, setExpandedSession] = React.useState<string | null>(
+    null,
+  );
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
   const primaryColor = sanitizePrimaryColor(storePrimaryColor);
+  const pendingTrainingCount = new Set(
+    pendingTrainings.map((training) => training.TneName.trim().toLowerCase()),
+  ).size;
+  const currentTraining = pendingTrainings[0];
+  const currentTrainingKey = currentTraining?.TneName.trim().toLowerCase();
+  const currentSessions = currentTraining
+    ? Array.from(
+        new Map(
+          pendingTrainings
+            .filter(
+              (training) =>
+                training.TneName.trim().toLowerCase() === currentTrainingKey,
+            )
+            .map((training) => [
+              training.TnsStartDateTime + "|" + training.TnsEndDateTime,
+              training,
+            ]),
+        ).values(),
+      )
+    : [];
+
+  React.useEffect(() => {
+    const loadPendingTraining = async () => {
+      try {
+        const pending = await trainingAttendanceService.getPending();
+        setPendingTrainings(pending);
+      } catch {
+        setPendingTrainings([]);
+      }
+    };
+
+    void loadPendingTraining();
+  }, []);
 
   const handleSettings = () => {
     router.push("/(protected)/home/settings");
@@ -87,6 +135,167 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
+          {pendingTrainings.length > 0 && !trainingDismissed && (
+            <Modal
+              visible
+              transparent
+              animationType="fade"
+              statusBarTranslucent
+              onRequestClose={() => setTrainingDismissed(true)}
+            >
+  <View className="flex-1 bg-black/70 items-center justify-center px-4 py-4">
+      <Animated.View
+        entering={ZoomIn.duration(300).springify()}
+    className="max-h-[84%]"
+    style={{ width: "92%", maxWidth: 420, maxHeight: "84%" }}
+      >
+                  <View className="rounded-[20px] bg-[#17191f] shadow-sm overflow-hidden border border-white/10">
+                    <View className="flex-row items-center px-4 py-3 border-b border-white/10">
+                      <View className="flex-1 flex-row items-center gap-2">
+                        <View className="w-8 h-8 rounded-lg bg-white/15 items-center justify-center">
+                          <GraduationCap size={18} color="#ffffff" />
+                        </View>
+                        <Text className="font-poppins-bold text-white text-xs uppercase tracking-widest">
+                          {currentTraining?.TneEventTypeName || "Evento"}
+                        </Text>
+                      </View>
+                      {pendingTrainingCount > 1 ? (
+                        <Text className="font-poppins-semibold text-white/70 text-xs">
+                          1 de {pendingTrainingCount}
+                        </Text>
+                      ) : null}
+                      <Pressable
+                        onPress={() => setTrainingDismissed(true)}
+                        className="ml-3 p-1.5 active:opacity-70"
+                        accessibilityLabel="Cerrar aviso de evento"
+                      >
+                        <X size={18} color="#ffffff" />
+                      </Pressable>
+                    </View>
+                    <ScrollView
+                      showsVerticalScrollIndicator={false}
+                      contentContainerStyle={{ padding: 14, paddingBottom: 16 }}
+                      style={{ maxHeight: 470 }}
+                    >
+                      <Text
+                        className="font-poppins-bold text-white text-lg leading-tight"
+                        numberOfLines={3}
+                      >
+                        {currentTraining?.TneName}
+                      </Text>
+                      <Text className="font-poppins-medium text-white/75 text-sm mt-2">
+                        Invitación pendiente
+                      </Text>
+                      {currentTraining?.TneFlyerFilID ? (
+                        <View
+                          className="mt-3 self-center rounded-xl bg-black/25 p-1 overflow-hidden border border-white/[0.06]"
+                          style={{ width: "82%", height: 300 }}
+                        >
+                          <NImage
+                            fileId={currentTraining.TneFlyerFilID}
+                            className="w-full h-full rounded-lg"
+                            contentFit="contain"
+                          />
+                        </View>
+                      ) : null}
+                      <Text className="font-poppins-medium text-white/70 text-xs mt-4 uppercase tracking-wider">
+                        {currentSessions.length}{" "}
+                        {currentSessions.length === 1 ? "sesión" : "sesiones"}
+                      </Text>
+                      <View className="mt-2">
+                        {currentSessions.map((session) => {
+                          const sessionKey =
+                            session.TnsStartDateTime + session.TnsEndDateTime;
+                          const isExpanded = expandedSession === sessionKey;
+
+                          return (
+                            <Pressable
+                              key={sessionKey}
+                              onPress={() =>
+                                setExpandedSession((current) =>
+                                  current === sessionKey ? null : sessionKey,
+                                )
+                              }
+                              className="flex-row items-center border-b border-white/10 py-2 active:opacity-75"
+                            >
+                              <View className="flex-1">
+                                <Text className="font-poppins-semibold text-white/90 text-xs">
+                                  {session.TnsTopicName}
+                                </Text>
+                                {isExpanded ? (
+                                  <View className="mt-1 gap-0.5">
+                                    <Text className="font-poppins-medium text-white/65 text-[11px]">
+                                      {DateTime.fromISO(
+                                        session.TnsStartDateTime,
+                                      ).toFormat("dd/LL/yyyy · HH:mm")}{" "}
+                                      –{" "}
+                                      {DateTime.fromISO(
+                                        session.TnsEndDateTime,
+                                      ).toFormat("HH:mm")}
+                                    </Text>
+                                    {session.TsiInstructorName ? (
+                                      <Text
+                                        className="font-poppins-medium text-white/65 text-[11px]"
+                                        numberOfLines={1}
+                                      >
+                                        Instructor: {session.TsiInstructorName}
+                                      </Text>
+                                    ) : null}
+                                  </View>
+                                ) : null}
+                              </View>
+                              <ChevronDown
+                                size={15}
+                                color="#ffffff"
+                                style={{
+                                  transform: [
+                                    { rotate: isExpanded ? "180deg" : "0deg" },
+                                  ],
+                                }}
+                              />
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </ScrollView>
+                    <View className="px-4 py-2.5 border-t border-white/10">
+                      <Pressable
+                        onPress={async () => {
+                          try {
+                            if (!currentTraining) return;
+                            await trainingAttendanceService.confirm(
+                              currentTraining.TnpID,
+                            );
+                            setPendingTrainings((current) =>
+                              current.filter(
+                                (training) =>
+                                  training.TneName !== currentTraining.TneName,
+                              ),
+                            );
+                          } catch {
+                            AlertHelper.alert(
+                              "No se pudo confirmar",
+                              "Intenta nuevamente en unos segundos.",
+                            );
+                          }
+                        }}
+                        className="rounded-xl py-3 items-center active:opacity-80"
+                        style={{ backgroundColor: primaryColor || "#315efb" }}
+                      >
+                        <Text
+                          className="font-poppins-bold text-sm"
+                          style={{ color: "#ffffff" }}
+                        >
+                          ✓ Asistiré
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </Animated.View>
+              </View>
+            </Modal>
+          )}
+
           {/* Personal Info */}
           <Animated.View
             entering={FadeInDown.duration(400).delay(100).springify()}
@@ -95,7 +304,11 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
                 className="w-8 h-8 rounded-xl items-center justify-center"
-                style={{ backgroundColor: primaryColor ? `${primaryColor}15` : "#002aff15" }}
+                style={{
+                  backgroundColor: primaryColor
+                    ? `${primaryColor}15`
+                    : "#002aff15",
+                }}
               >
                 <IdCard size={16} color={primaryColor || "#002aff"} />
               </View>
@@ -112,7 +325,11 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
                 className="w-8 h-8 rounded-xl items-center justify-center"
-                style={{ backgroundColor: primaryColor ? `${primaryColor}15` : "#002aff15" }}
+                style={{
+                  backgroundColor: primaryColor
+                    ? `${primaryColor}15`
+                    : "#002aff15",
+                }}
               >
                 <Building2 size={16} color={primaryColor || "#002aff"} />
               </View>
@@ -129,7 +346,11 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
                 className="w-8 h-8 rounded-xl items-center justify-center"
-                style={{ backgroundColor: primaryColor ? `${primaryColor}15` : "#002aff15" }}
+                style={{
+                  backgroundColor: primaryColor
+                    ? `${primaryColor}15`
+                    : "#002aff15",
+                }}
               >
                 <Mail size={16} color={primaryColor || "#002aff"} />
               </View>
@@ -146,7 +367,11 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-3 px-4 py-2.5">
               <View
                 className="w-8 h-8 rounded-xl items-center justify-center"
-                style={{ backgroundColor: primaryColor ? `${primaryColor}15` : "#002aff15" }}
+                style={{
+                  backgroundColor: primaryColor
+                    ? `${primaryColor}15`
+                    : "#002aff15",
+                }}
               >
                 <Phone size={16} color={primaryColor || "#002aff"} />
               </View>
@@ -197,7 +422,9 @@ export default function HomeScreen() {
 
               {Platform.OS !== "web" && (
                 <Pressable
-                  onPress={() => router.push({ pathname: "/(protected)/home/vault" })}
+                  onPress={() =>
+                    router.push({ pathname: "/(protected)/home/vault" })
+                  }
                   className="flex-row items-center gap-3.5 py-2 px-4 rounded-[16px] bg-card border border-border/40 active:bg-secondary/50"
                 >
                   <View className="w-9 h-9 rounded-[12px] bg-secondary/80 items-center justify-center">

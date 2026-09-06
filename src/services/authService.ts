@@ -304,7 +304,10 @@ export const authService = {
         Platform.OS === "web" || !isValidToken(refreshToken)
           ? {}
           : { RefreshToken: refreshToken },
-        { withCredentials: true },
+        {
+          withCredentials: true,
+          headers: { "X-Nova-Client": "nova-connect" },
+        },
       );
 
       if (!response.data?.Succeeded || !response.data?.Data) {

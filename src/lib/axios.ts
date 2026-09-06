@@ -18,6 +18,7 @@ export const api = axios.create({
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
+    "X-Nova-Client": "nova-connect",
   },
 });
 
@@ -46,7 +47,10 @@ export async function initCsrf(): Promise<void> {
   try {
     const response = await axios.get<{ Succeeded: boolean; Data?: string }>(
       `${API_URL}/Token/CsrfToken`,
-      { withCredentials: true },
+      {
+        withCredentials: true,
+        headers: { "X-Nova-Client": "nova-connect" },
+      },
     );
     if (response.data?.Succeeded && response.data?.Data) {
       _csrfToken = response.data.Data;
@@ -85,8 +89,12 @@ export async function fetchTokensFromResponse(response: any): Promise<{
 }> {
   const cookies = getSetCookie(response?.headers);
   return {
-    token: parseCookieValue(cookies, "nova_access_token"),
-    refreshToken: parseCookieValue(cookies, "nova_refresh_token"),
+    token:
+      parseCookieValue(cookies, "nova_connect_access_token") ??
+      parseCookieValue(cookies, "nova_access_token"),
+    refreshToken:
+      parseCookieValue(cookies, "nova_connect_refresh_token") ??
+      parseCookieValue(cookies, "nova_refresh_token"),
   };
 }
 
@@ -217,7 +225,10 @@ api.interceptors.response.use(
         const response = await axios.post(
           `${API_URL}/Token/Refresh`,
           isValidToken(refreshToken) ? { RefreshToken: refreshToken } : {},
-          { withCredentials: true },
+          {
+            withCredentials: true,
+            headers: { "X-Nova-Client": "nova-connect" },
+          },
         );
 
         if (response.data.Succeeded && response.data.Data) {

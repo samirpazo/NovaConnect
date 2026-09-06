@@ -24,7 +24,7 @@ export function PinKeypad({
   isBiometricSupported = false,
   isBiometricEnabled = false,
   onBiometric,
-  shuffle = false,
+  shuffle = true,
 }: PinKeypadProps) {
   const { colorScheme } = useAppTheme();
   const [shuffledNumbers, setShuffledNumbers] = React.useState<number[]>([]);
@@ -50,14 +50,17 @@ export function PinKeypad({
     onPinChange(pin.slice(0, -1));
   };
 
-  const keypadItems = shuffledNumbers.length > 0 ? [
-    ...shuffledNumbers.slice(0, 3),
-    ...shuffledNumbers.slice(3, 6),
-    ...shuffledNumbers.slice(6, 9),
-    showBiometric ? "bio" : "",
-    shuffledNumbers[9],
-    "del",
-  ] : [];
+  const keypadItems =
+    shuffledNumbers.length > 0
+      ? [
+          ...shuffledNumbers.slice(0, 3),
+          ...shuffledNumbers.slice(3, 6),
+          ...shuffledNumbers.slice(6, 9),
+          showBiometric ? "bio" : "",
+          shuffledNumbers[9],
+          "del",
+        ]
+      : [];
 
   return (
     <View className="w-full max-w-[280px] self-center">
@@ -68,7 +71,9 @@ export function PinKeypad({
             key={i}
             className={`size-3.5 rounded-full ${i < pin.length ? "" : "bg-muted"}`}
             style={
-              i < pin.length ? { backgroundColor: primaryColor || "#002aff" } : {}
+              i < pin.length
+                ? { backgroundColor: primaryColor || "#002aff" }
+                : {}
             }
           />
         ))}
@@ -94,25 +99,38 @@ export function PinKeypad({
               }}
               disabled={item === "bio" && !isBiometricSupported}
               className={`w-[30%] h-11 items-center justify-center rounded-xl ${
-                item !== "bio" && item !== "" ? "bg-secondary/60 active:bg-muted" : ""
+                item !== "bio" && item !== ""
+                  ? "bg-secondary/60 active:bg-muted"
+                  : ""
               } ${item === "bio" && !isBiometricSupported ? "opacity-0" : ""}`}
             >
               {item === "del" ? (
-                <Delete size={20} color={colorScheme === "dark" ? "#a1a1aa" : "#71717a"} />
+                <Delete
+                  size={20}
+                  color={colorScheme === "dark" ? "#a1a1aa" : "#71717a"}
+                />
               ) : item === "bio" ? (
                 isBiometricSupported ? (
                   Platform.OS === "ios" ? (
                     <ScanFace
                       size={24}
                       color={
-                        isBiometricEnabled ? primaryColor || "#002aff" : (colorScheme === "dark" ? "#a1a1aa" : "#71717a")
+                        isBiometricEnabled
+                          ? primaryColor || "#002aff"
+                          : colorScheme === "dark"
+                            ? "#a1a1aa"
+                            : "#71717a"
                       }
                     />
                   ) : (
                     <Fingerprint
                       size={24}
                       color={
-                        isBiometricEnabled ? primaryColor || "#002aff" : (colorScheme === "dark" ? "#a1a1aa" : "#71717a")
+                        isBiometricEnabled
+                          ? primaryColor || "#002aff"
+                          : colorScheme === "dark"
+                            ? "#a1a1aa"
+                            : "#71717a"
                       }
                     />
                   )
