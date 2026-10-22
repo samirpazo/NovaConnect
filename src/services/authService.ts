@@ -1,24 +1,46 @@
 import { api } from "@/lib/axios";
 import { storage } from "@/lib/storage";
 import { AuthResponse } from "@/types/auth";
+import { Platform } from "react-native";
 
 export const authService = {
   async loginCollaborator(
     credentials: any,
   ): Promise<{ success: boolean; data?: AuthResponse; error?: string }> {
     try {
-      const { data } = await api.post(
+      const response = await api.post(
         "/Token/AuthenticationCollaborator",
         credentials,
       );
+      const { data } = response;
       const isSuccess = data.Succeeded;
       const rawData = data.Data;
       const message = data.Message;
 
       if (isSuccess) {
+        const cookies = response.headers["set-cookie"];
+        const cookieText = Array.isArray(cookies)
+          ? cookies.join(", ")
+          : String(cookies || "");
+        const accessToken =
+          Platform.OS === "web"
+            ? ""
+            : cookieText.match(
+                /(?:^|[,;]\s*)nova_connect_access_token=([^;,\s]+)/,
+              )?.[1] || "";
+        const refreshToken =
+          Platform.OS === "web"
+            ? ""
+            : cookieText.match(
+                /(?:^|[,;]\s*)nova_connect_refresh_token=([^;,\s]+)/,
+              )?.[1] || "";
+        if (Platform.OS !== "web" && (!accessToken || !refreshToken))
+          throw new Error(
+            "El servidor no entregó las credenciales de la sesión.",
+          );
         const authData: AuthResponse = {
-          Token: rawData.Token,
-          RefreshToken: rawData.RefreshToken,
+          Token: accessToken,
+          RefreshToken: refreshToken,
           AccessTokenExpiration: rawData.AccessTokenExpiration,
           SsnID: rawData.SsnID,
           User: {
@@ -83,11 +105,18 @@ export const authService = {
         };
 
         // Guardar Tokens de forma segura
-        await Promise.all([
-          storage.setItem("token", authData.Token),
-          storage.setItem("refreshToken", authData.RefreshToken),
-          storage.setItem("user", JSON.stringify(authData.User)),
-        ]);
+        await storage.setItem("user", JSON.stringify(authData.User));
+        if (Platform.OS !== "web") {
+          await Promise.all([
+            storage.setItem("token", authData.Token),
+            storage.setItem("refreshToken", authData.RefreshToken),
+          ]);
+        } else {
+          await Promise.all([
+            storage.removeItem("token"),
+            storage.removeItem("refreshToken"),
+          ]);
+        }
 
         return { success: true, data: authData };
       } else {
@@ -130,9 +159,7 @@ export const authService = {
     }
   },
 
-  async validateLogin(
-    document: string,
-  ): Promise<{
+  async validateLogin(document: string): Promise<{
     success: boolean;
     data?: { PrsID: number; HasAccount: boolean };
     error?: string;
@@ -159,36 +186,49 @@ export const authService = {
     }
   },
 
+  async requestEnrollmentOtp(
+    document: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data } = await api.post("/SecCollaborator/RequestEnrollmentOtp", {
+        DocumentNumber: document,
+      });
+      return { success: data.Succeeded, error: data.Message };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error?.response?.data?.Message || "No se pudo enviar el código.",
+      };
+    }
+  },
+
   async registerCollaborator(
-    prsId: number,
+    document: string,
+    otp: string,
     password: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { data } = await api.post("/SecCollaborator/Save", {
-        PrsID: prsId,
-        ColPassword: password,
-        SecStatus: true,
+      const { data } = await api.post("/SecCollaborator/ConfirmEnrollment", {
+        DocumentNumber: document,
+        Otp: otp,
+        NewPasswordHash: password,
       });
-
-      if (data.Succeeded) {
-        return { success: true };
-      }
-
-      return {
-        success: false,
-        error: data.Message || "No se pudo completar el registro.",
-      };
+      return { success: data.Succeeded, error: data.Message };
     } catch (error: any) {
       return {
         success: false,
         error:
-          error?.response?.data?.Message ||
-          "Error al intentar registrar el colaborador.",
+          error?.response?.data?.Message || "No se pudo completar el registro.",
       };
     }
   },
 
   async logout(): Promise<void> {
+    try {
+      await api.post("/Token/Logout");
+    } catch {
+      /* Local cleanup still runs if the session expired. */
+    }
     await Promise.all([
       storage.removeItem("token"),
       storage.removeItem("refreshToken"),

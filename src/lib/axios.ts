@@ -11,10 +11,14 @@ export const API_URL =
 
 export const api = axios.create({
   baseURL: API_URL,
+  withCredentials: Platform.OS === "web",
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+let csrfToken = "";
+let csrfRequest: Promise<void> | null = null;
 
 // Variable para evitar bucles infinitos de logout
 let isLoggingOut = false;
@@ -29,7 +33,11 @@ api.interceptors.request.use(
   async (config) => {
     try {
       // 1. JWT Bearer token (para endpoints protegidos post-login)
-      const token = await storage.getItem("token");
+      config.headers["X-Nova-Client"] = "nova-connect";
+      config.headers["X-Client-Platform"] =
+        Platform.OS === "web" ? "web" : "native";
+      const token =
+        Platform.OS === "web" ? null : await storage.getItem("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -41,7 +49,24 @@ api.interceptors.request.use(
         config.headers["X-Mobile-Api-Key"] = mobileApiKey;
       }
     } catch (error) {
-      console.error("Error getting token from SecureStore", error);
+      return Promise.reject(error);
+    }
+    if (
+      Platform.OS === "web" &&
+      ["post", "put", "patch", "delete"].includes(config.method || "")
+    ) {
+      if (!csrfToken) {
+        csrfRequest ??= api
+          .get("/Token/CsrfToken")
+          .then(({ data }) => {
+            csrfToken = data.Data;
+          })
+          .finally(() => {
+            csrfRequest = null;
+          });
+        await csrfRequest;
+      }
+      config.headers["X-CSRF-TOKEN"] = csrfToken;
     }
     return config;
   },

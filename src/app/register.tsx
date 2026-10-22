@@ -21,7 +21,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RegisterScreen() {
-  const { doc, prsId } = useLocalSearchParams();
+  const { doc } = useLocalSearchParams<{ doc: string }>();
   const { login } = useAuthStore();
   const { setPreferences, primaryColor: storePrimaryColor } =
     usePreferenceStore();
@@ -30,13 +30,10 @@ export default function RegisterScreen() {
     storePrimaryColor?.toLowerCase() === "ff0000"
       ? "#002aff"
       : storePrimaryColor;
-  const [step, setStep] = React.useState<1 | 2>(1);
+  const [step, setStep] = React.useState<1 | 2 | 3>(1);
   const [firstPin, setFirstPin] = React.useState("");
   const [pin, setPin] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
-
-  // Parse prsId to number, since URL params are strings
-  const parsedPrsId = prsId ? parseInt(prsId as string, 10) : null;
 
   const handleContinue = () => {
     if (pin.length < 6) {
@@ -54,7 +51,7 @@ export default function RegisterScreen() {
       return;
     }
 
-    if (pin !== firstPin) {
+    if (step === 2 && pin !== firstPin) {
       AlertHelper.alert(
         "Error",
         "Los PINs no coinciden. Por favor, inténtalo de nuevo.",
@@ -63,21 +60,31 @@ export default function RegisterScreen() {
       return;
     }
 
-    if (!parsedPrsId) {
-      AlertHelper.alert("Error", "No se ha proporcionado un ID válido.");
+    if (!doc) {
+      AlertHelper.alert("Error", "No se ha proporcionado un documento válido.");
       return;
     }
 
     setIsLoading(true);
 
-    // Hash in frontend just like Login
-    const hashedPin = hashPassword(pin);
+    if (step === 2) {
+      const sent = await authService.requestEnrollmentOtp(doc);
+      setIsLoading(false);
+      if (!sent.success) {
+        AlertHelper.alert(
+          "Error",
+          sent.error || "No se pudo enviar el código.",
+        );
+        return;
+      }
+      setPin("");
+      setStep(3);
+      return;
+    }
+    const hashedPin = hashPassword(firstPin);
 
     // Call the Save flow
-    const result = await authService.registerCollaborator(
-      parsedPrsId,
-      hashedPin,
-    );
+    const result = await authService.registerCollaborator(doc, pin, hashedPin);
 
     setIsLoading(false);
 
@@ -136,7 +143,10 @@ export default function RegisterScreen() {
   };
 
   const handleBack = () => {
-    if (step === 2) {
+    if (step === 3) {
+      setStep(2);
+      setPin("");
+    } else if (step === 2) {
       setStep(1);
       setPin(firstPin);
     } else {
@@ -194,14 +204,24 @@ export default function RegisterScreen() {
                     className="text-[10px] font-bold font-poppins uppercase tracking-widest"
                     style={{ color: primaryColor || "#002aff" }}
                   >
-                    Paso {step} de 2
+                    Paso {step} de 3
                   </Text>
                 </View>
               </View>
               <Text className="text-xl font-bold font-poppins text-center text-foreground mb-4">
-                {step === 1 ? "Crea tu PIN" : "Confirma tu PIN"}
+                {step === 1
+                  ? "Crea tu PIN"
+                  : step === 2
+                    ? "Confirma tu PIN"
+                    : "Verifica tu correo"}
               </Text>
 
+              {step === 3 && (
+                <Text className="text-sm text-center text-muted-foreground mb-4">
+                  Ingresa el código enviado al correo registrado de tu ficha.
+                  Caduca en 15 minutos.
+                </Text>
+              )}
               {/* Custom PIN Dots */}
               <View className="flex-row gap-3 mb-6 justify-center">
                 {[...Array(6)].map((_, i) => (
@@ -217,6 +237,25 @@ export default function RegisterScreen() {
                 ))}
               </View>
 
+              {step === 3 && (
+                <Pressable
+                  disabled={isLoading}
+                  onPress={async () => {
+                    setIsLoading(true);
+                    const result = await authService.requestEnrollmentOtp(doc);
+                    setIsLoading(false);
+                    AlertHelper.alert(
+                      result.success ? "Código enviado" : "Error",
+                      result.error ||
+                        "Revisa el correo registrado de tu ficha.",
+                    );
+                  }}
+                >
+                  <Text className="text-sm text-center mb-4 text-primary">
+                    Reenviar código
+                  </Text>
+                </Pressable>
+              )}
               {/* Custom Keypad */}
               <View className="w-full flex-row flex-wrap justify-center gap-3 mb-5">
                 {keypadItems.map((item, i) => (
@@ -241,25 +280,41 @@ export default function RegisterScreen() {
               </View>
 
               {step === 1 ? (
-                <Pressable 
-                  onPress={handleContinue} 
+                <Pressable
+                  onPress={handleContinue}
                   disabled={pin.length < 6}
-                  className={`w-full h-12 rounded-xl flex-row items-center justify-center ${pin.length < 6 ? 'bg-muted opacity-60' : ''}`}
-                  style={pin.length >= 6 ? { backgroundColor: primaryColor || '#002aff' } : {}}
+                  className={`w-full h-12 rounded-xl flex-row items-center justify-center ${pin.length < 6 ? "bg-muted opacity-60" : ""}`}
+                  style={
+                    pin.length >= 6
+                      ? { backgroundColor: primaryColor || "#002aff" }
+                      : {}
+                  }
                 >
-                  <Text className={`font-poppins text-base font-bold ${pin.length >= 6 ? 'text-white' : 'text-muted-foreground'}`}>
+                  <Text
+                    className={`font-poppins text-base font-bold ${pin.length >= 6 ? "text-white" : "text-muted-foreground"}`}
+                  >
                     Continuar
                   </Text>
                 </Pressable>
               ) : (
-                <Pressable 
-                  onPress={handleRegister} 
+                <Pressable
+                  onPress={handleRegister}
                   disabled={isLoading || pin.length < 6}
-                  className={`w-full h-12 rounded-xl flex-row items-center justify-center ${pin.length < 6 ? 'bg-muted opacity-60' : ''}`}
-                  style={pin.length >= 6 ? { backgroundColor: primaryColor || '#002aff' } : {}}
+                  className={`w-full h-12 rounded-xl flex-row items-center justify-center ${pin.length < 6 ? "bg-muted opacity-60" : ""}`}
+                  style={
+                    pin.length >= 6
+                      ? { backgroundColor: primaryColor || "#002aff" }
+                      : {}
+                  }
                 >
-                  <Text className={`font-poppins text-base font-bold ${pin.length >= 6 ? 'text-white' : 'text-muted-foreground'}`}>
-                    {isLoading ? 'Registrando...' : 'Finalizar Registro'}
+                  <Text
+                    className={`font-poppins text-base font-bold ${pin.length >= 6 ? "text-white" : "text-muted-foreground"}`}
+                  >
+                    {isLoading
+                      ? "Procesando..."
+                      : step === 2
+                        ? "Enviar código"
+                        : "Verificar y registrar"}
                   </Text>
                 </Pressable>
               )}
