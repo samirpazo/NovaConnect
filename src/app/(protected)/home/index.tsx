@@ -9,6 +9,7 @@ import {
   Building2,
   ChevronRight,
   HelpCircle,
+  GraduationCap,
   IdCard,
   LogOut,
   Mail,
@@ -195,6 +196,19 @@ export default function HomeScreen() {
               <Text className="text-[11px] font-poppins-bold text-muted-foreground uppercase tracking-widest px-2 mb-1">
                 Acciones Rápidas
               </Text>
+
+              <Pressable
+                onPress={() => router.push("/(protected)/home/trainings")}
+                className="flex-row items-center gap-3.5 py-2 px-4 rounded-[16px] bg-card border border-border/40 active:bg-secondary/50"
+              >
+                <View className="w-9 h-9 rounded-[12px] bg-secondary/80 items-center justify-center">
+                  <GraduationCap size={18} className="text-foreground" />
+                </View>
+                <Text className="flex-1 font-poppins-semibold text-foreground text-sm">
+                  Capacitaciones
+                </Text>
+                <ChevronRight size={18} className="text-muted-foreground/50" />
+              </Pressable>
 
               <Pressable
                 onPress={() => router.push("/(protected)/home/help")}

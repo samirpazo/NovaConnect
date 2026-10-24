@@ -31,6 +31,7 @@ export default function HomeLayout() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="help" options={{ title: "Centro de Ayuda" }} />
       <Stack.Screen name="settings" options={{ title: "Configuración" }} />
+      <Stack.Screen name="trainings" options={{ title: "Capacitaciones" }} />
     </Stack>
   );
 }
