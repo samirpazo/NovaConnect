@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View } from 'react-native';
-import { Image } from 'expo-image';
-import { fileService } from '@/services/fileService';
-import { cn } from '@/lib/utils';
 import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
+import { fileService } from '@/services/fileService';
+import { Image } from 'expo-image';
+import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 
 interface NImageProps {
   genParameter: string;
@@ -26,7 +26,7 @@ export const NImage = ({ genParameter, fileName, className, fallbackText }: NIma
       try {
         const lastDotIndex = fileName.lastIndexOf('.');
         const nameFile = lastDotIndex !== -1 ? fileName.substring(0, lastDotIndex) : fileName;
-        
+
         const data = await fileService.getFile(genParameter, nameFile, true);
         setBase64(data);
       } catch (err) {
