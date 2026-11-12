@@ -1,73 +1,109 @@
-# Minimal Template
+# Nova Connect
 
-This is a [React Native](https://reactnative.dev/) project built with [Expo](https://expo.dev/) and [React Native Reusables](https://reactnativereusables.com).
+App móvil del colaborador. Permite autenticarse con documento y PIN (con acceso biométrico
+opcional), recibir documentos, consultar el historial y gestionar capacitaciones.
 
-It was initialized using the following command, then the `Minimal (Nativewind)` template was selected when prompted:
+- **Expo SDK 56** · React Native 0.85 · expo-router · NativeWind · Zustand
+- **Backend**: NovaApi (`/Users/edinson/Documents/Desarrollo/Nova`), endpoints bajo `/Token/*`,
+  `/SecCollaborator/*`, `/MpwProcessedDocument/*` y `/MpwTraining*`.
 
-```bash
-npx @react-native-reusables/cli@latest init
-```
+## Configuración
 
-## Getting Started
-
-To run the development server:
-
-```bash
-    npm run dev
-    # or
-    yarn dev
-    # or
-    pnpm dev
-    # or
-    bun dev
-```
-
-This will start the Expo Dev Server. Open the app in:
-
-- **iOS**: press `i` to launch in the iOS simulator _(Mac only)_
-- **Android**: press `a` to launch in the Android emulator
-- **Web**: press `w` to run in a browser
-
-You can also scan the QR code using the [Expo Go](https://expo.dev/go) app on your device. This project fully supports running in Expo Go for quick testing on physical devices.
-
-## Adding components
-
-You can add more reusable components using the CLI:
+El archivo `.env` **no se versiona**. Copiar `.env.example` y completar:
 
 ```bash
-npx react-native-reusables/cli@latest add [...components]
+cp .env.example .env
 ```
 
-> e.g. `npx react-native-reusables/cli@latest add input textarea`
+| Variable | Para qué sirve |
+|---|---|
+| `EXPO_PUBLIC_API_URL` | URL del backend. En el emulador de Android usar `http://10.0.2.2:8080`. |
+| `EXPO_PUBLIC_PASSWORD_SECRET` | Pepper con el que se hashea el PIN antes de enviarlo. Debe coincidir con `SecuritySettings:PasswordSecret` del backend. |
+| `EXPO_PUBLIC_MOBILE_API_KEY` | Clave para los endpoints previos al login. Debe coincidir con `MobileApi:ApiKey` del backend. |
 
-If you don't specify any component names, you'll be prompted to select which components to add interactively. Use the `--all` flag to install all available components at once.
+> `EXPO_PUBLIC_*` viaja **dentro del bundle**: son públicos para quien tenga el APK o el IPA.
+> No son un secreto, solo una primera barrera contra la fuerza bruta del PIN.
 
-## Project Features
+## Verificación
 
-- ⚛️ Built with [Expo Router](https://expo.dev/router)
-- 🎨 Styled with [Tailwind CSS](https://tailwindcss.com/) via [Nativewind](https://www.nativewind.dev/)
-- 📦 UI powered by [React Native Reusables](https://github.com/founded-labs/react-native-reusables)
-- 🚀 New Architecture enabled
-- 🔥 Edge to Edge enabled
-- 📱 Runs on iOS, Android, and Web
+```bash
+npm run typecheck   # TypeScript estricto
+npm test            # transporte de cookies/CSRF y ciclo de vida de la sesión
+npx expo-doctor     # compatibilidad con el SDK
+```
 
-## Learn More
+`npm test` no necesita framework externo: los scripts de `scripts/` cargan los módulos con
+`vm.runInNewContext` y verifican el comportamiento con dobles de prueba.
 
-To dive deeper into the technologies used:
+## Proyectos nativos
 
-- [React Native Docs](https://reactnative.dev/docs/getting-started)
-- [Expo Docs](https://docs.expo.dev/)
-- [Nativewind Docs](https://www.nativewind.dev/)
-- [React Native Reusables](https://reactnativereusables.com)
+`ios/` y `android/` se generan con `npx expo prebuild` y **no se versionan**.
 
-## Deploy with EAS
+```bash
+npx expo prebuild          # regenera ios/ y android/
+cd ios && pod install      # dependencias iOS
+npm run ios                # compila y levanta en el simulador
+npm run android            # compila y levanta en el emulador
+```
 
-The easiest way to deploy your app is with [Expo Application Services (EAS)](https://expo.dev/eas).
+### Requisito de JDK 17 en Android
 
-- [EAS Build](https://docs.expo.dev/build/introduction/)
-- [EAS Updates](https://docs.expo.dev/eas-update/introduction/)
-- [EAS Submit](https://docs.expo.dev/submit/introduction/)
+React Native 0.85 pide `jvmToolchain(17)`. Si Gradle no encuentra un JDK 17 local intenta
+descargarlo con el resolver de Foojay, incompatible con Gradle 9, y la compilación aborta con
+`JvmVendorSpec does not have member field IBM_SEMERU`. Se resuelve declarando la ruta del JDK 17
+en `android/gradle.properties` y en `~/.gradle/gradle.properties`:
 
----
+```properties
+org.gradle.java.installations.paths=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+org.gradle.java.installations.auto-download=false
+```
 
-If you enjoy using React Native Reusables, please consider giving it a ⭐ on [GitHub](https://github.com/founded-labs/react-native-reusables). Your support means a lot!
+El SDK location de Android va en `android/local.properties`:
+
+```properties
+sdk.dir=/Users/<usuario>/Library/Android/sdk
+```
+
+### Plugins propios
+
+`plugins/withPodDeploymentTarget.js` eleva el deployment target de los pods de terceros a 16.4.
+Xcode 26+ rechaza los targets antiguos que traen algunos pods (12.4, 13.4) y la compilación
+falla antes de empezar.
+
+## Sesión
+
+La renovación vive en `src/lib/axios.ts`:
+
+1. Un `401` renueva contra `POST /Token/Refresh` y **reintenta** la petición original.
+2. Las renovaciones simultáneas comparten un único vuelo: el backend rota el refresh token, así que
+   dos a la vez harían que la segunda usara un token ya invalidado.
+3. Solo se cierra la sesión si la renovación falla de verdad. Los endpoints `/Token*` quedan fuera
+   del interceptor para que el propio `POST /Token/Logout` (que responde `401` con el token
+   vencido) no dispare una cascada de cierres.
+4. En nativo el access y el refresh token se guardan en SecureStore; en web viajan en cookies
+   HttpOnly y el cliente no los toca.
+
+Las ventanas de sesión las define el backend (`Authentication:Mobile*`): access token de 60
+minutos, refresh token y ventana de inactividad de 30 días.
+
+## Estructura
+
+```text
+src/
+  app/                 Rutas de expo-router (el router usa src/app, no app/)
+  components/          Componentes de interfaz
+  lib/                 Cliente HTTP, almacenamiento seguro, tema, formato
+  services/            Clientes de los endpoints del backend
+  stores/              Estado de sesión y de preferencias
+  types/               Contratos
+scripts/               Pruebas ejecutables con node
+plugins/               Plugins de prebuild
+```
+
+## Pendiente conocido
+
+- **Sin soporte offline.** No hay base de datos local, caché ni cola de operaciones pendientes: la
+  app necesita red para funcionar, incluido el login. Además, si la carga de documentos falla por
+  red la pantalla muestra "Todo al día" en lugar del error.
+- El hash del PIN se guarda en SecureStore sin `requireAuthentication`, y el pepper viaja en el
+  bundle: quien tenga acceso al keychain puede forzar el PIN en bruto.
