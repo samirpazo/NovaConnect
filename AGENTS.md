@@ -35,3 +35,11 @@ He activado e integrado dos sistemas de inteligencia de diseño avanzados:
 
 1. **Alertas**: NO utilices `Alert.alert` nativo de `react-native`. Usa SIEMPRE la utilidad encapsulada `AlertHelper.alert` importada desde `@/lib/alert` para asegurar compatibilidad web/móvil.
 2. **Toasts**: Contamos con nuestra propia utilidad para mostrar notificaciones efímeras. Utiliza SIEMPRE `showToast` importada desde `@/lib/toast` en lugar de librerías externas o utilidades nativas.
+3. **Sesión**: la renovación vive en `src/lib/axios.ts`. Un 401 renueva contra
+   `POST /Token/Refresh` y reintenta la petición; solo se cierra la sesión si la renovación
+   falla de verdad. Los endpoints `/Token*` quedan fuera del interceptor para no provocar una
+   cascada de cierres de sesión. No reintroducir un logout forzado por expiración: es lo que
+   expulsaba al colaborador a los pocos minutos.
+4. **Secretos**: `.env` no se versiona (ver `.env.example`). `EXPO_PUBLIC_*` viaja dentro del
+   bundle: nunca se considera un secreto, solo un obstáculo menor.
+5. **Verificación**: antes de cerrar un cambio ejecutar `npm run typecheck` y `npm test`.

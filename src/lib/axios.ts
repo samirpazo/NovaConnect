@@ -20,13 +20,77 @@ export const api = axios.create({
 let csrfToken = "";
 let csrfRequest: Promise<void> | null = null;
 
-// Variable para evitar bucles infinitos de logout
-let isLoggingOut = false;
+// Renovación de la sesión. El backend rota el refresh token en cada uso, así que
+// dos renovaciones simultáneas harían que la segunda usara un token ya invalidado.
+// Un único vuelo compartido lo evita.
+let refreshPromise: Promise<boolean> | null = null;
+
+// Se invoca cuando la sesión ya no puede renovarse y hay que cerrar el acceso.
 let globalLogoutCallback: (() => void) | null = null;
+
+// Una vez cerrada la sesión no se vuelve a pedir el cierre. El propio
+// POST /Token/Logout responde 401 cuando el token ya venció y, sin esta
+// guarda, disparaba un logout en cascada: 401 -> logout -> 401 -> logout -> ...
+let sessionClosed = false;
 
 export const setGlobalLogoutCallback = (callback: () => void) => {
   globalLogoutCallback = callback;
 };
+
+/** Se invoca al iniciar sesión de nuevo para permitir un futuro cierre. */
+export const markSessionOpen = () => {
+  sessionClosed = false;
+};
+
+const isTokenEndpoint = (url?: string) =>
+  (url ?? "").toLowerCase().includes("/token");
+
+function readCookie(response: unknown, name: string): string {
+  const headers = (response as { headers?: Record<string, unknown> })?.headers;
+  const cookies = headers?.["set-cookie"];
+  const cookieText = Array.isArray(cookies)
+    ? cookies.join(", ")
+    : String(cookies || "");
+  return (
+    cookieText.match(new RegExp(`(?:^|[,;]\\s*)${name}=([^;,\\s]+)`))?.[1] || ""
+  );
+}
+
+/**
+ * Renueva la sesión contra NovaApi.
+ *
+ * En web el refresh token viaja en una cookie HttpOnly y solo hay que pedir la
+ * renovación; en nativo se envía en el cuerpo y se guardan los tokens que
+ * devuelve la respuesta.
+ */
+async function renewSession(): Promise<boolean> {
+  const refreshToken =
+    Platform.OS === "web" ? null : await storage.getItem("refreshToken");
+
+  const response = await api.post(
+    "/Token/Refresh",
+    refreshToken ? { RefreshToken: refreshToken } : {},
+  );
+
+  const body = response.data as { Succeeded?: boolean } | undefined;
+  if (!body?.Succeeded) return false;
+
+  if (Platform.OS !== "web") {
+    const accessToken = readCookie(response, "nova_connect_access_token");
+    if (!accessToken) return false;
+    const rotatedRefresh = readCookie(response, "nova_connect_refresh_token");
+    await storage.setItem("token", accessToken);
+    if (rotatedRefresh) await storage.setItem("refreshToken", rotatedRefresh);
+  }
+
+  return true;
+}
+
+async function closeSession(): Promise<void> {
+  if (sessionClosed) return;
+  sessionClosed = true;
+  globalLogoutCallback?.();
+}
 
 // Request interceptor: agrega Token JWT y API Key móvil
 api.interceptors.request.use(
@@ -80,37 +144,36 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Los endpoints de /Token quedan fuera: un 401 del propio refresh o del
+    // logout no debe cerrar la sesión ni provocar una cascada.
     if (
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      !isLoggingOut
+      error.response?.status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      isTokenEndpoint(originalRequest.url)
     ) {
-      originalRequest._retry = true;
-      try {
-        const refreshToken = await storage.getItem("refreshToken");
-        if (refreshToken) {
-          // Implementar refresh logic si el backend de NovaApi lo soporta con Bearer
-          // const response = await axios.post(`${API_URL}/Token/Refresh`, { token: refreshToken });
-          // await storage.setItem('token', response.data.Token);
-          // originalRequest.headers.Authorization = `Bearer ${response.data.Token}`;
-          // return axios(originalRequest);
-
-          // Por ahora simularemos un logout forzado al expirar para mantener seguridad
-          throw new Error("Refresh not implemented, forcing logout");
-        } else {
-          throw new Error("No refresh token");
-        }
-      } catch (refreshError) {
-        isLoggingOut = true;
-        if (globalLogoutCallback) {
-          globalLogoutCallback();
-        }
-        return Promise.reject(refreshError);
-      } finally {
-        isLoggingOut = false;
-      }
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    originalRequest._retry = true;
+
+    try {
+      refreshPromise ??= renewSession().finally(() => {
+        refreshPromise = null;
+      });
+      const renewed = await refreshPromise;
+      if (!renewed) throw new Error("No se pudo renovar la sesión.");
+
+      if (Platform.OS !== "web") {
+        const token = await storage.getItem("token");
+        if (token) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+        }
+      }
+      return api(originalRequest);
+    } catch (refreshError) {
+      await closeSession();
+      return Promise.reject(refreshError);
+    }
   },
 );

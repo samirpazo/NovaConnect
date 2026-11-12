@@ -29,7 +29,8 @@ function load(file, modules) {
       return { data: { Succeeded: true, Data: { Token: 'do-not-use-body', RefreshToken: 'do-not-use-body', Collaborator: { ColID: 7 } } },
         headers: { 'set-cookie': ['nova_connect_access_token=access-cookie; HttpOnly', 'nova_connect_refresh_token=refresh-cookie; HttpOnly'] } };
     } };
-    const { authService } = load('src/services/authService.ts', { '@/lib/axios': { api }, '@/lib/storage': { storage }, 'react-native': { Platform: { OS: platform } } });
+    let sessionOpened = 0;
+    const { authService } = load('src/services/authService.ts', { '@/lib/axios': { api, markSessionOpen: () => { sessionOpened++; } }, '@/lib/storage': { storage }, 'react-native': { Platform: { OS: platform } } });
     await authService.requestEnrollmentOtp('12345678');
     await authService.registerCollaborator('12345678', '123456', 'client-hash');
     assert.equal(calls[0].url, '/SecCollaborator/RequestEnrollmentOtp');
@@ -42,6 +43,7 @@ function load(file, modules) {
     assert.equal(stored.get('token'), platform === 'web' ? undefined : 'access-cookie');
     assert.equal(stored.get('refreshToken'), platform === 'web' ? undefined : 'refresh-cookie');
     assert.ok(!JSON.stringify([...stored]).includes('do-not-use-body'));
+    assert.equal(sessionOpened, 1, 'iniciar sesion debe liberar la guarda de cierre');
     await authService.logout();
     assert.equal(calls.at(-1).url, '/Token/Logout');
     assert.equal(stored.size, 0);

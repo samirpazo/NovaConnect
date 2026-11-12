@@ -5,9 +5,9 @@ import { hexToNativeWindHsl } from "@/lib/colorUtils";
 import { NAV_THEME } from "@/lib/theme";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
-import { ThemeProvider } from "@react-navigation/native";
+import { ThemeProvider } from "expo-router/react-navigation";
 import { PortalHost } from "@rn-primitives/portal";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter, useSegments, SplashScreen } from "expo-router";
 import Head from "expo-router/head";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme, vars } from "nativewind";
@@ -15,7 +15,6 @@ import { useEffect, useState } from "react";
 import { Platform, View, Dimensions } from "react-native";
 import { Toaster } from "@/lib/sonner";
 
-import { SplashScreen } from "expo-router";
 import {
   useFonts,
   Poppins_400Regular,

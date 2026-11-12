@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios";
+import { api, markSessionOpen } from "@/lib/axios";
 import { storage } from "@/lib/storage";
 import { AuthResponse } from "@/types/auth";
 import { Platform } from "react-native";
@@ -103,6 +103,10 @@ export const authService = {
             BslName: rawData.Collaborator?.BslName,
           },
         };
+
+        // Una sesion nueva permite un futuro cierre de sesion: la guarda se
+        // limpia al volver a autenticarse.
+        markSessionOpen();
 
         // Guardar Tokens de forma segura
         await storage.setItem("user", JSON.stringify(authData.User));
