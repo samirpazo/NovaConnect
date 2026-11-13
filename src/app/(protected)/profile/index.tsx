@@ -126,9 +126,14 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          <Text className="mt-1 text-center text-xs italic text-muted-foreground">
-            Desarrollado por Equipo TI · 2026
-          </Text>
+          <View className="mt-2 items-center gap-1">
+            <Text className="text-center text-xs font-poppins-semibold text-muted-foreground">
+              NOVACORE DIGITAL S.A.C.S.
+            </Text>
+            <Text className="text-center text-xs text-muted-foreground">
+              RUC 20616769163 · © {new Date().getFullYear()}
+            </Text>
+          </View>
         </View>
       </ScrollView>
 
