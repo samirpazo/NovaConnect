@@ -1,76 +1,38 @@
 import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
-import { fileService } from '@/services/fileService';
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 interface NImageProps {
-  genParameter: string;
-  fileName?: string | null;
-  /** Imagen ya descargada (data URI). Tiene prioridad sobre `fileName`. */
+  /** Imagen ya descargada (data URI). */
   source?: string | null;
   className?: string;
   fallbackText?: string;
 }
 
-export const NImage = ({
-  genParameter,
-  fileName,
-  source,
-  className,
-  fallbackText,
-}: NImageProps) => {
-  const [base64, setBase64] = useState<string | null>(null);
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // La imagen ya descargada se usa tal cual: no hace falta pedirla otra vez.
-    if (source) {
-      setBase64(source);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    const fetchImage = async () => {
-      if (!fileName) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const lastDotIndex = fileName.lastIndexOf('.');
-        const nameFile = lastDotIndex !== -1 ? fileName.substring(0, lastDotIndex) : fileName;
-
-        const data = await fileService.getFile(genParameter, nameFile, true);
-        if (!cancelled) setBase64(data);
-      } catch (err) {
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    fetchImage();
-    return () => {
-      cancelled = true;
-    };
-  }, [fileName, genParameter, source]);
-
-  if (!source && (!fileName || error || (!loading && !base64))) {
+/**
+ * Imagen de la persona. Muestra la foto cuando esta disponible y cae a la
+ * inicial del nombre cuando no hay foto.
+ *
+ * La foto llega como data URI: NovaApi la sirve en `/GenPerson/MyPhoto` y el
+ * endpoint de archivos por nombre (`GenUploadFiles`) ya no existe.
+ */
+export const NImage = ({ source, className, fallbackText }: NImageProps) => {
+  if (source) {
     return (
-      <View className={cn("items-center justify-center bg-muted", className)}>
-        <Text className="text-muted-foreground font-bold text-2xl">{fallbackText}</Text>
-      </View>
+      <Image
+        source={{ uri: source }}
+        className={className}
+        contentFit="cover"
+        transition={200}
+        cachePolicy="memory-disk"
+      />
     );
   }
 
   return (
-    <Image
-      source={{ uri: base64 || undefined }}
-      className={className}
-      contentFit="cover"
-      transition={200}
-    />
+    <View className={cn("items-center justify-center bg-muted", className)}>
+      <Text className="text-muted-foreground font-bold text-2xl">{fallbackText}</Text>
+    </View>
   );
 };

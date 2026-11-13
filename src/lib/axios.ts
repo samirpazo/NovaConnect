@@ -86,6 +86,16 @@ async function renewSession(): Promise<boolean> {
   return true;
 }
 
+/**
+ * Indica si hay con que renovar la sesion. En nativo es el refresh token del
+ * almacenamiento seguro; en web la cookie de sesion, que el navegador envia
+ * sola y la app no puede leer.
+ */
+async function hasRenewableCredential(): Promise<boolean> {
+  if (Platform.OS === "web") return true;
+  return !!(await storage.getItem("refreshToken"));
+}
+
 async function closeSession(): Promise<void> {
   if (sessionClosed) return;
   sessionClosed = true;
@@ -115,9 +125,13 @@ api.interceptors.request.use(
     } catch (error) {
       return Promise.reject(error);
     }
+    // El backend excluye de CSRF los endpoints /Token* (login, refresh,
+    // logout y la propia emission del token). Pedirselo ahi provocaba que un
+    // refresh fallara al no poder obtener el token CSRF.
     if (
       Platform.OS === "web" &&
-      ["post", "put", "patch", "delete"].includes(config.method || "")
+      ["post", "put", "patch", "delete"].includes(config.method || "") &&
+      !isTokenEndpoint(config.url)
     ) {
       if (!csrfToken) {
         csrfRequest ??= api
@@ -156,6 +170,12 @@ api.interceptors.response.use(
     }
 
     originalRequest._retry = true;
+
+    // Sin credencial no hay nada que renovar: en el pre-login (documento,
+    // registro, ayuda) un 401 solo significa "no autorizado todavia".
+    if (!(await hasRenewableCredential())) {
+      return Promise.reject(error);
+    }
 
     try {
       refreshPromise ??= renewSession().finally(() => {

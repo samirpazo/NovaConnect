@@ -1,32 +1,54 @@
 import { Text } from "@/components/ui/text";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
-import { Calendar, ChevronRight, FileText } from "lucide-react-native";
-import { View, FlatList, Pressable, RefreshControl, ActivityIndicator, Modal } from "react-native";
+import {
+  Calendar,
+  CheckCircle2,
+  ChevronRight,
+  CloudDownload,
+  FileText,
+  Loader2,
+  WifiOff,
+} from "lucide-react-native";
+import { View, FlatList, Pressable, RefreshControl, ActivityIndicator, Modal, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ConfirmReceptionModal } from "@/components/documents/ConfirmReceptionModal";
+import { DocumentsHeader } from "@/components/documents/DocumentsHeader";
+import { PendingDocumentsSkeleton } from "@/components/documents/PendingDocumentsSkeleton";
+import { PendingEmptyState } from "@/components/documents/PendingEmptyState";
+import { useNetwork } from "@/hooks/useNetwork";
+import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
+import { openDocument } from "@/services/documentDownload";
 import { processedDocumentService } from "@/services/processedDocumentService";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { ProcessedDocument } from "@/types/document";
 import { showToast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import * as React from "react";
 
 export default function DocumentsScreen() {
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
   const primaryColor = storePrimaryColor || "#002aff";
   
-  const { documents, isLoading, isRefreshing, refetch } = useProcessedDocuments(false);
+  const { documents, isLoading, isRefreshing, refetch, error } = useProcessedDocuments(false);
+  const offline = useOfflineDocuments();
+  const isOnline = useNetwork();
+  const [confirming, setConfirming] = React.useState(false);
 
-  const handleOpenPdf = async (fileName: string) => {
+  // El documento se descarga con la credencial y se abre con el visor del
+  // sistema: la URL de GenFiles exige Authorization y el navegador externo no
+  // la lleva.
+  const handleOpenPdf = async (fileId: number) => {
     try {
-      await processedDocumentService.openPdf(fileName, primaryColor);
-    } catch (error) {
+      await openDocument(fileId);
+    } catch {
       showToast.error("Error", "No se pudo abrir el documento.");
     }
   };
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<ProcessedDocument | null>(null);
+  const [isModalVisible, setIsModalVisible] = React.useState(false);
+  const [selectedDocument, setSelectedDocument] =
+    React.useState<ProcessedDocument | null>(null);
 
   const handleDocumentPress = (item: ProcessedDocument) => {
     setSelectedDocument(item);
@@ -35,24 +57,26 @@ export default function DocumentsScreen() {
 
   const confirmReception = async () => {
     if (!selectedDocument) return;
-    setIsModalVisible(false);
-    
+    setConfirming(true);
     try {
       const success = await processedDocumentService.receiveDocument(selectedDocument);
       if (success) {
+        setIsModalVisible(false);
         showToast.success(
           "Documento recepcionado",
           "El documento se ha movido a tu historial."
         );
         refetch();
-        await handleOpenPdf(selectedDocument.PdcFilePath);
+        await handleOpenPdf(selectedDocument.PdcFilID);
       } else {
         showToast.error("Error", "No se pudo recepcionar el documento.");
       }
     } catch (error) {
       showToast.error("Error", "Ocurrió un problema al procesar la solicitud.");
+    } finally {
+      setConfirming(false);
+      setSelectedDocument(null);
     }
-    setSelectedDocument(null);
   };
 
   const renderItem = ({ item, index }: { item: ProcessedDocument; index: number }) => {
@@ -78,9 +102,33 @@ export default function DocumentsScreen() {
               <Text className="text-[11px] font-poppins-medium text-muted-foreground capitalize">
                 {item.PdcPeriodMonth} {item.PdcPeriodYear}
               </Text>
+              {offline.isCached(item.PdcFilID) ? (
+                <View className="flex-row items-center ml-2">
+                  <CheckCircle2 size={12} color="#10B981" className="mr-1" />
+                  <Text className="text-[11px] font-poppins-medium text-[#10B981]">
+                    Listo offline
+                  </Text>
+                </View>
+              ) : null}
             </View>
           </View>
-          
+
+          {Platform.OS !== 'web' && !offline.isCached(item.PdcFilID) ? (
+            <Pressable
+              onPress={() => void offline.cache(item.PdcFilID)}
+              disabled={offline.downloadingId !== null}
+              accessibilityRole="button"
+              accessibilityLabel="Guardar documento para ver sin conexion"
+              className="w-9 h-9 rounded-full bg-secondary/50 items-center justify-center border border-border/50 mr-1 active:opacity-70"
+            >
+              {offline.downloadingId === item.PdcFilID ? (
+                <Loader2 size={16} className="text-muted-foreground" />
+              ) : (
+                <CloudDownload size={16} className="text-muted-foreground" />
+              )}
+            </Pressable>
+          ) : null}
+
           <View className="w-8 h-8 rounded-full bg-secondary/50 items-center justify-center border border-border/50">
             <ChevronRight size={16} className="text-muted-foreground" />
           </View>
@@ -91,21 +139,53 @@ export default function DocumentsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <View className="px-6 pt-4 pb-2">
-        <Text className="text-3xl font-poppins-bold text-foreground tracking-tight">
-          Pendientes
-        </Text>
-        <Text className="text-sm font-poppins-medium text-muted-foreground mt-1">
-          Documentos listos para tu revisión.
-        </Text>
+      <View className="px-6 pt-4 pb-2 gap-3">
+        <DocumentsHeader
+          pendingCount={documents.length}
+          refreshing={isRefreshing}
+          primaryColor={primaryColor}
+          onRefresh={() => void refetch()}
+        />
+        {Platform.OS !== 'web' && documents.length > 0 ? (
+          <View className="flex-row items-center gap-2">
+            <Button
+              variant="outline"
+              disabled={offline.progress !== null}
+              onPress={async () => {
+                const result = await offline.cacheAll(
+                  documents.map(item => item.PdcFilID)
+                );
+                if (result.failed > 0)
+                  showToast.error(
+                    'Error',
+                    `${result.failed} documento(s) no se pudieron guardar.`
+                  );
+                else if (result.done > 0)
+                  showToast.success(
+                    'Documentos guardados',
+                    'Ya puedes verlos sin conexion.'
+                  );
+              }}
+              className="px-4 py-2"
+            >
+              {offline.progress ? (
+                <Loader2 size={14} className="text-muted-foreground" />
+              ) : (
+                <CloudDownload size={14} className="text-muted-foreground" />
+              )}
+              <Text className="text-xs">
+                {offline.progress
+                  ? `Guardando ${offline.progress.done}/${offline.progress.total}`
+                  : 'Guardar para ver sin conexion'}
+              </Text>
+            </Button>
+          </View>
+        ) : null}
       </View>
 
       {isLoading && !isRefreshing ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={primaryColor} />
-          <Text className="mt-4 font-poppins text-muted-foreground text-sm">
-            Buscando documentos...
-          </Text>
+        <View className="flex-1 px-6 pt-4">
+          <PendingDocumentsSkeleton />
         </View>
       ) : (
         <FlatList
@@ -123,69 +203,59 @@ export default function DocumentsScreen() {
             />
           }
           ListEmptyComponent={
-            <Animated.View 
-              entering={FadeInDown.springify()} 
-              style={{ flex: 1, alignItems: "center", justifyContent: "center", marginTop: 80 }}
-            >
-              <View
-                className="w-24 h-24 rounded-[32px] items-center justify-center mb-6"
-                style={{ backgroundColor: `${primaryColor}10` }}
+            error ? (
+              <Animated.View
+                entering={FadeInDown.springify()}
+                style={{ flex: 1, alignItems: "center", justifyContent: "center", marginTop: 80 }}
               >
-                <FileText size={40} color={primaryColor} style={{ opacity: 0.6 }} />
-              </View>
-              <Text className="text-xl font-poppins-bold text-foreground text-center mb-2">
-                Todo al día
-              </Text>
-              <Text className="text-sm font-poppins text-muted-foreground text-center max-w-[250px] leading-5">
-                No tienes documentos pendientes por recepcionar en este momento.
-              </Text>
-            </Animated.View>
+                <View
+                  className="w-24 h-24 rounded-[32px] items-center justify-center mb-6"
+                  style={{ backgroundColor: "#F59E0B18" }}
+                >
+                  <WifiOff size={40} color="#F59E0B" style={{ opacity: 0.7 }} />
+                </View>
+                <Text className="text-xl font-poppins-bold text-foreground text-center mb-2">
+                  No se pudieron cargar
+                </Text>
+                <Text className="text-sm font-poppins text-muted-foreground text-center max-w-[280px] leading-5">
+                  {error} Revisa tu conexion e intentalo de nuevo.
+                </Text>
+                <Button
+                  variant="outline"
+                  onPress={() => refetch()}
+                  className="mt-5 px-6"
+                >
+                  <Text>Reintentar</Text>
+                </Button>
+              </Animated.View>
+            ) : (
+              <PendingEmptyState
+                refreshing={isRefreshing}
+                primaryColor={primaryColor}
+                onRefresh={() => void refetch()}
+              />
+            )
           }
         />
       )}
 
-      <Modal
+      <ConfirmReceptionModal
         visible={isModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View 
-          className="flex-1 justify-center items-center px-6" 
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
-          <View className="w-full max-w-sm bg-card rounded-[24px] p-6 shadow-xl border border-border/40">
-            <View 
-              className="w-12 h-12 rounded-full items-center justify-center mb-4"
-              style={{ backgroundColor: `${primaryColor}15` }}
-            >
-              <FileText size={24} color={primaryColor} />
-            </View>
-            <Text className="text-xl font-poppins-bold text-foreground mb-2">
-              Confirmar recepción
-            </Text>
-            <Text className="text-base font-poppins text-muted-foreground mb-8">
-              ¿Deseas recepcionar el documento de {selectedDocument?.PdcPeriodMonth} {selectedDocument?.PdcPeriodYear}?
-            </Text>
-            
-            <View className="flex-row justify-end gap-3">
-              <Button 
-                variant="ghost" 
-                onPress={() => setIsModalVisible(false)}
-                className="px-6"
-              >
-                <Text>Cancelar</Text>
-              </Button>
-              <Button 
-                onPress={confirmReception}
-                className="px-6"
-              >
-                <Text>Recepcionar</Text>
-              </Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        documentLabel={selectedDocument?.DprDisplayName}
+        periodLabel={
+          selectedDocument
+            ? `${selectedDocument.PdcPeriodMonth} ${selectedDocument.PdcPeriodYear}`
+            : undefined
+        }
+        offline={!isOnline}
+        confirming={confirming}
+        primaryColor={primaryColor}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setSelectedDocument(null);
+        }}
+        onConfirm={() => void confirmReception()}
+      />
     </SafeAreaView>
   );
 }

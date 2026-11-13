@@ -114,7 +114,7 @@ export default function RegisterScreen() {
         AlertHelper.alert("¡Éxito!", "Te has registrado correctamente.", [
           {
             text: "Comenzar",
-            onPress: () => router.replace("/(protected)/home"),
+            onPress: () => router.replace("/(protected)/profile"),
           },
         ]);
       } else {

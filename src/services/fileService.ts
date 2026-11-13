@@ -1,32 +1,26 @@
-import { api } from '@/lib/axios';
+import { api, API_URL } from '@/lib/axios';
 
+/**
+ * Servicio de los archivos administrados (GenFiles).
+ *
+ * NovaApi guarda el documento en el servicio unificado de archivos: el
+ * contenido se pide por identificador (`/GenFiles/{id}/preview`) y no por
+ * nombre de archivo. La descarga exige credenciales, por eso el cliente
+ * autenticado no puede abrir la URL directamente en el navegador del sistema.
+ */
 export const fileService = {
-  async getFile(
-    genParameter: string,
-    nameFile: string,
-    isImg: boolean = false
-  ): Promise<string> {
-    try {
-      const response = await api.get('/GenUploadFiles/downloadFile', {
-        params: { genParameter, nameFile, isImg },
-      });
-      if (isImg) {
-        return response.data.base64;
-      }
-      return '';
-    } catch (error) {
-      console.error('Error fetching file:', error);
-      throw error;
-    }
+  /** URL del archivo. En nativo requiere Authorization: no la abras fuera de la app. */
+  getFileUrl(fileId: number): string {
+    return `${API_URL}/GenFiles/${fileId}/preview`;
   },
 
   /**
    * Foto de la persona del colaborador autenticado.
    *
    * `GET /GenPerson/MyPhoto` devuelve el archivo de la foto activa usando el
-   * PrsID del claim del token, sin permisos adicionales. Antes la app depended
-   * de `user.PrsPhoto`, un campo que NovaApi nunca envía: la foto nunca se
-   * solicitaba y el avatar caía siempre en las iniciales.
+   * PrsID del claim del token, sin permisos adicionales. Antes la app usaba
+   * `user.PrsPhoto`, un campo que NovaApi nunca envia: la foto nunca se
+   * solicitaba y el avatar caia siempre en las iniciales.
    */
   async getMyPhoto(): Promise<string | null> {
     try {

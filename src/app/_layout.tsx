@@ -7,6 +7,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { ThemeProvider } from "expo-router/react-navigation";
 import { PortalHost } from "@rn-primitives/portal";
+import { NOfflineBanner } from "@/components/custom/NOfflineBanner";
 import { Stack, useRouter, useSegments, SplashScreen } from "expo-router";
 import Head from "expo-router/head";
 import { StatusBar } from "expo-status-bar";
@@ -42,7 +43,7 @@ function useProtectedRoute(user: any, loading: boolean, isReady: boolean) {
     if (!user && inProtectedGroup) {
       router.replace("/");
     } else if (user && !inProtectedGroup) {
-      router.replace("/(protected)/home");
+      router.replace("/(protected)/profile");
     }
   }, [user, segments, loading, isReady]);
 }
@@ -121,6 +122,7 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="(protected)" options={{ headerShown: false }} />
         </Stack>
+        <NOfflineBanner />
         <PortalHost />
         <Toaster
           position="top-center"

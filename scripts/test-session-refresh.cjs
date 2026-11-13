@@ -74,6 +74,8 @@ function unauthorized(url, headers = {}) {
 function loadAxios({ platform, storage, refreshResult, postThrows }) {
   const calls = [];
   let responseInterceptor;
+  let requestInterceptor;
+  const captured = () => requestInterceptor;
 
   const client = Object.assign(
     async config => {
@@ -82,7 +84,11 @@ function loadAxios({ platform, storage, refreshResult, postThrows }) {
     },
     {
       interceptors: {
-        request: { use: () => {} },
+        request: {
+          use: fn => {
+            requestInterceptor = fn;
+          },
+        },
         response: {
           use: (ok, onError) => {
             responseInterceptor = onError;
@@ -111,7 +117,15 @@ function loadAxios({ platform, storage, refreshResult, postThrows }) {
     },
   });
 
-  return { module, calls, client, handleError: error => responseInterceptor(error) };
+  return {
+    module,
+    calls,
+    client,
+    handleError: error => responseInterceptor(error),
+    get requestInterceptor() {
+      return captured();
+    },
+  };
 }
 
 (async () => {
@@ -326,6 +340,72 @@ function loadAxios({ platform, storage, refreshResult, postThrows }) {
       'tras volver a iniciar sesion debe intentarse la renovacion otra vez',
     );
     assert.equal(storage.stored.get('token'), 'token-nuevo');
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 4. Un endpoint /Token* no pide token CSRF. NovaApi los excluye de la
+  //    validacion CSRF, y pedirlo ahi hacia fallar la renovacion con un
+  //    error 401 que no explicaba nada.
+  // ────────────────────────────────────────────────────────────────
+  {
+    const storage = makeStorage();
+    const { calls, handleError, requestInterceptor } = loadAxios({
+      platform: 'web',
+      storage,
+      refreshResult: () => ({ data: { Succeeded: true }, headers: {} }),
+    });
+
+    await requestInterceptor({
+      method: 'post',
+      url: '/Token/Refresh',
+      headers: {},
+    });
+
+    assert.equal(
+      calls.filter(c => c.kind === 'get' && c.url === '/Token/CsrfToken').length,
+      0,
+      'los endpoints /Token no deben pedir token CSRF'
+    );
+
+    // La exclusion es selectiva: una mutacion normal si la exige.
+    await requestInterceptor({
+      method: 'post',
+      url: '/MpwProcessedDocument/Update',
+      headers: {},
+    });
+
+    assert.equal(
+      calls.filter(c => c.kind === 'get' && c.url === '/Token/CsrfToken').length,
+      1,
+      'una mutacion normal si debe pedir token CSRF'
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 5. Sin credencial no hay nada que renovar. En el pre-login (documento,
+  //    registro, ayuda) un 401 solo significa "todavia no autorizado" y no
+  //    debe disparar una renovacion.
+  // ────────────────────────────────────────────────────────────────
+  {
+    const storage = makeStorage();
+    const { calls, handleError } = loadAxios({
+      platform: 'ios',
+      storage,
+      refreshResult: () => ({ data: { Succeeded: true }, headers: {} }),
+    });
+
+    await expectRejection(
+      handleError({
+        response: { status: 401 },
+        config: { url: '/GenParameter/GetHelpInfo', headers: {}, method: 'get' },
+      })
+    );
+
+    assert.equal(
+      calls.filter(c => c.kind === 'post' && c.url === '/Token/Refresh').length,
+      0,
+      'sin refresh token no se debe intentar renovar'
+    );
   }
 
   console.log('Session refresh, logout cascade and token rotation checks passed.');

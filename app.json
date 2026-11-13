@@ -64,11 +64,12 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Permitir a Nova Connect usar Face ID para iniciar sesi\u00f3n de forma r\u00e1pida."
+          "faceIDPermission": "Permitir a Nova Connect usar Face ID para iniciar sesión de forma rápida."
         }
       ],
       "expo-secure-store",
-      "./plugins/withPodDeploymentTarget"
+      "./plugins/withPodDeploymentTarget",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

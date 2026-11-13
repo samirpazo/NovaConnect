@@ -5,6 +5,7 @@ import { Icon } from "@/components/ui/icon";
 import { api } from "@/lib/axios";
 import { hashPassword } from "@/lib/security";
 import { storage } from "@/lib/storage";
+import { biometricService } from "@/services/biometricService";
 import { showToast } from "@/lib/toast";
 import { authService } from "@/services/authService";
 import { secCollaboratorPreferenceService } from "@/services/secCollaboratorPreferenceService";
@@ -14,6 +15,7 @@ import { Link, Stack, router, useFocusEffect } from "expo-router";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SplashScreen from "expo-splash-screen";
 import { genParameterService, HelpData } from "@/services/genParameterService";
+import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import {
   ArrowRight,
@@ -88,8 +90,11 @@ export default function LoginScreen() {
           setIsBiometricSupported(true);
         }
 
-        const savedDoc = await storage.getItem("savedDocumentNumber");
-        const bioEnabled = await storage.getItem("isBiometricEnabled");
+        const { documentNumber: savedDoc } =
+          await biometricService.getCredentials();
+        const bioEnabled = (await biometricService.isEnabled())
+          ? "true"
+          : null;
 
         if (bioEnabled === "true") {
           setIsBiometricEnabled(true);
@@ -204,9 +209,7 @@ export default function LoginScreen() {
 
   const handleForgetDocument = async () => {
     setShowConfirmLogoutModal(false);
-    await storage.removeItem("savedDocumentNumber");
-    await storage.removeItem("isBiometricEnabled");
-    await storage.removeItem("savedHashedPin");
+    await biometricService.disable();
     setPrsDocumentNumber("");
     setPin("");
     setIsBiometricEnabled(false);
@@ -248,7 +251,7 @@ export default function LoginScreen() {
         );
       }
     } catch (e) {}
-    router.replace("/(protected)/home");
+    router.replace("/(protected)/profile");
   };
 
   const handleBiometricAuth = async (doc?: string) => {
@@ -261,7 +264,8 @@ export default function LoginScreen() {
       });
 
       if (result.success) {
-        const savedHashedPin = await storage.getItem("savedHashedPin");
+        const { hashedPin: savedHashedPin } =
+          await biometricService.getCredentials();
         if (savedHashedPin && documentToUse) {
           const loginResult = await login({
             DocumentNumber: documentToUse,
@@ -293,9 +297,7 @@ export default function LoginScreen() {
     });
 
     if (result.success) {
-      await storage.setItem("savedHashedPin", hashedPassword);
-      await storage.setItem("isBiometricEnabled", "true");
-      await storage.setItem("savedDocumentNumber", PrsDocumentNumber);
+      await biometricService.enable(PrsDocumentNumber, hashedPassword);
       setIsBiometricEnabled(true);
       setShowBiometricModal(false);
       processSuccessfulLogin();
@@ -319,7 +321,7 @@ export default function LoginScreen() {
     });
 
     if (result.success) {
-      await storage.setItem("savedDocumentNumber", PrsDocumentNumber);
+      await biometricService.rememberDocument(PrsDocumentNumber);
       processSuccessfulLogin();
     } else {
       showToast.error(
@@ -333,11 +335,15 @@ export default function LoginScreen() {
   const handlePinPress = (num: string) => {
     if (pin.length < 6) {
       setPin((prev) => prev + num);
+      // Confirmacion tactil: en campo se teclea con guantes o sin mirar la
+      // pantalla, y el PIN se muestra en digitos barajados.
+      void Haptics.selectionAsync();
     }
   };
 
   const handleDeletePin = () => {
     setPin((prev) => prev.slice(0, -1));
+    void Haptics.selectionAsync();
   };
 
   return (

@@ -1,7 +1,5 @@
 import { api, API_URL } from "@/lib/axios";
 import { ProcessedDocument } from "@/types/document";
-import * as WebBrowser from "expo-web-browser";
-import { Platform } from "react-native";
 
 export const processedDocumentService = {
   async getDocuments(
@@ -32,30 +30,11 @@ export const processedDocumentService = {
     }
   },
   
-  getPdfUrl(fileName: string): string {
-    if (!fileName) return "";
-    return `${API_URL}/GenUploadFiles/downloadFile?genParameter=ROUTE_BOLETAS&nameFile=${fileName}`;
-  },
-
-  async openPdf(fileName: string, primaryColor: string): Promise<void> {
-    if (!fileName) return;
-    try {
-      if (Platform.OS === "web") {
-        const { data } = await api.get(
-          `/GenUploadFiles/downloadFile?genParameter=ROUTE_BOLETAS&nameFile=${fileName}`,
-          { responseType: "blob" }
-        );
-        const blobUrl = window.URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
-        window.open(blobUrl, "_blank");
-      } else {
-        const url = this.getPdfUrl(fileName);
-        await WebBrowser.openBrowserAsync(url, {
-          toolbarColor: primaryColor,
-        });
-      }
-    } catch (error) {
-      console.error("Error opening PDF:", error);
-      throw error;
-    }
+  /**
+   * URL del documento. El archivo vive en GenFiles: el contenido se sirve con
+   * `/GenFiles/{PdcFilID}/preview` y no por nombre de archivo.
+   */
+  getFileUrl(fileId: number): string {
+    return `${API_URL}/GenFiles/${fileId}/preview`;
   }
 };

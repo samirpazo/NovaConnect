@@ -107,3 +107,19 @@ plugins/               Plugins de prebuild
   red la pantalla muestra "Todo al día" en lugar del error.
 - El hash del PIN se guarda en SecureStore sin `requireAuthentication`, y el pepper viaja en el
   bundle: quien tenga acceso al keychain puede forzar el PIN en bruto.
+
+## Documentos y archivos
+
+NovaApi guarda los documentos en el servicio unificado de archivos (`GenFiles`). La relación con la
+persona la mantiene `MpwProcessedDocument.PdcFilID`:
+
+- `GET /MpwProcessedDocument/GetByPrsID?PdcIsReceived={bool}` devuelve los documentos del
+  colaborador con su `PdcFilID`. Los campos `PdcFileName` y `PdcFilePath` ya no existen.
+- `GET /GenFiles/{PdcFilID}/preview` devuelve el contenido. Para PDF devuelve el archivo crudo.
+
+La URL de `GenFiles` exige `Authorization`, así que **no se puede abrir directamente en el navegador
+del sistema**: la app lo descarga con la sesión (`src/services/documentDownload.native.ts`) y lo
+entrega al visor de PDF que elija el usuario (`expo-sharing`). No se usa visor PDF nativo.
+
+El botón "Guardar para ver sin conexion" deja el documento en la cache del dispositivo y la lista
+muestra la insignia "Listo offline".
