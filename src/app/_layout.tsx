@@ -78,9 +78,7 @@ export default function RootLayout() {
 
       // Aplicar el tema recuperado inmediatamente antes de renderizar
       const currentTheme = usePreferenceStore.getState().theme;
-      if (currentTheme !== "system" && currentTheme !== colorScheme) {
-        setColorScheme(currentTheme);
-      }
+      setColorScheme(currentTheme);
 
       setIsReady(true);
       await SplashScreen.hideAsync();
@@ -90,6 +88,13 @@ export default function RootLayout() {
       initApp();
     }
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    // NativeWind elimina la clase al elegir "system", aunque el sistema sea oscuro.
+    if (Platform.OS === "web") {
+      document.documentElement.classList.toggle("dark", colorScheme === "dark");
+    }
+  }, [colorScheme, theme, isReady]);
 
   const primaryHsl = hexToNativeWindHsl(primaryColor);
 

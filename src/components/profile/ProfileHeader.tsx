@@ -58,8 +58,8 @@ export function ProfileHeader({
           avatarHidden ? "opacity-0" : ""
         }`}
         style={{
-          width: 112,
-          height: 112,
+          width: 104,
+          height: 104,
           borderColor: primaryColor,
           backgroundColor: `${primaryColor}15`,
         }}
@@ -81,7 +81,7 @@ export function ProfileHeader({
 
       <View className="w-full items-center gap-2.5">
         <Text
-          className="text-center text-xl font-poppins-bold uppercase leading-tight tracking-tight text-foreground"
+          className="text-center text-lg font-poppins-bold uppercase leading-tight tracking-tight text-foreground"
           numberOfLines={2}
           accessibilityLabel={displayName}
         >
@@ -89,7 +89,7 @@ export function ProfileHeader({
         </Text>
         {position ? (
           <View
-            className="self-center rounded-full border px-3.5 py-1.5"
+            className="self-center rounded-xl border px-3 py-1"
             style={{
               backgroundColor: `${primaryColor}1f`,
               borderColor: `${primaryColor}59`,

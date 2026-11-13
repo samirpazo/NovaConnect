@@ -2,7 +2,6 @@ import { Text } from "@/components/ui/text";
 import { CheckCircle2, RotateCw } from "lucide-react-native";
 import * as React from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
 
 interface PendingEmptyStateProps {
   refreshing: boolean;
@@ -20,11 +19,10 @@ export function PendingEmptyState({
   onRefresh,
 }: PendingEmptyStateProps) {
   return (
-    <Animated.View
-      entering={FadeInDown.springify()}
-      className="w-full items-center rounded-[24px] border border-border/40 bg-card px-6 py-10 shadow-sm"
+    <View
+      className="w-full items-center rounded-2xl border border-border/40 bg-card px-6 py-10 shadow-sm"
     >
-      <View className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-emerald-500/15">
+      <View style={{ alignSelf: "center" }} className="mb-6 h-24 w-24 items-center justify-center rounded-full bg-emerald-500/15">
         <View className="h-16 w-16 items-center justify-center rounded-full bg-emerald-500/25">
           <CheckCircle2 size={40} color="#10B981" />
         </View>
@@ -42,7 +40,7 @@ export function PendingEmptyState({
         disabled={refreshing}
         accessibilityRole="button"
         accessibilityLabel="Comprobar si hay documentos nuevos"
-        className="mt-6 flex-row items-center gap-2 rounded-xl border border-border/40 bg-muted/60 px-4 py-2.5 active:opacity-70 disabled:opacity-60"
+        className="mt-6 self-center flex-row items-center gap-2 rounded-xl border border-border/40 bg-muted/60 px-4 py-2.5 active:opacity-70 disabled:opacity-60"
       >
         {refreshing ? (
           <ActivityIndicator size="small" color={primaryColor} />
@@ -56,6 +54,6 @@ export function PendingEmptyState({
           {refreshing ? "Comprobando..." : "Comprobar nuevos"}
         </Text>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }

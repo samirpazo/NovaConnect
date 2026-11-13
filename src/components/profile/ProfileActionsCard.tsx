@@ -1,5 +1,7 @@
+import { Image } from "expo-image";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { ChevronDown, ChevronUp } from "lucide-react-native";
+import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react-native";
 import * as React from "react";
 import { Pressable, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
@@ -33,7 +35,7 @@ export function ProfileActionsCard({
   const [qrOpen, setQrOpen] = React.useState(false);
 
   return (
-    <View className="overflow-hidden rounded-[24px] border border-border/40 bg-card shadow-sm">
+    <View className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
       {qrValue ? (
         <>
           <Pressable
@@ -44,8 +46,8 @@ export function ProfileActionsCard({
             className="flex-row items-center gap-3.5 px-4 py-3.5 active:bg-secondary/40"
           >
             <View
-              className="h-11 w-11 items-center justify-center rounded-2xl"
-              style={{ backgroundColor: `${primaryColor}1f` }}
+              className="h-11 w-11 items-center justify-center rounded-xl border"
+              style={{ backgroundColor: `${primaryColor}1f`, borderColor: `${primaryColor}3d` }}
             >
               <QrIcon color={primaryColor} />
             </View>
@@ -59,9 +61,9 @@ export function ProfileActionsCard({
             </View>
             <View className="h-8 w-8 items-center justify-center rounded-full bg-secondary/60">
               {qrOpen ? (
-                <ChevronUp size={16} className="text-muted-foreground" />
+                <Icon as={ChevronUp} size={16} className="text-muted-foreground" />
               ) : (
-                <ChevronDown size={16} className="text-muted-foreground" />
+                <Icon as={ChevronDown} size={16} className="text-muted-foreground" />
               )}
             </View>
           </Pressable>
@@ -72,9 +74,21 @@ export function ProfileActionsCard({
                 <QRCode
                   value={qrValue}
                   size={190}
+                  ecl="H"
                   color="#000000"
                   backgroundColor="#ffffff"
                 />
+                <View
+                  pointerEvents="none"
+                  style={{ position: "absolute", alignSelf: "center", top: 92, width: 38, height: 38, padding: 5, backgroundColor: "#ffffff", borderRadius: 6 }}
+                >
+                  <Image
+                    source={require("../../../assets/images/logo-nova.svg")}
+                    style={{ width: 28, height: 28 }}
+                    contentFit="contain"
+                    accessibilityLabel="Nova Connect"
+                  />
+                </View>
               </View>
               <Text className="px-4 text-center text-xs font-poppins-medium text-muted-foreground">
                 Muestra este código en los puntos de control para validar tu
@@ -91,16 +105,12 @@ export function ProfileActionsCard({
           onPress={action.onPress}
           accessibilityRole="button"
           className={`flex-row items-center gap-3.5 px-4 py-3.5 active:bg-secondary/40 ${
-            index === 0 && qrValue
-              ? "border-t border-border/30"
-              : actions[index - 1] || !qrValue
-                ? ""
-                : "border-t border-border/30"
+            index > 0 || qrValue ? "border-t border-border/30" : ""
           }`}
         >
           <View
             className="h-11 w-11 items-center justify-center rounded-2xl"
-            style={{ backgroundColor: `${primaryColor}1f` }}
+            style={{ backgroundColor: `${primaryColor}1f`, borderColor: `${primaryColor}3d` }}
           >
             <action.icon size={20} color={primaryColor} />
           </View>
@@ -115,10 +125,7 @@ export function ProfileActionsCard({
             ) : null}
           </View>
           <View className="h-8 w-8 items-center justify-center rounded-full bg-secondary/60">
-            <ChevronUp
-              size={16}
-              className="rotate-[-90deg] text-muted-foreground"
-            />
+            <Icon as={ChevronRight} size={16} className="text-muted-foreground" />
           </View>
         </Pressable>
       ))}

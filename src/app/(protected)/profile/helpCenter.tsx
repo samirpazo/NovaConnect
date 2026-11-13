@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { genParameterService, HelpData } from "@/services/genParameterService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
@@ -19,7 +20,6 @@ import {
   ScrollView,
   View,
 } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
 
 function digitsOf(phone: string): string {
   return phone.replace(/[^0-9]/g, "");
@@ -101,11 +101,8 @@ export default function HelpCenterScreen() {
         contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View
-          entering={FadeInDown.duration(400).springify()}
-          className="mb-6 w-full"
-        >
-          <View className="flex-row items-center gap-4 rounded-[24px] border border-border/40 bg-card p-4 shadow-sm">
+        <View className="mb-8 w-full">
+          <View className="flex-row items-center gap-4 rounded-2xl border border-border/40 bg-card p-4 shadow-sm">
             <View className="h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15">
               <Headset size={24} color="#10B981" />
             </View>
@@ -113,12 +110,12 @@ export default function HelpCenterScreen() {
               <Text className="text-base font-poppins-bold text-foreground">
                 ¿En qué podemos ayudarte?
               </Text>
-              <Text className="text-xs font-poppins-medium text-muted-foreground">
+              <Text className="mt-1.5 text-xs leading-5 font-poppins-medium text-muted-foreground">
                 Comunícate directamente con nuestro equipo de atención
               </Text>
             </View>
           </View>
-        </Animated.View>
+        </View>
 
         {loading ? (
           <View className="items-center justify-center py-8">
@@ -128,23 +125,20 @@ export default function HelpCenterScreen() {
             </Text>
           </View>
         ) : (
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(100).springify()}
-            className="w-full"
-          >
+          <View className="w-full">
             {hasContact ? (
               <>
-                <Text className="mb-3 px-1 text-xs font-poppins-bold uppercase tracking-widest text-muted-foreground">
+                <Text className="mb-4 px-1 text-xs font-poppins-bold uppercase tracking-widest text-muted-foreground">
                   Canales directos
                 </Text>
-                <View className="gap-3">
+                <View className="gap-4">
                   {phone ? (
-                    <View className="w-full flex-row items-center gap-4 rounded-[24px] border border-emerald-500/40 bg-card p-4 shadow-sm">
+                    <View className="w-full flex-row items-center gap-4 rounded-2xl border border-emerald-500/40 bg-card p-4 shadow-sm">
                       <View className="h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500">
                         <MessageCircle size={24} color="#ffffff" />
                       </View>
                       <View className="flex-1">
-                        <View className="flex-row items-center gap-2">
+                        <View className="flex-row flex-wrap items-center gap-2">
                           <Text className="text-base font-poppins-bold text-foreground">
                             WhatsApp Recursos Humanos
                           </Text>
@@ -154,8 +148,8 @@ export default function HelpCenterScreen() {
                             </Text>
                           </View>
                         </View>
-                        <Text className="text-xs font-poppins-medium text-muted-foreground">
-                          Esríbenos para consultas sobre boletas, contratos o
+                        <Text className="mt-1.5 text-xs leading-5 font-poppins-medium text-muted-foreground">
+                          Escríbenos para consultas sobre boletas, contratos o
                           dudas laborales
                         </Text>
                       </View>
@@ -171,7 +165,7 @@ export default function HelpCenterScreen() {
                   ) : null}
 
                   {phone ? (
-                    <View className="w-full flex-row items-center gap-4 rounded-[24px] border border-border/40 bg-card p-4 shadow-sm">
+                    <View className="w-full flex-row items-center gap-4 rounded-2xl border border-border/40 bg-card p-4 shadow-sm">
                       <View
                         className="h-12 w-12 items-center justify-center rounded-2xl"
                         style={{ backgroundColor: `${primaryColor}1f` }}
@@ -182,7 +176,7 @@ export default function HelpCenterScreen() {
                         <Text className="text-base font-poppins-bold text-foreground">
                           Llamada Telefónica
                         </Text>
-                        <Text className="text-xs font-poppins-medium text-muted-foreground">
+                        <Text className="mt-1.5 text-xs leading-5 font-poppins-medium text-muted-foreground">
                           Atención directa para incidencias o problemas con la
                           aplicación
                         </Text>
@@ -193,13 +187,13 @@ export default function HelpCenterScreen() {
                         accessibilityLabel="Llamar al teléfono de soporte"
                         className="h-9 w-9 items-center justify-center rounded-full bg-secondary/60 active:opacity-70"
                       >
-                        <ChevronRight size={18} className="text-muted-foreground" />
+                        <Icon as={ChevronRight} size={18} className="text-muted-foreground" />
                       </Pressable>
                     </View>
                   ) : null}
 
                   {helpData?.emails && helpData.emails.length > 0 ? (
-                    <View className="w-full gap-2 rounded-[24px] border border-border/40 bg-card p-4 shadow-sm">
+                    <View className="w-full gap-3 rounded-2xl border border-border/40 bg-card p-4 shadow-sm">
                       <View className="flex-row items-center gap-2.5">
                         <Mail size={18} color={primaryColor} />
                         <Text className="text-sm font-poppins-bold text-foreground">
@@ -209,7 +203,7 @@ export default function HelpCenterScreen() {
                       {helpData.emails.map((email, index) => (
                         <View
                           key={`email-${index}`}
-                          className="flex-row items-center rounded-xl border border-border/20 bg-secondary/50 px-3 py-2.5"
+                          className="flex-row items-center gap-3 rounded-xl border border-border/20 bg-secondary/50 px-3 py-2.5"
                         >
                           <Text className="flex-1 text-sm font-poppins-medium text-foreground">
                             {email}
@@ -220,7 +214,7 @@ export default function HelpCenterScreen() {
                             accessibilityLabel={`Copiar el correo ${email}`}
                             className="rounded-md border border-border/40 bg-card p-2 active:opacity-70"
                           >
-                            <Copy size={16} className="text-muted-foreground" />
+                            <Icon as={Copy} size={16} className="text-muted-foreground" />
                           </Pressable>
                         </View>
                       ))}
@@ -235,7 +229,7 @@ export default function HelpCenterScreen() {
                 </Text>
               </View>
             )}
-          </Animated.View>
+          </View>
         )}
       </ScrollView>
     </View>

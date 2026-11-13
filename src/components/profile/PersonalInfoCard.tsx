@@ -38,30 +38,24 @@ export function PersonalInfoCard({
   if (rows.length === 0) return null;
 
   return (
-    <View className="overflow-hidden rounded-[24px] border border-border/40 bg-card shadow-sm">
-      <Text className="px-5 pb-1 pt-4 text-base font-poppins-bold text-foreground">
+    <View className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
+      <Text className="px-4 pb-2 pt-4 text-[15px] font-poppins-bold text-foreground">
         Información Personal
       </Text>
-      {rows.map((row, index) => (
+      {rows.map((row) => (
         <View
           key={row.label}
-          className={`flex-row items-start gap-3 px-5 py-3 ${
-            index < rows.length - 1 ? "border-b border-border/30" : ""
-          }`}
+          className="px-4 pb-4"
         >
-          <row.icon
-            size={16}
-            color={primaryColor}
-            style={{ marginTop: 2 }}
-          />
-          <View className="flex-1">
+          <View className="flex-row items-center gap-1.5 mb-1">
+            <row.icon size={14} color={primaryColor} />
             <Text className="text-[11px] font-poppins-semibold uppercase tracking-wider text-muted-foreground">
               {row.label}
             </Text>
-            <Text className="mt-0.5 text-base font-poppins-bold text-foreground">
-              {row.value}
-            </Text>
           </View>
+          <Text className="text-sm font-poppins-semibold text-foreground">
+            {row.value}
+          </Text>
         </View>
       ))}
     </View>

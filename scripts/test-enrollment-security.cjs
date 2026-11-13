@@ -16,6 +16,8 @@ function load(file, modules) {
 }
 
 (async () => {
+  const loginSource = fs.readFileSync(path.join(__dirname, '../src/app/index.tsx'), 'utf8');
+  assert.ok(!loginSource.includes('genParameterService'), 'El login no debe consultar los contactos de ayuda protegidos.');
   for (const platform of ['web', 'ios']) {
     const stored = new Map();
     const calls = [];

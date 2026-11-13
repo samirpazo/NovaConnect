@@ -14,7 +14,6 @@ import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Link, Stack, router, useFocusEffect } from "expo-router";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SplashScreen from "expo-splash-screen";
-import { genParameterService, HelpData } from "@/services/genParameterService";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import {
@@ -25,8 +24,6 @@ import {
   Headset,
   IdCard,
   LogOut,
-  Mail,
-  Phone,
   ShieldCheck,
   X,
 } from "lucide-react-native";
@@ -68,17 +65,10 @@ export default function LoginScreen() {
   const [registerDoc, setRegisterDoc] = React.useState("");
   const [registerError, setRegisterError] = React.useState("");
   const [isRegistering, setIsRegistering] = React.useState(false);
-  const [helpData, setHelpData] = React.useState<HelpData | null>(null);
   const [biometricSetupPin, setBiometricSetupPin] = React.useState("");
   const [hasStoredDocument, setHasStoredDocument] = React.useState(false);
 
   React.useEffect(() => {
-    genParameterService.getHelpInfo().then((data) => {
-      if (data) {
-        setHelpData(data);
-      }
-    });
-
     const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     setShuffledNumbers([...numbers].sort(() => Math.random() - 0.5));
 
@@ -742,39 +732,8 @@ export default function LoginScreen() {
                 </Text>
                 <Text className="text-sm text-muted-foreground font-poppins text-center mt-3 mb-2">
                   Si tienes problemas para acceder a tu cuenta, por favor
-                  comunícate con tu administrador o contáctanos:
+                  comunícate con el administrador de tu empresa.
                 </Text>
-
-                {helpData ? (
-                  <View className="w-full mt-2">
-                    {helpData.emails?.map((email, idx) => (
-                      <View
-                        key={`email-${idx}`}
-                        className="flex-row items-center justify-center mb-2"
-                      >
-                        <Mail size={14} color={primaryColor || '#002aff'} className="mr-2" />
-                        <Text className="text-sm font-bold font-poppins text-center text-foreground">
-                          {email}
-                        </Text>
-                      </View>
-                    ))}
-                    {helpData.phones?.map((phone, idx) => (
-                      <View
-                        key={`phone-${idx}`}
-                        className="flex-row items-center justify-center mb-1"
-                      >
-                        <Phone size={14} color={primaryColor || '#002aff'} className="mr-2" />
-                        <Text className="text-sm font-bold font-poppins text-center text-foreground">
-                          {phone}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                ) : (
-                  <Text className="text-sm font-bold text-primary font-poppins text-center mt-2">
-                    Cargando información...
-                  </Text>
-                )}
               </View>
 
               <Pressable

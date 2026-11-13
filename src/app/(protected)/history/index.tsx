@@ -1,4 +1,5 @@
 import { PendingDocumentsSkeleton } from "@/components/documents/PendingDocumentsSkeleton";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
 import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
@@ -81,7 +82,7 @@ export default function HistoryYearsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="px-6 pt-4 pb-2 gap-3">
-        <View className="w-full flex-row items-center gap-4 rounded-[24px] border border-border/40 bg-card p-4 shadow-sm">
+        <View className="w-full flex-row items-center gap-4 rounded-2xl border border-border/40 bg-card p-4 shadow-sm">
           <View
             className="h-11 w-11 items-center justify-center rounded-2xl border"
             style={{
@@ -116,15 +117,15 @@ export default function HistoryYearsScreen() {
             {isRefreshing ? (
               <ActivityIndicator size="small" color={primaryColor} />
             ) : (
-              <RotateCw size={16} className="text-muted-foreground" />
+              <Icon as={RotateCw} size={16} className="text-muted-foreground" />
             )}
           </Pressable>
         </View>
 
         <View className="relative justify-center">
-          <Search
+          <Icon as={Search}
             size={20}
-            className="absolute left-10 z-10 text-muted-foreground"
+            className="absolute left-4 z-10 text-muted-foreground"
           />
           <Input
             className="h-12 rounded-[18px] border-border/40 bg-card pl-11 font-poppins text-base"
@@ -269,7 +270,7 @@ export default function HistoryYearsScreen() {
                       {total} doc{total !== 1 ? "s" : ""}
                     </Text>
                   </View>
-                  <ChevronRight size={20} className="text-muted-foreground" />
+                  <Icon as={ChevronRight} size={20} className="text-muted-foreground" />
                 </Pressable>
               </Animated.View>
             );

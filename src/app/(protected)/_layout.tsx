@@ -75,6 +75,7 @@ export default function ProtectedLayout() {
         },
       }}
     >
+      <Tabs.Screen name="home" options={{ href: null }} />
       <Tabs.Screen
         name="profile"
         options={{

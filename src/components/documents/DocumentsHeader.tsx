@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { FileText, RotateCw } from "lucide-react-native";
 import * as React from "react";
@@ -21,7 +22,7 @@ export function DocumentsHeader({
   onRefresh,
 }: DocumentsHeaderProps) {
   return (
-    <View className="w-full flex-row items-center gap-4 rounded-[24px] border border-border/40 bg-card p-4 shadow-sm">
+    <View className="w-full flex-row items-center gap-4 rounded-2xl border border-border/40 bg-card p-4 shadow-sm">
       <View
         className="h-11 w-11 items-center justify-center rounded-2xl border"
         style={{
@@ -58,7 +59,7 @@ export function DocumentsHeader({
         {refreshing ? (
           <ActivityIndicator size="small" color={primaryColor} />
         ) : (
-          <RotateCw size={16} className="text-muted-foreground" />
+          <Icon as={RotateCw} size={16} className="text-muted-foreground" />
         )}
       </Pressable>
     </View>

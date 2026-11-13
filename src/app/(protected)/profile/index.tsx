@@ -9,14 +9,12 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { router } from "expo-router";
 import {
-  GraduationCap,
   Headset,
   LogOut,
   Settings,
 } from "lucide-react-native";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
@@ -66,9 +64,9 @@ export default function ProfileScreen() {
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="w-full max-w-lg self-center gap-4 px-5 pt-4">
-          <Animated.View entering={FadeInDown.duration(400).springify()}>
-            <View className="items-center rounded-[24px] border border-border/40 bg-card px-5 py-6 shadow-sm">
+        <View className="w-full max-w-lg self-center gap-3 px-4 pt-3">
+          <View>
+            <View className="items-center rounded-2xl border border-border/40 bg-card px-4 py-5 shadow-sm">
               <ProfileHeader
                 photo={myPhoto}
                 fullName={user?.FullName || user?.PrsName}
@@ -77,11 +75,9 @@ export default function ProfileScreen() {
                 onPressAvatar={() => setPhotoVisible(true)}
               />
             </View>
-          </Animated.View>
+          </View>
 
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(100).springify()}
-          >
+          <View>
             <PersonalInfoCard
               documentNumber={user?.PrsDocumentNumber}
               area={user?.AreName}
@@ -89,11 +85,9 @@ export default function ProfileScreen() {
               phone={user?.PrsPhone}
               primaryColor={primaryColor}
             />
-          </Animated.View>
+          </View>
 
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(150).springify()}
-          >
+          <View>
             <ProfileActionsCard
               qrValue={user?.PrsDocumentNumber}
               primaryColor={primaryColor}
@@ -112,20 +106,12 @@ export default function ProfileScreen() {
                   icon: Settings,
                   onPress: () => router.push("/(protected)/profile/configuration"),
                 },
-                {
-                  key: "trainings",
-                  label: "Capacitaciones",
-                  description: "Invitaciones y materiales",
-                  icon: GraduationCap,
-                  onPress: () => router.push("/(protected)/home/trainings"),
-                },
+
               ]}
             />
-          </Animated.View>
+          </View>
 
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(200).springify()}
-          >
+          <View>
             <Pressable
               onPress={handleLogout}
               accessibilityRole="button"
@@ -138,7 +124,7 @@ export default function ProfileScreen() {
                 Cerrar Sesión
               </Text>
             </Pressable>
-          </Animated.View>
+          </View>
 
           <Text className="mt-1 text-center text-xs italic text-muted-foreground">
             Desarrollado por Equipo TI · 2026

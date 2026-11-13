@@ -23,7 +23,6 @@ import {
   ScrollView,
   View,
 } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ColorPicker, { HueSlider, Panel1 } from "reanimated-color-picker";
 import { useColorScheme } from "nativewind";
@@ -101,11 +100,8 @@ export default function ConfigurationScreen() {
           contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
         >
-          <Animated.View
-            entering={FadeInDown.duration(400).springify()}
-            className="mb-6"
-          >
-            <View className="flex-row items-center gap-4 rounded-[24px] border border-border/40 bg-card p-4 shadow-sm">
+          <View className="mb-8">
+            <View className="flex-row items-center gap-4 rounded-2xl border border-border/40 bg-card p-4 shadow-sm">
               <View
                 className="h-12 w-12 items-center justify-center rounded-2xl"
                 style={{ backgroundColor: `${primaryColor}1f` }}
@@ -116,19 +112,16 @@ export default function ConfigurationScreen() {
                 <Text className="text-base font-poppins-bold text-foreground">
                   Preferencias y Seguridad
                 </Text>
-                <Text className="text-xs font-poppins-medium text-muted-foreground">
+                <Text className="mt-1.5 text-xs leading-5 font-poppins-medium text-muted-foreground">
                   Personaliza la apariencia y protege el acceso a tu cuenta
                 </Text>
               </View>
             </View>
-          </Animated.View>
+          </View>
 
           {/* Apariencia */}
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(100).springify()}
-            className="mb-6"
-          >
-            <View className="mb-3 flex-row items-center gap-2.5 px-1">
+          <View className="mb-8">
+            <View className="mb-4 flex-row items-center gap-2.5 px-1">
               <Palette size={18} color={primaryColor} />
               <Text className="text-xs font-poppins-bold uppercase tracking-widest text-foreground">
                 Apariencia
@@ -173,7 +166,7 @@ export default function ConfigurationScreen() {
               })}
             </View>
 
-            <View className="rounded-[24px] border border-border/40 bg-card p-5 shadow-sm">
+            <View className="rounded-2xl border border-border/40 bg-card p-5 shadow-sm">
               <Text className="mb-3 text-center text-[10px] font-poppins-bold uppercase tracking-widest text-muted-foreground">
                 Predefinidos
               </Text>
@@ -238,21 +231,18 @@ export default function ConfigurationScreen() {
                 )}
               </View>
             </View>
-          </Animated.View>
+          </View>
 
           {/* Seguridad y acceso */}
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(150).springify()}
-            className="mb-6"
-          >
-            <View className="mb-3 flex-row items-center gap-2.5 px-1">
+          <View className="mb-8">
+            <View className="mb-4 flex-row items-center gap-2.5 px-1">
               <ShieldCheckIcon size={18} color={primaryColor} />
               <Text className="text-xs font-poppins-bold uppercase tracking-widest text-foreground">
                 Seguridad y acceso
               </Text>
             </View>
 
-            <View className="gap-3">
+            <View className="gap-4">
               <BiometricRow
                 enabled={biometricEnabled}
                 supported={biometricSupported}
@@ -277,7 +267,7 @@ export default function ConfigurationScreen() {
                 }}
               />
 
-              <View className="flex-row items-center gap-4 rounded-[24px] border border-border/40 bg-card p-4 shadow-sm">
+              <View className="flex-row items-center gap-4 rounded-2xl border border-border/40 bg-card p-4 shadow-sm">
                 <View
                   className="h-12 w-12 items-center justify-center rounded-2xl"
                   style={{ backgroundColor: `${primaryColor}1f` }}
@@ -288,7 +278,7 @@ export default function ConfigurationScreen() {
                   <Text className="text-base font-poppins-bold text-foreground">
                     Cambiar Contraseña / PIN
                   </Text>
-                  <Text className="text-xs font-poppins-medium text-muted-foreground">
+                  <Text className="mt-1.5 text-xs leading-5 font-poppins-medium text-muted-foreground">
                     Actualiza tu código PIN de 6 dígitos
                   </Text>
                 </View>
@@ -299,12 +289,10 @@ export default function ConfigurationScreen() {
                 </View>
               </View>
             </View>
-          </Animated.View>
+          </View>
 
           {/* Sincronizar */}
-          <Animated.View
-            entering={FadeInDown.duration(400).delay(200).springify()}
-          >
+          <View>
             <Pressable
               onPress={handleSave}
               disabled={isSaving}
@@ -322,11 +310,11 @@ export default function ConfigurationScreen() {
                 {isSaving ? "Guardando..." : "Sincronizar"}
               </Text>
             </Pressable>
-            <Text className="mt-3 px-6 text-center text-[10px] font-poppins text-muted-foreground">
+            <Text className="mt-4 px-4 text-center text-xs leading-5 font-poppins text-muted-foreground">
               Los cambios se guardan localmente. Sincroniza para aplicarlos en
               todos tus dispositivos.
             </Text>
-          </Animated.View>
+          </View>
         </ScrollView>
       </View>
     </GestureHandlerRootView>
