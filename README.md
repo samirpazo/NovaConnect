@@ -100,6 +100,17 @@ scripts/               Pruebas ejecutables con node
 plugins/               Plugins de prebuild
 ```
 
+## Despliegue a Producción (Web / PWA)
+
+La versión web está desplegada en `https://novaconnect.novateam.tech` mediante un contenedor Podman servido por Nginx.
+
+Para volver a desplegar tras realizar cambios:
+```bash
+bash scripts/deploy-prod.sh
+```
+
+Consulta [DEPLOYMENT.md](DEPLOYMENT.md) para detalles de arquitectura, puertos, variables de entorno y rollback.
+
 ## Pendiente conocido
 
 - **Sin soporte offline.** No hay base de datos local, caché ni cola de operaciones pendientes: la
