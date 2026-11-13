@@ -57,6 +57,26 @@ function readCookie(response: unknown, name: string): string {
 }
 
 /**
+ * Convierte el fallo de la renovación en un mensaje que dice qué pasó de verdad.
+ * El backend responde 401 con un motivo ("No refresh token provided" si la
+ * cookie no llegó, "Sesión inválida o expirada" si el token ya no es válido) y
+ * sin ese dato el error de axios no explicaba nada.
+ */
+function describeRefreshFailure(error: unknown): string {
+  const response = (
+    error as {
+      response?: { status?: number; data?: { Message?: string; message?: string } };
+    }
+  )?.response;
+  const status = response?.status;
+  const reason = response?.data?.Message ?? response?.data?.message;
+
+  if (reason) return `No se pudo renovar la sesión (${status}): ${reason}`;
+  if (status) return `No se pudo renovar la sesión (${status}).`;
+  return "No se pudo renovar la sesión: no hay respuesta del servidor.";
+}
+
+/**
  * Renueva la sesión contra NovaApi.
  *
  * En web el refresh token viaja en una cookie HttpOnly y solo hay que pedir la
@@ -67,10 +87,18 @@ async function renewSession(): Promise<boolean> {
   const refreshToken =
     Platform.OS === "web" ? null : await storage.getItem("refreshToken");
 
-  const response = await api.post(
-    "/Token/Refresh",
-    refreshToken ? { RefreshToken: refreshToken } : {},
-  );
+  let response;
+  try {
+    response = await api.post(
+      "/Token/Refresh",
+      refreshToken ? { RefreshToken: refreshToken } : {},
+    );
+  } catch (error) {
+    // No se reintenta: si la petición llegó al servidor pero se perdió la
+    // respuesta, el refresh token ya pudo rotar y un segundo intento
+    // invalidaría la sesión.
+    throw new Error(describeRefreshFailure(error));
+  }
 
   const body = response.data as { Succeeded?: boolean } | undefined;
   if (!body?.Succeeded) return false;

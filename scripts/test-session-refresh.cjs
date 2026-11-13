@@ -408,6 +408,43 @@ function loadAxios({ platform, storage, refreshResult, postThrows }) {
     );
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // 6. El fallo de la renovacion explica el motivo del backend.
+  //    "No refresh token provided" = la cookie no llego; "Sesion invalida"
+  //    = el token ya no es valido en la base de datos.
+  // ────────────────────────────────────────────────────────────────
+  {
+    const storage = makeStorage();
+    storage.stored.set('token', 'token-vencido');
+    storage.stored.set('refreshToken', 'refresh-1');
+
+    const { handleError } = loadAxios({
+      platform: 'web',
+      storage,
+      refreshResult: () => ({ data: { Succeeded: true }, headers: {} }),
+      postThrows: url =>
+        url === '/Token/Refresh'
+          ? {
+              response: {
+                status: 401,
+                data: { Succeeded: false, Message: 'Sesión inválida o expirada' },
+              },
+              config: { url: '/Token/Refresh', headers: {}, method: 'post' },
+            }
+          : null,
+    });
+
+    const error = await expectRejection(
+      handleError(unauthorized('/MpwProcessedDocument/Mine')),
+    );
+
+    assert.match(
+      error.message,
+      /No se pudo renovar la sesion|Sesión inválida o expirada/,
+      'el error debe explicar el motivo devuelto por el backend',
+    );
+  }
+
   console.log('Session refresh, logout cascade and token rotation checks passed.');
 })().catch(error => {
   console.error(error);
