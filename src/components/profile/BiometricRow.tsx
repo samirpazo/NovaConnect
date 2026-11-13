@@ -77,7 +77,7 @@ export function BiometricRow({
 
   return (
     <>
-      <View className="overflow-hidden rounded-[24px] border border-border/40 bg-card shadow-sm">
+      <View className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
         <View className="flex-row items-center gap-4 px-5 py-4">
           <View
             className="h-10 w-10 items-center justify-center rounded-2xl"
@@ -113,7 +113,7 @@ export function BiometricRow({
                 Desactivar
               </Text>
             </Pressable>
-          ) : (
+          ) : supported ? (
             <Pressable
               onPress={onEnable}
               disabled={!supported}
@@ -130,7 +130,7 @@ export function BiometricRow({
                 Activar
               </Text>
             </Pressable>
-          )}
+          ) : null}
         </View>
       </View>
 
@@ -141,7 +141,7 @@ export function BiometricRow({
         onRequestClose={() => setPinVisible(false)}
       >
         <View className="flex-1 justify-center bg-black/60 px-6">
-          <View className="gap-4 rounded-[24px] border border-border/40 bg-background p-5">
+          <View className="gap-4 rounded-2xl border border-border/40 bg-background p-5">
             <View className="items-center gap-2">
               <ShieldCheck size={22} color={primaryColor} />
               <Text className="text-center text-lg font-poppins-bold text-foreground">

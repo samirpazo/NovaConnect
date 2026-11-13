@@ -2,13 +2,13 @@ import { BiometricRow } from "@/components/profile/BiometricRow";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { AlertHelper } from "@/lib/alert";
-import { showToast } from "@/lib/toast";
 import { biometricService } from "@/services/biometricService";
-import { secCollaboratorPreferenceService } from "@/services/secCollaboratorPreferenceService";
+import { queuePreferenceSave } from "@/services/secCollaboratorPreferenceService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Stack } from "expo-router";
 import {
-  CloudUploadIcon,
+  Check,
+  ChevronRight,
   MonitorIcon,
   MoonStarIcon,
   Palette,
@@ -16,13 +16,7 @@ import {
   SunIcon,
 } from "lucide-react-native";
 import * as React from "react";
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  ScrollView,
-  View,
-} from "react-native";
+import { Platform, Pressable, ScrollView, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ColorPicker, { HueSlider, Panel1 } from "reanimated-color-picker";
 import { useColorScheme } from "nativewind";
@@ -56,7 +50,19 @@ export default function ConfigurationScreen() {
       ? "#002aff"
       : storePrimaryColor || "#002aff";
 
-  const [isSaving, setIsSaving] = React.useState(false);
+  const [saveStatus, setSaveStatus] = React.useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [customColorOpen, setCustomColorOpen] = React.useState(false);
+  const mounted = React.useRef(true);
+  const revision = React.useRef(0);
+
+  React.useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const [biometricEnabled, setBiometricEnabled] = React.useState(false);
   const [biometricSupported, setBiometricSupported] = React.useState(false);
 
@@ -65,30 +71,23 @@ export default function ConfigurationScreen() {
     void biometricService.isEnabled().then(setBiometricEnabled);
   }, []);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await secCollaboratorPreferenceService.savePreferences({
-        Theme: theme,
-        PrimaryColor: primaryColor,
-      });
-      AlertHelper.alert(
-        "Éxito",
-        "Preferencias guardadas en la nube correctamente."
-      );
-    } catch (e) {
-      console.error(e);
-      AlertHelper.alert(
-        "Error",
-        "Hubo un error al guardar las preferencias en la nube."
-      );
-    } finally {
-      setIsSaving(false);
-    }
+  const updatePreferences = (nextTheme: typeof theme, nextColor: string) => {
+    setPreferences(nextTheme, nextColor);
+    setColorScheme(nextTheme);
+    setSaveStatus("saving");
+    const currentRevision = ++revision.current;
+    queuePreferenceSave(
+      { Theme: nextTheme, PrimaryColor: nextColor },
+      (saved) => {
+        if (mounted.current && revision.current === currentRevision) {
+          setSaveStatus(saved ? "saved" : "error");
+        }
+      },
+    );
   };
 
   const onColorComplete = (color: { hex: string }) => {
-    setPreferences(theme, color.hex);
+    updatePreferences(theme, color.hex);
   };
 
   return (
@@ -100,51 +99,46 @@ export default function ConfigurationScreen() {
           contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
         >
-          <View className="mb-8">
-            <View className="flex-row items-center gap-4 rounded-2xl border border-border/40 bg-card p-4 shadow-sm">
-              <View
-                className="h-12 w-12 items-center justify-center rounded-2xl"
-                style={{ backgroundColor: `${primaryColor}1f` }}
-              >
-                <ShieldCheckIcon size={24} color={primaryColor} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-base font-poppins-bold text-foreground">
-                  Preferencias y Seguridad
-                </Text>
-                <Text className="mt-1.5 text-xs leading-5 font-poppins-medium text-muted-foreground">
-                  Personaliza la apariencia y protege el acceso a tu cuenta
-                </Text>
-              </View>
-            </View>
+          <View className="mb-6 gap-1">
+            <Text className="text-2xl font-poppins-bold text-foreground">
+              Configuración
+            </Text>
+            <Text className="text-sm font-poppins text-muted-foreground">
+              Haz que Nova Connect se sienta tuyo.
+            </Text>
           </View>
 
           {/* Apariencia */}
           <View className="mb-8">
-            <View className="mb-4 flex-row items-center gap-2.5 px-1">
+            <View className="mb-3 flex-row items-center gap-2.5 px-1">
               <Palette size={18} color={primaryColor} />
-              <Text className="text-xs font-poppins-bold uppercase tracking-widest text-foreground">
+              <Text className="text-base font-poppins-semibold text-foreground">
                 Apariencia
               </Text>
             </View>
 
-            <View className="mb-4 flex-row gap-2 rounded-[20px] border border-border/40 bg-secondary/50 p-1.5">
+            <View className="mb-4 flex-row gap-2 rounded-2xl border border-border/40 bg-secondary/50 p-1.5">
               {THEME_OPTIONS.map((option) => {
                 const isSelected = theme === option.value;
                 return (
                   <Pressable
                     key={option.value}
                     onPress={() => {
-                      setPreferences(option.value, primaryColor);
-                      setColorScheme(option.value);
+                      updatePreferences(option.value, primaryColor);
                     }}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: isSelected }}
                     accessibilityLabel={`Tema ${option.label}`}
-                    className={`flex-1 flex-col items-center justify-center gap-1.5 rounded-[16px] py-3 ${
-                      isSelected ? "border border-border/50 bg-card shadow-sm" : ""
+                    className={`flex-1 flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 ${
+                      isSelected
+                        ? "border border-border/50 bg-card shadow-sm"
+                        : ""
                     }`}
-                    style={isSelected ? { backgroundColor: `${primaryColor}26` } : undefined}
+                    style={
+                      isSelected
+                        ? { backgroundColor: `${primaryColor}26` }
+                        : undefined
+                    }
                   >
                     <Icon
                       as={option.icon}
@@ -167,19 +161,25 @@ export default function ConfigurationScreen() {
             </View>
 
             <View className="rounded-2xl border border-border/40 bg-card p-5 shadow-sm">
-              <Text className="mb-3 text-center text-[10px] font-poppins-bold uppercase tracking-widest text-muted-foreground">
-                Predefinidos
-              </Text>
-              <View className="mb-6 flex-row flex-wrap justify-center gap-3">
+              <View className="mb-4 flex-row items-center justify-between">
+                <Text className="text-sm font-poppins-semibold text-foreground">
+                  Color de acento
+                </Text>
+                <Text className="text-xs font-poppins text-muted-foreground">
+                  {primaryColor.toUpperCase()}
+                </Text>
+              </View>
+              <View className="flex-row flex-wrap justify-between gap-2">
                 {COLORS.map((color) => {
                   const isSelected =
                     primaryColor.toLowerCase() === color.value.toLowerCase();
                   return (
                     <Pressable
                       key={color.value}
-                      onPress={() => setPreferences(theme, color.value)}
+                      onPress={() => updatePreferences(theme, color.value)}
                       accessibilityRole="button"
                       accessibilityLabel={`Color ${color.label}`}
+                      accessibilityState={{ selected: isSelected }}
                       className="items-center justify-center"
                     >
                       <View
@@ -191,35 +191,57 @@ export default function ConfigurationScreen() {
                             ? `${color.value}40`
                             : "transparent",
                         }}
-                      />
+                      >
+                        {isSelected ? (
+                          <Check size={20} color="#ffffff" strokeWidth={3} />
+                        ) : null}
+                      </View>
                     </Pressable>
                   );
                 })}
               </View>
 
-              <View className="mb-5 h-[1px] w-full bg-border/40" />
-
-              <Text className="mb-4 text-center text-[10px] font-poppins-bold uppercase tracking-widest text-muted-foreground">
-                Personalizado libre
-              </Text>
-
-              <View className="w-full items-center">
-                {Platform.OS === "web" ? (
-                  React.createElement("input", {
-                    type: "color",
-                    value: primaryColor,
-                    onChange: (e: any) => onColorComplete({ hex: e.target.value }),
-                    style: {
-                      width: "100%",
-                      height: 80,
-                      borderRadius: 16,
-                      border: "none",
-                      padding: 0,
-                      cursor: "pointer",
-                      backgroundColor: "transparent",
-                    },
-                  })
-                ) : (
+              <View className="mt-4 border-t border-border/40 pt-4">
+                <View className="flex-row items-center justify-between gap-3">
+                  <View className="flex-1">
+                    <Text className="text-sm font-poppins-medium text-foreground">
+                      Color personalizado
+                    </Text>
+                    <Text className="mt-1 text-xs font-poppins text-muted-foreground">
+                      Elige otro tono para la aplicación
+                    </Text>
+                  </View>
+                  {Platform.OS === "web" ? (
+                    React.createElement("input", {
+                      type: "color",
+                      value: primaryColor,
+                      "aria-label": "Elegir color personalizado",
+                      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                        onColorComplete({ hex: e.target.value }),
+                      style: {
+                        width: 44,
+                        height: 44,
+                        padding: 3,
+                        border: "1px solid #71717a",
+                        borderRadius: 10,
+                        backgroundColor: "transparent",
+                        cursor: "pointer",
+                      },
+                    })
+                  ) : (
+                    <Pressable
+                      onPress={() => setCustomColorOpen(!customColorOpen)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Elegir color personalizado"
+                      accessibilityState={{ expanded: customColorOpen }}
+                      className="h-11 w-11 rounded-xl border border-border"
+                      style={{ backgroundColor: primaryColor }}
+                    />
+                  )}
+                </View>
+              </View>
+              {Platform.OS !== "web" && customColorOpen ? (
+                <View className="mt-4 w-full items-center">
                   <ColorPicker
                     style={{ width: "100%", gap: 16 }}
                     value={primaryColor}
@@ -228,16 +250,16 @@ export default function ConfigurationScreen() {
                     <Panel1 style={{ height: 160, borderRadius: 16 }} />
                     <HueSlider style={{ borderRadius: 12, height: 24 }} />
                   </ColorPicker>
-                )}
-              </View>
+                </View>
+              ) : null}
             </View>
           </View>
 
           {/* Seguridad y acceso */}
           <View className="mb-8">
-            <View className="mb-4 flex-row items-center gap-2.5 px-1">
+            <View className="mb-3 flex-row items-center gap-2.5 px-1">
               <ShieldCheckIcon size={18} color={primaryColor} />
-              <Text className="text-xs font-poppins-bold uppercase tracking-widest text-foreground">
+              <Text className="text-base font-poppins-semibold text-foreground">
                 Seguridad y acceso
               </Text>
             </View>
@@ -262,7 +284,7 @@ export default function ConfigurationScreen() {
                           setBiometricEnabled(false);
                         },
                       },
-                    ]
+                    ],
                   );
                 }}
               />
@@ -276,44 +298,47 @@ export default function ConfigurationScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-base font-poppins-bold text-foreground">
-                    Cambiar Contraseña / PIN
+                    Contraseña y PIN
                   </Text>
                   <Text className="mt-1.5 text-xs leading-5 font-poppins-medium text-muted-foreground">
-                    Actualiza tu código PIN de 6 dígitos
+                    Código de acceso de 6 dígitos
                   </Text>
                 </View>
                 <View className="h-8 w-8 items-center justify-center rounded-full bg-secondary/60">
-                  <Text className="text-sm font-poppins-bold text-muted-foreground">
-                    ›
-                  </Text>
+                  <Icon
+                    as={ChevronRight}
+                    size={16}
+                    className="text-muted-foreground"
+                  />
                 </View>
               </View>
             </View>
           </View>
 
-          {/* Sincronizar */}
-          <View>
-            <Pressable
-              onPress={handleSave}
-              disabled={isSaving}
-              accessibilityRole="button"
-              accessibilityLabel="Guardar las preferencias en la nube"
-              className="w-full flex-row items-center justify-center gap-2 rounded-[16px] active:opacity-80 disabled:opacity-60"
-              style={{ backgroundColor: primaryColor, paddingVertical: 16 }}
-            >
-              {isSaving ? (
-                <ActivityIndicator color="#ffffff" size="small" />
-              ) : (
-                <CloudUploadIcon size={20} color="#ffffff" strokeWidth={2.5} />
-              )}
-              <Text className="text-sm font-poppins-bold text-white">
-                {isSaving ? "Guardando..." : "Sincronizar"}
-              </Text>
-            </Pressable>
-            <Text className="mt-4 px-4 text-center text-xs leading-5 font-poppins text-muted-foreground">
-              Los cambios se guardan localmente. Sincroniza para aplicarlos en
-              todos tus dispositivos.
+          <View
+            accessibilityLiveRegion="polite"
+            className="items-center px-4 pb-4"
+          >
+            <Text className="text-center text-xs font-poppins text-muted-foreground">
+              {saveStatus === "saving"
+                ? "Guardando cambios…"
+                : saveStatus === "saved"
+                  ? "Cambios sincronizados"
+                  : saveStatus === "error"
+                    ? "Guardado en este dispositivo. No se pudo sincronizar."
+                    : "Tus cambios se guardan automáticamente."}
             </Text>
+            {saveStatus === "error" ? (
+              <Pressable
+                onPress={() => updatePreferences(theme, primaryColor)}
+                accessibilityRole="button"
+                className="mt-2 px-4 py-2"
+              >
+                <Text className="text-sm font-poppins-semibold text-foreground">
+                  Reintentar sincronización
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         </ScrollView>
       </View>
