@@ -51,17 +51,23 @@ export async function isDocumentCached(fileId: number): Promise<boolean> {
 }
 
 /**
- * Abre el documento con el visor del sistema.
+ * Entrega el documento al usuario.
  *
- * Se evita el visor PDF nativo: el archivo se descarga autenticado y se
- * entrega a la aplicacion de PDF que elija el usuario.
+ * La aplicacion no incluye un visor PDF embebido: el archivo se descarga
+ * autenticado y se entrega al visor del sistema. En iOS el share sheet es la
+ * unica via para dejar el PDF en "Archivos", de ahi el titulo del dialogo; en
+ * Android ofrece las mismas dos salidas.
  */
-export async function openDocument(fileId: number): Promise<void> {
+export async function saveDocumentToDevice(
+  fileId: number,
+  fileName: string
+): Promise<void> {
   const cached = await isDocumentCached(fileId);
   const uri = cached ? cachedFile(fileId).uri : await downloadDocument(fileId);
+
   await Sharing.shareAsync(uri, {
     mimeType: 'application/pdf',
     UTI: 'com.adobe.pdf',
-    dialogTitle: 'Abrir documento',
+    dialogTitle: fileName,
   });
 }

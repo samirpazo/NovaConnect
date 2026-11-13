@@ -2,8 +2,8 @@ import { api } from '@/lib/axios';
 import { fileService } from '@/services/fileService';
 
 /**
- * En web el documento se descarga con la sesion y se abre en una pestana nueva.
- * No hace falta cache en disco: el navegador gestiona el blob.
+ * En web el documento se descarga con la sesion y se muestra embebido en un
+ * iframe. El blob vive en memoria: no hay cache persistente en disco.
  */
 export async function downloadDocument(
   fileId: number,
@@ -26,8 +26,32 @@ export async function isDocumentCached(_fileId: number): Promise<boolean> {
   return false;
 }
 
-/** Abre el documento en una pestana nueva con la credencial de la sesion. */
-export async function openDocument(fileId: number): Promise<void> {
-  const url = await downloadDocument(fileId);
-  window.open(url, '_blank');
+/**
+ * Descarga el documento al equipo del usuario.
+ *
+ * El blob se declara como octet-stream porque Safari ignora el atributo
+ * download cuando el objeto conserva el tipo application/pdf y abre el PDF
+ * en una pestana en lugar de guardarlo.
+ */
+export async function saveDocumentToDevice(
+  fileId: number,
+  fileName: string
+): Promise<void> {
+  const response = await api.get(fileService.getFileUrl(fileId), {
+    responseType: 'blob',
+  });
+
+  const blob = new Blob([response.data], { type: 'application/octet-stream' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName.toLowerCase().endsWith('.pdf')
+    ? fileName
+    : `${fileName}.pdf`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  setTimeout(() => window.URL.revokeObjectURL(url), 1000);
 }

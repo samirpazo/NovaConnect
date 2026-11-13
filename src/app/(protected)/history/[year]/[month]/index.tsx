@@ -3,7 +3,8 @@ import { Text } from "@/components/ui/text";
 import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { showToast } from "@/lib/toast";
-import { openDocument } from "@/services/documentDownload";
+import { saveDocumentToDevice } from "@/services/documentDownload";
+import DocumentViewerModal from "@/components/documents/DocumentViewerModal";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { ProcessedDocument } from "@/types/document";
 import { Stack, useLocalSearchParams } from "expo-router";
@@ -16,6 +17,7 @@ import {
   Loader2,
   WifiOff,
 } from "lucide-react-native";
+import * as React from "react";
 import { useMemo } from "react";
 import {
   ActivityIndicator,
@@ -53,12 +55,28 @@ export default function HistoryMonthDocumentsScreen() {
     );
   }, [allDocuments, year, month]);
 
-  // El documento se descarga con la credencial y se abre con el visor del
-  // sistema: la URL de GenFiles exige Authorization y el navegador externo no
-  // la lleva.
-  const handleOpenPdf = async (fileId: number) => {
+  // En web el documento se muestra embebido en la app (el visor usa un iframe
+  // con el blob descargado con la sesion). En nativo no hay visor PDF
+  // embebido: se entrega al visor del sistema, porque la URL de GenFiles exige
+  // Authorization y el navegador externo no la lleva.
+  const [viewerFileId, setViewerFileId] = React.useState<number | null>(null);
+  const [viewerDocument, setViewerDocument] =
+    React.useState<ProcessedDocument | null>(null);
+
+  const handleOpenPdf = async (
+    fileId: number,
+    document?: ProcessedDocument
+  ) => {
+    if (Platform.OS === "web") {
+      setViewerDocument(document ?? null);
+      setViewerFileId(fileId);
+      return;
+    }
     try {
-      await openDocument(fileId);
+      await saveDocumentToDevice(
+        fileId,
+        document?.DprDisplayName || "documento"
+      );
     } catch {
       showToast.error("Error", "No se pudo abrir el documento.");
     }
@@ -74,7 +92,7 @@ export default function HistoryMonthDocumentsScreen() {
     return (
       <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
         <Pressable
-          onPress={() => handleOpenPdf(item.PdcFilID)}
+          onPress={() => void handleOpenPdf(item.PdcFilID, item)}
           className="bg-card rounded-[18px] p-3.5 mb-3 border border-border/40 shadow-sm flex-row items-center active:opacity-70"
         >
           <View
@@ -265,6 +283,22 @@ export default function HistoryMonthDocumentsScreen() {
           />
         )}
       </View>
+
+      <DocumentViewerModal
+        visible={viewerFileId !== null}
+        fileId={viewerFileId}
+        fileName={viewerDocument?.DprDisplayName}
+        title={viewerDocument?.DprDisplayName}
+        subtitle={
+          viewerDocument
+            ? `${viewerDocument.PdcPeriodMonth} ${viewerDocument.PdcPeriodYear}`
+            : undefined
+        }
+        onClose={() => {
+          setViewerFileId(null);
+          setViewerDocument(null);
+        }}
+      />
     </>
   );
 }

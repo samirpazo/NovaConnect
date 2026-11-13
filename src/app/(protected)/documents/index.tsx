@@ -18,7 +18,8 @@ import { PendingEmptyState } from "@/components/documents/PendingEmptyState";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
-import { openDocument } from "@/services/documentDownload";
+import { saveDocumentToDevice } from "@/services/documentDownload";
+import DocumentViewerModal from "@/components/documents/DocumentViewerModal";
 import { processedDocumentService } from "@/services/processedDocumentService";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { ProcessedDocument } from "@/types/document";
@@ -35,12 +36,28 @@ export default function DocumentsScreen() {
   const isOnline = useNetwork();
   const [confirming, setConfirming] = React.useState(false);
 
-  // El documento se descarga con la credencial y se abre con el visor del
-  // sistema: la URL de GenFiles exige Authorization y el navegador externo no
-  // la lleva.
-  const handleOpenPdf = async (fileId: number) => {
+  // En web el documento se muestra embebido en la app (el visor usa un iframe
+  // con el blob descargado con la sesion). En nativo no hay visor PDF
+  // embebido: se entrega al visor del sistema, porque la URL de GenFiles exige
+  // Authorization y el navegador externo no la lleva.
+  const [viewerFileId, setViewerFileId] = React.useState<number | null>(null);
+  const [viewerDocument, setViewerDocument] =
+    React.useState<ProcessedDocument | null>(null);
+
+  const handleOpenPdf = async (
+    fileId: number,
+    document?: ProcessedDocument
+  ) => {
+    if (Platform.OS === "web") {
+      setViewerDocument(document ?? null);
+      setViewerFileId(fileId);
+      return;
+    }
     try {
-      await openDocument(fileId);
+      await saveDocumentToDevice(
+        fileId,
+        document?.DprDisplayName || "documento"
+      );
     } catch {
       showToast.error("Error", "No se pudo abrir el documento.");
     }
@@ -67,7 +84,7 @@ export default function DocumentsScreen() {
           "El documento se ha movido a tu historial."
         );
         refetch();
-        await handleOpenPdf(selectedDocument.PdcFilID);
+        await handleOpenPdf(selectedDocument.PdcFilID, selectedDocument);
       } else {
         showToast.error("Error", "No se pudo recepcionar el documento.");
       }
@@ -238,6 +255,22 @@ export default function DocumentsScreen() {
           }
         />
       )}
+
+      <DocumentViewerModal
+        visible={viewerFileId !== null}
+        fileId={viewerFileId}
+        fileName={viewerDocument?.DprDisplayName}
+        title={viewerDocument?.DprDisplayName}
+        subtitle={
+          viewerDocument
+            ? `${viewerDocument.PdcPeriodMonth} ${viewerDocument.PdcPeriodYear}`
+            : undefined
+        }
+        onClose={() => {
+          setViewerFileId(null);
+          setViewerDocument(null);
+        }}
+      />
 
       <ConfirmReceptionModal
         visible={isModalVisible}
