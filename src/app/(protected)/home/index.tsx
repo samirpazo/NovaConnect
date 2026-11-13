@@ -1,6 +1,7 @@
 import { NImage } from "@/components/custom/NImage";
 import { Text } from "@/components/ui/text";
 import { AlertHelper } from "@/lib/alert";
+import { fileService } from "@/services/fileService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { LinearGradient } from "expo-linear-gradient";
@@ -25,6 +26,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function HomeScreen() {
   const { user, logout } = useAuthStore();
   const [photoVisible, setPhotoVisible] = React.useState(false);
+  const [myPhoto, setMyPhoto] = React.useState<string | null>(null);
+
+  // La foto se pide una sola vez al backend. El campo PrsPhoto del login
+  // nunca llego porque NovaApi no lo envia: la foto se obtiene del endpoint
+  // que devuelve el archivo de la persona del colaborador.
+  React.useEffect(() => {
+    let cancelled = false;
+    void fileService.getMyPhoto().then((source) => {
+      if (!cancelled) setMyPhoto(source);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
   const primaryColor =
     storePrimaryColor?.toLowerCase() === "#ff0000" ||
@@ -71,6 +86,7 @@ export default function HomeScreen() {
                 <NImage
                   genParameter="ROUTE_PERSONS"
                   fileName={user?.PrsPhoto}
+                  source={myPhoto}
                   className="w-full h-full"
                   fallbackText={user?.PrsName?.[0] || "U"}
                 />
@@ -289,6 +305,7 @@ export default function HomeScreen() {
               <NImage
                 genParameter="ROUTE_PERSONS"
                 fileName={user?.PrsPhoto}
+                source={myPhoto}
                 className="w-full h-full rounded-lg"
                 fallbackText={user?.PrsName?.[0] || "U"}
               />
