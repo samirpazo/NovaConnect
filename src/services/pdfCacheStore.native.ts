@@ -11,7 +11,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 const OFFLINE_DIRECTORY = new Directory(
   Paths.document,
   'nova-connect',
-  'pdf-offline'
+  'pdf-offline',
 );
 
 const fileNameFor = (fileId: number) => `doc-${fileId}.pdf`;
@@ -72,7 +72,9 @@ export async function list(): Promise<number[]> {
     const ids: number[] = [];
     for (const entry of entries) {
       if (!(entry instanceof File)) continue;
-      const id = Number(entry.name.replace(/\.pdf$/, ''));
+      const match = /^doc-(\d+)\.pdf$/.exec(entry.name);
+      if (!match) continue;
+      const id = Number(match[1]);
       if (Number.isInteger(id) && id > 0) ids.push(id);
     }
     return ids;

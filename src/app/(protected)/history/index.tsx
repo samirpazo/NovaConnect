@@ -1,3 +1,4 @@
+import { OfflineDownloadCard } from "@/components/documents/OfflineDownloadCard";
 import { PendingDocumentsSkeleton } from "@/components/documents/PendingDocumentsSkeleton";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -10,9 +11,7 @@ import { showToast } from "@/lib/toast";
 import { router } from "expo-router";
 import {
   ChevronRight,
-  CloudDownload,
   Folder,
-  Loader2,
   RotateCw,
   Search,
 } from "lucide-react-native";
@@ -47,7 +46,10 @@ export default function HistoryYearsScreen() {
   const filesByYear = useMemo(() => {
     const map = new Map<string, number>();
     for (const document of documents) {
-      map.set(document.PdcPeriodYear, (map.get(document.PdcPeriodYear) ?? 0) + 1);
+      map.set(
+        document.PdcPeriodYear,
+        (map.get(document.PdcPeriodYear) ?? 0) + 1,
+      );
     }
     return map;
   }, [documents]);
@@ -65,7 +67,9 @@ export default function HistoryYearsScreen() {
   }, [documents, offline]);
 
   const cachedCount = useMemo(
-    () => documents.filter((document) => offline.isCached(document.PdcFilID)).length,
+    () =>
+      documents.filter((document) => offline.isCached(document.PdcFilID))
+        .length,
     [documents, offline],
   );
 
@@ -75,10 +79,6 @@ export default function HistoryYearsScreen() {
         .filter((document) => document.PdcPeriodYear === year)
         .map((document) => document.PdcPeriodMonth),
     ).size;
-
-  const allCached =
-    documents.length > 0 &&
-    documents.every((document) => offline.isCached(document.PdcFilID));
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -124,7 +124,8 @@ export default function HistoryYearsScreen() {
         </View>
 
         <View className="relative justify-center">
-          <Icon as={Search}
+          <Icon
+            as={Search}
             size={20}
             className="absolute left-4 z-10 text-muted-foreground"
           />
@@ -139,55 +140,27 @@ export default function HistoryYearsScreen() {
         </View>
 
         {documents.length > 0 ? (
-          <View className="flex-row items-center gap-2">
-            <Pressable
-              onPress={async () => {
-                const result = await offline.cacheAll(
-                  documents.map(toOfflineInput),
+          <OfflineDownloadCard
+            total={documents.length}
+            cached={cachedCount}
+            progress={offline.progress}
+            primaryColor={primaryColor}
+            onDownload={async () => {
+              const result = await offline.cacheAll(
+                documents.map(toOfflineInput),
+              );
+              if (result.failed > 0)
+                showToast.error(
+                  "Error",
+                  `${result.failed} documento(s) no se pudieron guardar.`,
                 );
-                if (result.failed > 0)
-                  showToast.error(
-                    "Error",
-                    `${result.failed} documento(s) no se pudieron guardar.`,
-                  );
-                else if (result.done > 0)
-                  showToast.success(
-                    "Documentos guardados",
-                    "Ya puedes verlos sin conexion.",
-                  );
-              }}
-              disabled={offline.progress !== null}
-              accessibilityRole="button"
-              accessibilityLabel="Guardar todo el historial para verlo sin conexion"
-              className="flex-1 flex-row items-center gap-3 rounded-[18px] px-4 py-3 active:opacity-80 disabled:opacity-60"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {offline.progress ? (
-                <Loader2 size={18} color="#ffffff" />
-              ) : (
-                <CloudDownload size={18} color="#ffffff" />
-              )}
-              <View className="flex-1">
-                <Text className="text-sm font-poppins-bold text-white">
-                  {offline.progress
-                    ? `Guardando ${offline.progress.done}/${offline.progress.total}`
-                    : "Guardar todos mis documentos offline"}
-                </Text>
-                <Text className="text-[11px] font-poppins-medium text-white/80">
-                  {cachedCount} de {documents.length} guardados · Toca para
-                  descargar todo
-                </Text>
-              </View>
-            </Pressable>
-
-            {allCached ? (
-              <View className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1.5">
-                <Text className="text-[10px] font-poppins-bold uppercase tracking-wider text-emerald-600">
-                  Todo offline
-                </Text>
-              </View>
-            ) : null}
-          </View>
+              else if (result.done > 0)
+                showToast.success(
+                  "Documentos guardados",
+                  "Ya puedes verlos sin conexion.",
+                );
+            }}
+          />
         ) : null}
       </View>
 
@@ -258,7 +231,7 @@ export default function HistoryYearsScreen() {
                     </Text>
                     <Text className="text-sm font-poppins-medium text-muted-foreground">
                       {monthsOf(item)} mes{monthsOf(item) !== 1 ? "es" : ""}{" "}
-                      registrados
+                      registrado{monthsOf(item) !== 1 ? "s" : ""}
                     </Text>
                     {cached > 0 ? (
                       <Text className="text-xs font-poppins-medium text-muted-foreground">
@@ -271,7 +244,11 @@ export default function HistoryYearsScreen() {
                       {total} doc{total !== 1 ? "s" : ""}
                     </Text>
                   </View>
-                  <Icon as={ChevronRight} size={20} className="text-muted-foreground" />
+                  <Icon
+                    as={ChevronRight}
+                    size={20}
+                    className="text-muted-foreground"
+                  />
                 </Pressable>
               </Animated.View>
             );

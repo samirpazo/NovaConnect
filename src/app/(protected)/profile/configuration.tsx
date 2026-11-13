@@ -2,16 +2,13 @@ import { BiometricRow } from "@/components/profile/BiometricRow";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { AlertHelper } from "@/lib/alert";
-import { showToast } from "@/lib/toast";
 import { biometricService } from "@/services/biometricService";
-import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
 import { queuePreferenceSave } from "@/services/secCollaboratorPreferenceService";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Stack } from "expo-router";
 import {
   Check,
   ChevronRight,
-  HardDriveIcon,
   MonitorIcon,
   MoonStarIcon,
   Palette,
@@ -68,45 +65,11 @@ export default function ConfigurationScreen() {
   }, []);
   const [biometricEnabled, setBiometricEnabled] = React.useState(false);
   const [biometricSupported, setBiometricSupported] = React.useState(false);
-  const offline = useOfflineDocuments();
-  const [clearingOffline, setClearingOffline] = React.useState(false);
-  const offlineCount = offline.cachedIds.length;
 
   React.useEffect(() => {
     void biometricService.isSupported().then(setBiometricSupported);
     void biometricService.isEnabled().then(setBiometricEnabled);
   }, []);
-
-  const handleClearOffline = () => {
-    AlertHelper.alert(
-      "Liberar espacio",
-      "Se borraran los documentos guardados para verlos sin conexion. Los demas seguiran disponibles en el servidor.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Liberar",
-          style: "destructive",
-          onPress: async () => {
-            setClearingOffline(true);
-            try {
-              await offline.clearAll();
-              showToast.success(
-                "Espacio liberado",
-                "Ya no hay documentos guardados sin conexion."
-              );
-            } catch {
-              showToast.error(
-                "Error",
-                "No se pudieron borrar los documentos guardados."
-              );
-            } finally {
-              setClearingOffline(false);
-            }
-          },
-        },
-      ]
-    );
-  };
 
   const updatePreferences = (nextTheme: typeof theme, nextColor: string) => {
     setPreferences(nextTheme, nextColor);
@@ -349,50 +312,6 @@ export default function ConfigurationScreen() {
                   />
                 </View>
               </View>
-            </View>
-          </View>
-
-          {/* Almacenamiento offline */}
-          <View className="mb-8">
-            <View className="mb-3 flex-row items-center gap-2.5 px-1">
-              <HardDriveIcon size={18} color={primaryColor} />
-              <Text className="text-base font-poppins-semibold text-foreground">
-                Almacenamiento offline
-              </Text>
-            </View>
-
-            <View className="flex-row items-center gap-4 rounded-2xl border border-border/40 bg-card p-4 shadow-sm">
-              <View
-                className="h-12 w-12 items-center justify-center rounded-2xl"
-                style={{ backgroundColor: `${primaryColor}1f` }}
-              >
-                <HardDriveIcon size={24} color={primaryColor} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-base font-poppins-bold text-foreground">
-                  Documentos guardados
-                </Text>
-                <Text className="mt-1.5 text-xs leading-5 font-poppins-medium text-muted-foreground">
-                  {offlineCount === 0
-                    ? "No tienes documentos guardados sin conexión"
-                    : `${offlineCount} ${
-                        offlineCount === 1 ? "documento guardado" : "documentos guardados"
-                      } para ver sin conexión`}
-                </Text>
-              </View>
-              {offlineCount > 0 ? (
-                <Pressable
-                  onPress={handleClearOffline}
-                  disabled={clearingOffline}
-                  accessibilityRole="button"
-                  accessibilityLabel="Liberar el espacio de los documentos guardados sin conexión"
-                  className="rounded-xl border border-border/40 bg-secondary/50 px-3 py-2 active:opacity-70 disabled:opacity-50"
-                >
-                  <Text className="text-xs font-poppins-semibold text-foreground">
-                    {clearingOffline ? "Limpiando…" : "Liberar"}
-                  </Text>
-                </Pressable>
-              ) : null}
             </View>
           </View>
 

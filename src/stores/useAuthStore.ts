@@ -3,17 +3,19 @@ import { authService } from '@/services/authService';
 import { offlineAuthService } from '@/services/offlineAuthService';
 import { storage } from '@/lib/storage';
 import { AuthResponse } from '@/types/auth';
-import { setGlobalLogoutCallback } from '@/lib/axios';
+import { setGlobalLogoutCallback, markSessionOpen } from '@/lib/axios';
 
 interface AuthState {
   user: AuthResponse['User'] | null;
   loading: boolean;
   isAuthenticating: boolean;
   initializeAuth: () => Promise<void>;
-  login: (credentials: any) => Promise<{ success: boolean; error?: string }>;
+  login: (
+    credentials: any,
+  ) => Promise<{ success: boolean; error?: string; offline?: boolean }>;
   loginOffline: (
     credentials: any,
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; error?: string; offline?: boolean }>;
   logout: () => Promise<void>;
 }
 
@@ -43,6 +45,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ user: result.data.User });
         return { success: true };
       } else {
+        if (result.networkError) {
+          const session = await offlineAuthService.verifyHash(
+            credentials?.DocumentNumber ?? '',
+            credentials?.Password ?? '',
+          );
+          if (session) {
+            await storage.setItem('user', JSON.stringify(session.user));
+            markSessionOpen();
+            set({ user: session.user });
+            return { success: true, offline: true };
+          }
+        }
         return { success: false, error: result.error };
       }
     } finally {
@@ -62,22 +76,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!session) {
       return {
         success: false,
-        error: 'No hay una sesion guardada para ese documento en este dispositivo.',
+        error:
+          'No hay una sesion guardada para ese documento en este dispositivo.',
       };
     }
     await storage.setItem('user', JSON.stringify(session.user));
+    markSessionOpen();
     set({ user: session.user });
-    return { success: true };
+    return { success: true, offline: true };
   },
 
   logout: async () => {
     await authService.logout();
-    await offlineAuthService.clear();
     set({ user: null });
-  }
+  },
 }));
 
 // Setup global logout callback (used when token expires)
 setGlobalLogoutCallback(() => {
-  useAuthStore.getState().logout();
+  void offlineAuthService
+    .clear()
+    .finally(() => useAuthStore.getState().logout());
 });

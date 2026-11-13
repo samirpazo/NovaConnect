@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
 import { toOfflineInput } from "@/services/offlineDocuments";
@@ -57,8 +58,7 @@ export default function HistoryMonthsScreen() {
         const month =
           doc.PdcPeriodMonth.charAt(0).toUpperCase() +
           doc.PdcPeriodMonth.slice(1).toLowerCase();
-        if (offline.isCached(doc.PdcFilID))
-          acc[month] = (acc[month] || 0) + 1;
+        if (offline.isCached(doc.PdcFilID)) acc[month] = (acc[month] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>,
@@ -95,43 +95,49 @@ export default function HistoryMonthsScreen() {
                     : FadeInDown.delay(Math.min(index * 20, 140)).duration(220)
                 }
               >
-                <Pressable
-                  onPress={() => router.push(`/history/${year}/${item.month}`)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Ver los documentos de ${item.month}`}
-                  className="mb-3 flex-row items-center rounded-[18px] border border-border/40 bg-card p-4 active:opacity-70"
+                <View
+                  className="mb-3 flex-row items-center rounded-2xl border border-border/40 bg-card p-4"
                   style={
                     monthCached
                       ? { borderColor: "rgba(16,185,129,0.4)" }
                       : undefined
                   }
                 >
-                  <View
-                    className="mr-4 h-12 w-12 items-center justify-center rounded-[14px] border"
-                    style={{
-                      backgroundColor: monthCached
-                        ? "rgba(16,185,129,0.15)"
-                        : `${primaryColor}10`,
-                      borderColor: monthCached
-                        ? "rgba(16,185,129,0.3)"
-                        : `${primaryColor}30`,
-                    }}
+                  <Pressable
+                    onPress={() =>
+                      router.push(`/history/${year}/${item.month}`)
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ver los documentos de ${item.month}`}
+                    className="flex-1 flex-row items-center active:opacity-70"
                   >
-                    <Calendar
-                      size={24}
-                      color={monthCached ? "#10B981" : primaryColor}
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-lg font-poppins-bold text-foreground">
-                      {item.month}
-                    </Text>
-                    <Text className="text-sm font-poppins-medium text-muted-foreground">
-                      {item.count}{" "}
-                      {item.count === 1 ? "documento" : "documentos"}
-                      {item.cached > 0 ? ` · ${item.cached} offline` : ""}
-                    </Text>
-                  </View>
+                    <View
+                      className="mr-4 h-12 w-12 items-center justify-center rounded-[14px] border"
+                      style={{
+                        backgroundColor: monthCached
+                          ? "rgba(16,185,129,0.15)"
+                          : `${primaryColor}10`,
+                        borderColor: monthCached
+                          ? "rgba(16,185,129,0.3)"
+                          : `${primaryColor}30`,
+                      }}
+                    >
+                      <Calendar
+                        size={24}
+                        color={monthCached ? "#10B981" : primaryColor}
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-lg font-poppins-bold text-foreground">
+                        {item.month}
+                      </Text>
+                      <Text className="text-sm font-poppins-medium text-muted-foreground">
+                        {item.count}{" "}
+                        {item.count === 1 ? "documento" : "documentos"}
+                        {item.cached > 0 ? ` · ${item.cached} offline` : ""}
+                      </Text>
+                    </View>
+                  </Pressable>
                   {!monthCached ? (
                     <Pressable
                       onPress={async () => {
@@ -140,8 +146,12 @@ export default function HistoryMonthsScreen() {
                             .filter(
                               (document) =>
                                 document.PdcPeriodYear.toString() === year &&
-                                (document.PdcPeriodMonth.charAt(0).toUpperCase() +
-                                  document.PdcPeriodMonth.slice(1).toLowerCase()) ===
+                                document.PdcPeriodMonth.charAt(
+                                  0,
+                                ).toUpperCase() +
+                                  document.PdcPeriodMonth.slice(
+                                    1,
+                                  ).toLowerCase() ===
                                   item.month,
                             )
                             .map(toOfflineInput),
@@ -163,14 +173,26 @@ export default function HistoryMonthsScreen() {
                       className="mr-1 h-9 w-9 items-center justify-center rounded-full border border-border/40 bg-secondary/50 active:opacity-70"
                     >
                       {offline.downloadingId !== null ? (
-                        <Loader2 size={15} className="text-muted-foreground" />
+                        <Icon
+                          as={Loader2}
+                          size={15}
+                          className="text-muted-foreground"
+                        />
                       ) : (
-                        <CloudDownload size={15} className="text-muted-foreground" />
+                        <Icon
+                          as={CloudDownload}
+                          size={15}
+                          className="text-muted-foreground"
+                        />
                       )}
                     </Pressable>
                   ) : null}
-                  <ChevronRight size={20} className="text-muted-foreground" />
-                </Pressable>
+                  <Icon
+                    as={ChevronRight}
+                    size={20}
+                    className="text-muted-foreground"
+                  />
+                </View>
               </Animated.View>
             );
           }}

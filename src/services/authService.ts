@@ -7,7 +7,12 @@ import { Platform } from "react-native";
 export const authService = {
   async loginCollaborator(
     credentials: any,
-  ): Promise<{ success: boolean; data?: AuthResponse; error?: string }> {
+  ): Promise<{
+    success: boolean;
+    data?: AuthResponse;
+    error?: string;
+    networkError?: boolean;
+  }> {
     try {
       const response = await api.post(
         "/Token/AuthenticationCollaborator",
@@ -112,16 +117,15 @@ export const authService = {
         // Guardar Tokens de forma segura
         await storage.setItem("user", JSON.stringify(authData.User));
 
-        // En nativo se recuerda la sesion para poder abrir la app sin conexion:
-        // se guarda el hash del PIN (el mismo que viaja al servidor) y los
-        // datos del colaborador. En web la credencial vive en una cookie
-        // HttpOnly que la app no puede leer, asi que no hay nada que recordar.
-        if (Platform.OS !== "web" && credentials?.Password) {
-          await offlineAuthService.save(
-            credentials.DocumentNumber,
-            credentials.Password,
-            authData.User,
-          );
+        // El verificador local permite abrir datos guardados sin reutilizar la credencial del servidor.
+        if (credentials?.Password) {
+          await offlineAuthService
+            .save(
+              credentials.DocumentNumber,
+              credentials.Password,
+              authData.User,
+            )
+            .catch(() => {});
         }
         if (Platform.OS !== "web") {
           await Promise.all([
@@ -142,6 +146,12 @@ export const authService = {
     } catch (error: any) {
       return {
         success: false,
+        networkError:
+          !error?.response &&
+          (error?.code === "ERR_NETWORK" ||
+            error?.code === "ECONNABORTED" ||
+            error?.code === "ENOTFOUND" ||
+            error?.code === "ERR_INTERNET_DISCONNECTED"),
         error:
           error?.response?.data?.Message ||
           "Error al conectar con el servidor.",

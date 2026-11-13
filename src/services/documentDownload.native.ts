@@ -1,3 +1,4 @@
+import { offlineDocumentsService } from '@/services/offlineDocuments';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
@@ -18,7 +19,7 @@ function tempFile(fileId: number): File {
 async function fetchTo(
   fileId: number,
   destination: File,
-  onProgress?: (received: number, total: number) => void
+  onProgress?: (received: number, total: number) => void,
 ): Promise<string> {
   const token = await storage.getItem('token');
   const headers: Record<string, string> = {};
@@ -32,7 +33,7 @@ async function fetchTo(
       idempotent: true,
       onProgress: ({ bytesWritten, totalBytes }) =>
         onProgress?.(bytesWritten, totalBytes),
-    }
+    },
   );
   return file.uri;
 }
@@ -46,10 +47,18 @@ async function fetchTo(
  */
 export async function downloadDocument(
   fileId: number,
-  onProgress?: (received: number, total: number) => void
+  onProgress?: (received: number, total: number) => void,
 ): Promise<string> {
   TEMP_DIRECTORY.create({ intermediates: true, idempotent: true });
-  return fetchTo(fileId, tempFile(fileId), onProgress);
+  const uri = await fetchTo(fileId, tempFile(fileId), onProgress);
+  try {
+    cacheStore.ensureDirectory();
+    await new File(uri).copy(cacheStore.fileFor(fileId), { overwrite: true });
+    await offlineDocumentsService.upsert({ fileId });
+  } catch {
+    // La falta de espacio offline no impide abrir el documento temporal.
+  }
+  return uri;
 }
 
 /**
@@ -58,15 +67,11 @@ export async function downloadDocument(
  */
 export async function cacheDocument(
   fileId: number,
-  onProgress?: (received: number, total: number) => void
+  onProgress?: (received: number, total: number) => void,
 ): Promise<string | null> {
   cacheStore.ensureDirectory();
   try {
-    return await fetchTo(
-      fileId,
-      cacheStore.fileFor(fileId),
-      onProgress
-    );
+    return await fetchTo(fileId, cacheStore.fileFor(fileId), onProgress);
   } catch {
     return null;
   }
@@ -74,7 +79,7 @@ export async function cacheDocument(
 
 /** Ruta local del documento guardado, o null si no esta guardado. */
 export async function getCachedDocumentUri(
-  fileId: number
+  fileId: number,
 ): Promise<string | null> {
   return cacheStore.read(fileId);
 }
@@ -109,7 +114,7 @@ export async function clearCachedDocuments(): Promise<void> {
  */
 export async function saveDocumentToDevice(
   fileId: number,
-  fileName: string
+  fileName: string,
 ): Promise<void> {
   const cached = await getCachedDocumentUri(fileId);
   const uri = cached ?? (await downloadDocument(fileId));

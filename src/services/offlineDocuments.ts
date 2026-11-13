@@ -1,6 +1,18 @@
 import { storage } from '@/lib/storage';
 import { ProcessedDocument } from '@/types/document';
 
+const listeners = new Set<() => void>();
+let writes: Promise<void> = Promise.resolve();
+
+export function subscribeOfflineDocuments(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+const notify = () => listeners.forEach((listener) => listener());
+
 const KEY = 'nova-connect.offlineDocuments';
 
 export type OfflineDocument = {
@@ -38,22 +50,34 @@ export const offlineDocumentsService = {
   },
 
   async upsert(document: Omit<OfflineDocument, 'savedAt'>): Promise<void> {
-    const documents = await this.list();
-    const next = documents.filter(item => item.fileId !== document.fileId);
-    next.push({ ...document, savedAt: Date.now() });
-    await storage.setItem(KEY, JSON.stringify(next));
+    const write = writes.then(async () => {
+      const documents = await this.list();
+      const existing = documents.find(
+        (item) => item.fileId === document.fileId,
+      );
+      const next = documents.filter((item) => item.fileId !== document.fileId);
+      next.push({ ...existing, ...document, savedAt: Date.now() });
+      await storage.setItem(KEY, JSON.stringify(next));
+      notify();
+    });
+    writes = write.catch(() => {});
+    await write;
   },
 
   async remove(fileId: number): Promise<void> {
+    await writes;
     const documents = await this.list();
     await storage.setItem(
       KEY,
-      JSON.stringify(documents.filter(item => item.fileId !== fileId)),
+      JSON.stringify(documents.filter((item) => item.fileId !== fileId)),
     );
+    notify();
   },
 
   async clear(): Promise<void> {
+    await writes;
     await storage.setItem(KEY, JSON.stringify([]));
+    notify();
   },
 };
 

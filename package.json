@@ -9,7 +9,7 @@
     "web": "expo start -c --web",
     "clean": "rm -rf .expo node_modules",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "node scripts/test-enrollment-security.cjs && node scripts/test-session-refresh.cjs && node scripts/test-person-photo.cjs && node scripts/test-preference-autosave.cjs && node scripts/test-document-viewer.cjs",
+    "test": "node scripts/test-enrollment-security.cjs && node scripts/test-session-refresh.cjs && node scripts/test-person-photo.cjs && node scripts/test-preference-autosave.cjs && node scripts/test-document-viewer.cjs && node scripts/test-offline-login.cjs",
     "lint": "expo lint"
   },
   "dependencies": {

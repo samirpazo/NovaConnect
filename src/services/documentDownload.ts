@@ -1,3 +1,4 @@
+import { offlineDocumentsService } from '@/services/offlineDocuments';
 import { api } from '@/lib/axios';
 import { fileService } from '@/services/fileService';
 import * as cacheStore from '@/services/pdfCacheStore';
@@ -10,7 +11,7 @@ import * as cacheStore from '@/services/pdfCacheStore';
 
 async function fetchBlob(
   fileId: number,
-  onProgress?: (received: number, total: number) => void
+  onProgress?: (received: number, total: number) => void,
 ): Promise<Blob> {
   const response = await api.get(fileService.getFileUrl(fileId), {
     responseType: 'blob',
@@ -25,9 +26,12 @@ async function fetchBlob(
 /** Descarga el documento y devuelve una URL de objeto para mostrarlo. */
 export async function downloadDocument(
   fileId: number,
-  onProgress?: (received: number, total: number) => void
+  onProgress?: (received: number, total: number) => void,
 ): Promise<string> {
   const blob = await fetchBlob(fileId, onProgress);
+  if (await cacheStore.write(fileId, blob)) {
+    await offlineDocumentsService.upsert({ fileId }).catch(() => {});
+  }
   return window.URL.createObjectURL(blob);
 }
 
@@ -37,7 +41,7 @@ export async function downloadDocument(
  */
 export async function cacheDocument(
   fileId: number,
-  onProgress?: (received: number, total: number) => void
+  onProgress?: (received: number, total: number) => void,
 ): Promise<string | null> {
   const blob = await fetchBlob(fileId, onProgress);
   const stored = await cacheStore.write(fileId, blob);
@@ -47,7 +51,7 @@ export async function cacheDocument(
 
 /** URL de objeto del documento guardado, o null si no esta guardado. */
 export async function getCachedDocumentUri(
-  fileId: number
+  fileId: number,
 ): Promise<string | null> {
   return cacheStore.read(fileId);
 }
@@ -81,7 +85,7 @@ export async function clearCachedDocuments(): Promise<void> {
  */
 export async function saveDocumentToDevice(
   fileId: number,
-  fileName: string
+  fileName: string,
 ): Promise<void> {
   const response = await api.get(fileService.getFileUrl(fileId), {
     responseType: 'blob',

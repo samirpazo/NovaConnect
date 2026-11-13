@@ -48,7 +48,7 @@ function load(file, modules) {
     assert.equal(stored.get('refreshToken'), platform === 'web' ? undefined : 'refresh-cookie');
     assert.ok(!JSON.stringify([...stored]).includes('do-not-use-body'));
     assert.equal(sessionOpened, 1, 'iniciar sesion debe liberar la guarda de cierre');
-    assert.equal(offlineSessions.length, platform === 'web' ? 0 : 1, 'en nativo se recuerda la sesion para el modo offline');
+    assert.equal(offlineSessions.length, 1, 'web y nativo recuerdan el acceso offline tras un login válido');
     if (platform !== 'web') {
       assert.equal(offlineSessions[0].document, '12345678');
       assert.equal(offlineSessions[0].pinHash, 'hash-del-pin', 'se guarda el hash del PIN, no el PIN');

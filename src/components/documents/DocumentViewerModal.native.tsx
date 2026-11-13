@@ -4,7 +4,13 @@ import { showToast } from "@/lib/toast";
 import { saveDocumentToDevice } from "@/services/documentDownload";
 import { FileText, Loader2, Share2, X } from "lucide-react-native";
 import * as React from "react";
-import { ActivityIndicator, Modal, Platform, Pressable, View } from "react-native";
+import {
+  ActivityIndicator,
+  Modal,
+  Platform,
+  Pressable,
+  View,
+} from "react-native";
 
 export type DocumentViewerModalProps = {
   visible: boolean;
@@ -12,6 +18,8 @@ export type DocumentViewerModalProps = {
   fileName?: string;
   title?: string;
   subtitle?: string;
+  periodMonth?: string;
+  periodYear?: string;
   onClose: () => void;
 };
 

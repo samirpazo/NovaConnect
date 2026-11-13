@@ -40,7 +40,7 @@ function load(file, modules, globals) {
       caches: globals.caches,
       window: globals.window,
       document: globals.document,
-      require: name => {
+      require: (name) => {
         assert.ok(name in modules, `Unexpected import ${name}`);
         return modules[name];
       },
@@ -56,7 +56,7 @@ function makeBrowser() {
   const clicked = [];
 
   const urlMock = {
-    createObjectURL: blob => {
+    createObjectURL: (blob) => {
       const url = `blob:mock-${created.length}`;
       created.push({ blob, url });
       return url;
@@ -71,7 +71,7 @@ function makeBrowser() {
       appendChild: () => {},
       removeChild: () => {},
     },
-    createElement: tag => {
+    createElement: (tag) => {
       const element = { tag, click: () => clicked.push(element) };
       return element;
     },
@@ -100,7 +100,7 @@ function makeCacheApi() {
           return store.delete(key);
         },
         async keys() {
-          return [...store.keys()].map(url => ({ url }));
+          return [...store.keys()].map((url) => ({ url }));
         },
       };
     },
@@ -157,9 +157,12 @@ function makeCacheApi() {
     {
       '@/lib/axios': { api },
       '@/services/fileService': {
-        fileService: { getFileUrl: id => `/GenFiles/${id}/preview` },
+        fileService: { getFileUrl: (id) => `/GenFiles/${id}/preview` },
       },
       '@/services/pdfCacheStore': storeModule,
+      '@/services/offlineDocuments': {
+        offlineDocumentsService: { upsert: async () => {} },
+      },
     },
     globals,
   );
@@ -174,6 +177,11 @@ function makeCacheApi() {
     assert.equal(requests[0].url, '/GenFiles/42/preview');
     assert.equal(requests[0].config.responseType, 'blob');
     assert.match(url, /^blob:/, 'debe devolver una URL de objeto');
+    assert.equal(
+      await module.isDocumentCached(42),
+      true,
+      'Abrir guarda automáticamente una copia offline',
+    );
     assert.equal(browser.created[0].blob.type, 'application/pdf');
   }
 
@@ -183,7 +191,11 @@ function makeCacheApi() {
   {
     await module.saveDocumentToDevice(42, 'Contrato');
 
-    assert.equal(browser.clicked.length, 1, 'debe pulsar el enlace de descarga');
+    assert.equal(
+      browser.clicked.length,
+      1,
+      'debe pulsar el enlace de descarga',
+    );
     const link = browser.clicked[0];
     assert.equal(link.tag, 'a');
     assert.match(link.href, /^blob:/);
@@ -205,7 +217,7 @@ function makeCacheApi() {
 
     assert.equal(
       browser.clicked[browser.clicked.length - 1].download,
-      'Contrato.pdf'
+      'Contrato.pdf',
     );
   }
 
@@ -213,7 +225,11 @@ function makeCacheApi() {
   // 4. Guardar el documento lo deja disponible sin conexion.
   // ────────────────────────────────────────────────────────────────
   {
-    assert.equal(await module.isDocumentCached(42), false);
+    assert.equal(
+      await module.isDocumentCached(42),
+      true,
+      'La apertura anterior ya dejó la copia offline',
+    );
 
     const uri = await module.cacheDocument(42);
     assert.match(uri, /^blob:/, 'debe devolver la URL del documento guardado');
@@ -252,11 +268,90 @@ function makeCacheApi() {
 
     assert.equal(await module.isDocumentCached(42), false);
     const remaining = await module.listCachedDocuments();
-    assert.equal(remaining.length, 0, 'no debe quedar ningun documento guardado');
+    assert.equal(
+      remaining.length,
+      0,
+      'no debe quedar ningun documento guardado',
+    );
   }
 
-  console.log('Document viewer (web embed, download and offline cache) checks passed.');
-})().catch(error => {
+  // Las pantallas reciben cambios y las descargas paralelas conservan sus fichas.
+  {
+    const stored = new Map();
+    const { offlineDocumentsService: service, subscribeOfflineDocuments } =
+      load(
+        'src/services/offlineDocuments.ts',
+        {
+          '@/lib/storage': {
+            storage: {
+              getItem: async (key) => stored.get(key) ?? null,
+              setItem: async (key, value) => stored.set(key, value),
+            },
+          },
+        },
+        {},
+      );
+    let notifications = 0;
+    const unsubscribe = subscribeOfflineDocuments(() => notifications++);
+    await Promise.all([
+      service.upsert({ fileId: 10, periodYear: '2026', title: 'Boleta' }),
+      service.upsert({ fileId: 11, periodYear: '2026' }),
+    ]);
+    assert.equal(
+      (await service.list()).length,
+      2,
+      'Las escrituras simultáneas no pierden documentos',
+    );
+    assert.equal(
+      notifications,
+      2,
+      'Mes, año e historial reciben cada actualización',
+    );
+    await service.upsert({ fileId: 10 });
+    assert.equal(
+      (await service.list()).find((item) => item.fileId === 10).title,
+      'Boleta',
+    );
+    unsubscribe();
+    await service.clear();
+    assert.equal(notifications, 3, 'Se elimina la suscripción al desmontar');
+  }
+
+  // Los nombres persistentes de nativo se interpretan con su prefijo real.
+  {
+    class File {
+      constructor(name) {
+        this.name = name;
+      }
+    }
+    class Directory {
+      create() {}
+      list() {
+        return [
+          new File('doc-42.pdf'),
+          new File('doc-7.pdf'),
+          new File('otro.pdf'),
+        ];
+      }
+    }
+    const nativeStore = load(
+      'src/services/pdfCacheStore.native.ts',
+      {
+        'expo-file-system': {
+          File,
+          Directory,
+          Paths: { document: '/documents' },
+        },
+      },
+      {},
+    );
+    assert.equal(JSON.stringify(await nativeStore.list()), '[42,7]');
+  }
+
+  console.log(
+    'Document viewer (web embed, download and offline cache) checks passed.',
+  );
+})().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

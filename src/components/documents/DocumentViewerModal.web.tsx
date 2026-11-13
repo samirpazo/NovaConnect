@@ -1,3 +1,5 @@
+import { offlineDocumentsService } from "@/services/offlineDocuments";
+import { isDocumentCached } from "@/services/documentDownload";
 import { Text } from "@/components/ui/text";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { showToast } from "@/lib/toast";
@@ -16,6 +18,8 @@ export type DocumentViewerModalProps = {
   fileName?: string;
   title?: string;
   subtitle?: string;
+  periodMonth?: string;
+  periodYear?: string;
   onClose: () => void;
 };
 
@@ -32,6 +36,8 @@ export default function DocumentViewerModal({
   fileName,
   title,
   subtitle,
+  periodMonth,
+  periodYear,
   onClose,
 }: DocumentViewerModalProps) {
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
@@ -62,18 +68,23 @@ export default function DocumentViewerModal({
       const objectUrl =
         (await getCachedDocumentUri(fileId)) ??
         (await downloadDocument(fileId));
+      if (await isDocumentCached(fileId)) {
+        await offlineDocumentsService
+          .upsert({ fileId, title: title || fileName, periodMonth, periodYear })
+          .catch(() => {});
+      }
       objectUrlRef.current = objectUrl;
       setUrl(objectUrl);
     } catch {
       setError(
         typeof navigator !== "undefined" && !navigator.onLine
           ? "Este documento no esta guardado para verse sin conexion."
-          : "No se pudo cargar el documento."
+          : "No se pudo cargar el documento.",
       );
     } finally {
       setLoading(false);
     }
-  }, [fileId, releaseUrl]);
+  }, [fileId, releaseUrl, title, fileName, periodMonth, periodYear]);
 
   React.useEffect(() => {
     if (!visible || !fileId) return;
@@ -96,7 +107,7 @@ export default function DocumentViewerModal({
       await saveDocumentToDevice(fileId, fileName || title || "documento");
       showToast.success(
         "Descarga iniciada",
-        "El documento se está guardando en tu equipo."
+        "El documento se está guardando en tu equipo.",
       );
     } catch {
       showToast.error("Error", "No se pudo descargar el documento.");

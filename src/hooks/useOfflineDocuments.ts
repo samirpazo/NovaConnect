@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
@@ -7,6 +8,7 @@ import {
 } from '@/services/documentDownload';
 import {
   offlineDocumentsService,
+  subscribeOfflineDocuments,
   OfflineDocument,
 } from '@/services/offlineDocuments';
 
@@ -32,12 +34,13 @@ export type OfflineDocumentInput = {
 export function useOfflineDocuments() {
   const [cachedIds, setCachedIds] = useState<number[]>([]);
   const [offlineDocuments, setOfflineDocuments] = useState<OfflineDocument[]>(
-    []
+    [],
   );
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(
-    null
-  );
+  const [progress, setProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
 
   const refresh = useCallback(async () => {
     const [ids, documents] = await Promise.all([
@@ -45,7 +48,9 @@ export function useOfflineDocuments() {
       offlineDocumentsService.list(),
     ]);
     setCachedIds(ids);
-    setOfflineDocuments(documents);
+    setOfflineDocuments(
+      documents.filter((document) => ids.includes(document.fileId)),
+    );
   }, []);
 
   useEffect(() => {
@@ -57,13 +62,19 @@ export function useOfflineDocuments() {
       ]);
       if (!cancelled) {
         setCachedIds(ids);
-        setOfflineDocuments(documents);
+        setOfflineDocuments(
+          documents.filter((document) => ids.includes(document.fileId)),
+        );
       }
     })();
+    const unsubscribe = subscribeOfflineDocuments(() => {
+      if (!cancelled) void refresh();
+    });
     return () => {
       cancelled = true;
+      unsubscribe();
     };
-  }, []);
+  }, [refresh]);
 
   const cache = useCallback(
     async (document: OfflineDocumentInput) => {
@@ -72,6 +83,7 @@ export function useOfflineDocuments() {
       try {
         const uri = await cacheDocument(fileId);
         if (uri) {
+          if (Platform.OS === 'web') URL.revokeObjectURL(uri);
           await offlineDocumentsService.upsert(document);
           await refresh();
         }
@@ -82,13 +94,13 @@ export function useOfflineDocuments() {
         setDownloadingId(null);
       }
     },
-    [refresh]
+    [refresh],
   );
 
   const cacheAll = useCallback(
     async (documents: OfflineDocumentInput[]) => {
       const pending = documents.filter(
-        document => !cachedIds.includes(document.fileId),
+        (document) => !cachedIds.includes(document.fileId),
       );
       if (pending.length === 0) return { done: 0, failed: 0 };
 
@@ -110,17 +122,16 @@ export function useOfflineDocuments() {
       };
 
       await Promise.all(
-        Array.from(
-          { length: Math.min(CONCURRENCY, pending.length) },
-          () => worker()
-        )
+        Array.from({ length: Math.min(CONCURRENCY, pending.length) }, () =>
+          worker(),
+        ),
       );
 
       setProgress(null);
       await refresh();
       return { done, failed };
     },
-    [cache, cachedIds, refresh]
+    [cache, cachedIds, refresh],
   );
 
   /** Borra los documentos guardados y libera el espacio ocupado. */

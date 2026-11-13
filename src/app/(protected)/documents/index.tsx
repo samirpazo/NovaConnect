@@ -9,7 +9,13 @@ import {
   Loader2,
   WifiOff,
 } from "lucide-react-native";
-import { View, FlatList, Pressable, RefreshControl, Platform } from "react-native";
+import {
+  View,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  Platform,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ConfirmReceptionModal } from "@/components/documents/ConfirmReceptionModal";
 import { DocumentsHeader } from "@/components/documents/DocumentsHeader";
@@ -17,7 +23,10 @@ import { PendingDocumentsSkeleton } from "@/components/documents/PendingDocument
 import { PendingEmptyState } from "@/components/documents/PendingEmptyState";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
-import { toOfflineInput } from "@/services/offlineDocuments";
+import {
+  offlineDocumentsService,
+  toOfflineInput,
+} from "@/services/offlineDocuments";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { saveDocumentToDevice } from "@/services/documentDownload";
 import DocumentViewerModal from "@/components/documents/DocumentViewerModal";
@@ -31,8 +40,9 @@ import * as React from "react";
 export default function DocumentsScreen() {
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
   const primaryColor = storePrimaryColor || "#002aff";
-  
-  const { documents, isLoading, isRefreshing, refetch, error } = useProcessedDocuments(false);
+
+  const { documents, isLoading, isRefreshing, refetch, error } =
+    useProcessedDocuments(false);
   const offline = useOfflineDocuments();
   const isOnline = useNetwork();
 
@@ -40,7 +50,7 @@ export default function DocumentsScreen() {
   // estaban guardados en el dispositivo.
   const offlineList = React.useMemo<ProcessedDocument[]>(() => {
     if (!error || offline.offlineDocuments.length === 0) return [];
-    return offline.offlineDocuments.map(item => ({
+    return offline.offlineDocuments.map((item) => ({
       PdcID: item.fileId,
       PrsID: 0,
       PdcPeriodYear: item.periodYear ?? "",
@@ -73,7 +83,7 @@ export default function DocumentsScreen() {
 
   const handleOpenPdf = async (
     fileId: number,
-    document?: ProcessedDocument
+    document?: ProcessedDocument,
   ) => {
     if (Platform.OS === "web") {
       setViewerDocument(document ?? null);
@@ -83,8 +93,10 @@ export default function DocumentsScreen() {
     try {
       await saveDocumentToDevice(
         fileId,
-        document?.DprDisplayName || "documento"
+        document?.DprDisplayName || "documento",
       );
+      if (document)
+        await offlineDocumentsService.upsert(toOfflineInput(document));
     } catch {
       showToast.error("Error", "No se pudo abrir el documento.");
     }
@@ -103,12 +115,13 @@ export default function DocumentsScreen() {
     if (!selectedDocument) return;
     setConfirming(true);
     try {
-      const success = await processedDocumentService.receiveDocument(selectedDocument);
+      const success =
+        await processedDocumentService.receiveDocument(selectedDocument);
       if (success) {
         setIsModalVisible(false);
         showToast.success(
           "Documento recepcionado",
-          "El documento se ha movido a tu historial."
+          "El documento se ha movido a tu historial.",
         );
         refetch();
         await handleOpenPdf(selectedDocument.PdcFilID, selectedDocument);
@@ -123,20 +136,26 @@ export default function DocumentsScreen() {
     }
   };
 
-  const renderItem = ({ item, index }: { item: ProcessedDocument; index: number }) => {
+  const renderItem = ({
+    item,
+    index,
+  }: {
+    item: ProcessedDocument;
+    index: number;
+  }) => {
     return (
       <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
         <Pressable
           onPress={() => handleDocumentPress(item)}
           className="bg-card rounded-[18px] p-3.5 mb-3 border border-border/40 shadow-sm flex-row items-center active:opacity-70"
         >
-          <View 
+          <View
             className="w-11 h-11 rounded-[14px] items-center justify-center mr-3.5"
             style={{ backgroundColor: `${primaryColor}15` }}
           >
             <FileText size={20} color={primaryColor} />
           </View>
-          
+
           <View className="flex-1 justify-center">
             <Text className="text-sm font-poppins-semibold text-foreground mb-0.5 tracking-tight">
               {item.DprDisplayName || "Documento"}
@@ -197,17 +216,17 @@ export default function DocumentsScreen() {
               disabled={offline.progress !== null}
               onPress={async () => {
                 const result = await offline.cacheAll(
-                  documents.map(toOfflineInput)
+                  documents.map(toOfflineInput),
                 );
                 if (result.failed > 0)
                   showToast.error(
-                    'Error',
-                    `${result.failed} documento(s) no se pudieron guardar.`
+                    "Error",
+                    `${result.failed} documento(s) no se pudieron guardar.`,
                   );
                 else if (result.done > 0)
                   showToast.success(
-                    'Documentos guardados',
-                    'Ya puedes verlos sin conexion.'
+                    "Documentos guardados",
+                    "Ya puedes verlos sin conexion.",
                   );
               }}
               className="px-4 py-2"
@@ -220,7 +239,7 @@ export default function DocumentsScreen() {
               <Text className="text-xs">
                 {offline.progress
                   ? `Guardando ${offline.progress.done}/${offline.progress.total}`
-                  : 'Guardar para ver sin conexion'}
+                  : "Guardar para ver sin conexion"}
               </Text>
             </Button>
           </View>
@@ -231,7 +250,8 @@ export default function DocumentsScreen() {
         <View className="mx-6 mb-2 flex-row items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
           <WifiOff size={14} color="#F59E0B" />
           <Text className="flex-1 text-xs font-poppins-medium text-foreground">
-            Sin conexión: se muestran los documentos guardados en este dispositivo.
+            Sin conexión: se muestran los documentos guardados en este
+            dispositivo.
           </Text>
         </View>
       ) : null}
@@ -264,7 +284,12 @@ export default function DocumentsScreen() {
             error && offlineList.length === 0 ? (
               <Animated.View
                 entering={FadeInDown.springify()}
-                style={{ flex: 1, alignItems: "center", justifyContent: "center", marginTop: 80 }}
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: 80,
+                }}
               >
                 <View
                   className="w-24 h-24 rounded-[32px] items-center justify-center mb-6"
@@ -301,6 +326,8 @@ export default function DocumentsScreen() {
         visible={viewerFileId !== null}
         fileId={viewerFileId}
         fileName={viewerDocument?.DprDisplayName}
+        periodMonth={viewerDocument?.PdcPeriodMonth}
+        periodYear={viewerDocument?.PdcPeriodYear}
         title={viewerDocument?.DprDisplayName}
         subtitle={
           viewerDocument
