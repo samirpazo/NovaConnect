@@ -8,7 +8,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/samirpazo/NovaConnect.git",
-      "revision": "9e2dd428273c089780a50cf7b917b1c7fb1d79f8",
+      "revision": "b7199d6c3fd1aa08d24d53f50a47abdd679d5a2c",
       "link_mode": "local-only"
     }
   },
@@ -56,8 +56,8 @@
       "sources": [
         {
           "path": "src/app/(protected)/documents/index.tsx",
-          "line": 85,
-          "end_line": 97
+          "line": 83,
+          "end_line": 95
         }
       ]
     },
@@ -71,8 +71,8 @@
       "sources": [
         {
           "path": "src/app/(protected)/documents/index.tsx",
-          "line": 94,
-          "end_line": 134
+          "line": 89,
+          "end_line": 133
         }
       ]
     },
@@ -86,8 +86,8 @@
       "sources": [
         {
           "path": "src/app/(protected)/documents/index.tsx",
-          "line": 94,
-          "end_line": 134
+          "line": 89,
+          "end_line": 133
         }
       ]
     },
@@ -141,13 +141,13 @@
       "lane": "offline",
       "col": 2,
       "type": "frontend",
-      "label": "Abrir copia guardada",
-      "sublabel": "No confirmar recepción",
+      "label": "Ocultar pendientes",
+      "sublabel": "Sin consulta ni recepción",
       "sources": [
         {
           "path": "src/app/(protected)/documents/index.tsx",
-          "line": 85,
-          "end_line": 97
+          "line": 168,
+          "end_line": 192
         }
       ]
     },
@@ -156,13 +156,13 @@
       "lane": "offline",
       "col": 3,
       "type": "database",
-      "label": "Estado sin cambios",
-      "sublabel": "Descargado no significa recibido",
+      "label": "Ir a Historial",
+      "sublabel": "Recibidos guardados",
       "sources": [
         {
           "path": "src/app/(protected)/documents/index.tsx",
-          "line": 95,
-          "end_line": 104
+          "line": 168,
+          "end_line": 192
         }
       ]
     },
@@ -176,8 +176,8 @@
       "sources": [
         {
           "path": "src/app/(protected)/documents/index.tsx",
-          "line": 94,
-          "end_line": 134
+          "line": 89,
+          "end_line": 133
         }
       ]
     }
@@ -258,8 +258,8 @@
       "dot": "amber",
       "title": "Sin conexión",
       "items": [
-        "No se registra una nueva recepción offline ni se encola una confirmación automática. Solo puede consultarse una copia ya guardada.",
-        "Un PDF antiguo sin estado conocido no se inventa como pendiente."
+        "Los pendientes no se consultan, listan ni abren offline. Tampoco se registran ni encolan recepciones.",
+        "Historial permite consultar las copias guardadas de documentos recibidos."
       ]
     },
     {

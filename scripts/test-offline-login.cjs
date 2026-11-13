@@ -257,6 +257,45 @@ function load(file, modules, extra = {}) {
       'La pantalla no inventa pendientes a partir de todos los PDF guardados',
     );
   }
+  {
+    let requests = 0;
+    let stateIndex = 0;
+    const { useProcessedDocuments } = load(
+      'src/hooks/useProcessedDocuments.ts',
+      {
+        '@/hooks/useNetwork': { useNetwork: () => false },
+        react: {
+          useState: (initial) => [
+            stateIndex++ === 0 ? [{ PdcID: 1, PdcIsReceived: false }] : initial,
+            () => {},
+          ],
+          useCallback: (fn) => fn,
+        },
+        'expo-router': { useFocusEffect: (fn) => fn() },
+        '@/services/processedDocumentService': {
+          processedDocumentService: {
+            getDocuments: async () => {
+              requests++;
+              return [];
+            },
+          },
+        },
+      },
+    );
+    const pending = useProcessedDocuments(false);
+    await pending.refetch();
+    assert.equal(
+      pending.documents.length,
+      0,
+      'No expone pendientes antiguos al perder conexión',
+    );
+    assert.equal(pending.isLoading, false);
+    assert.equal(
+      requests,
+      0,
+      'No consulta pendientes al servidor estando offline',
+    );
+  }
   console.log(
     'Offline PIN verification, lockout, network fallback and account isolation checks passed.',
   );

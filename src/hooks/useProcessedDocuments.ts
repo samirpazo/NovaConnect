@@ -12,30 +12,33 @@ export function useProcessedDocuments(isReceived: boolean) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDocuments = useCallback(async (refresh = false) => {
-    if (!canLoad) return;
-    if (refresh) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-    setError(null);
-    try {
-      const data = await processedDocumentService.getDocuments(isReceived);
-      setDocuments(data);
-    } catch (err) {
-      setError("No se pudieron cargar los documentos.");
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [isReceived, canLoad]);
+  const fetchDocuments = useCallback(
+    async (refresh = false) => {
+      if (!canLoad) return;
+      if (refresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+      setError(null);
+      try {
+        const data = await processedDocumentService.getDocuments(isReceived);
+        setDocuments(data);
+      } catch (err) {
+        setError("No se pudieron cargar los documentos.");
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [isReceived, canLoad],
+  );
 
   // Se ejecuta automáticamente cuando la pantalla recibe el foco
   useFocusEffect(
     useCallback(() => {
       fetchDocuments();
-    }, [fetchDocuments])
+    }, [fetchDocuments]),
   );
 
   return {

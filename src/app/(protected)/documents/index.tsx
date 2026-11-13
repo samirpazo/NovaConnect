@@ -1,12 +1,7 @@
 import { router } from "expo-router";
 import { Text } from "@/components/ui/text";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
-import {
-  Calendar,
-  ChevronRight,
-  FileText,
-  WifiOff,
-} from "lucide-react-native";
+import { Calendar, ChevronRight, FileText, WifiOff } from "lucide-react-native";
 import {
   View,
   FlatList,
@@ -78,6 +73,15 @@ export default function DocumentsScreen() {
   const [selectedDocument, setSelectedDocument] =
     React.useState<ProcessedDocument | null>(null);
 
+  React.useEffect(() => {
+    if (!isOnline) {
+      setIsModalVisible(false);
+      setSelectedDocument(null);
+      setViewerFileId(null);
+      setViewerDocument(null);
+    }
+  }, [isOnline]);
+
   const handleDocumentPress = (item: ProcessedDocument) => {
     if (!isOnline || item.PdcIsReceived) return;
     setSelectedDocument(item);
@@ -142,7 +146,6 @@ export default function DocumentsScreen() {
               <Text className="text-[11px] font-poppins-medium text-muted-foreground capitalize">
                 {item.PdcPeriodMonth} {item.PdcPeriodYear}
               </Text>
-
             </View>
           </View>
 
@@ -158,12 +161,22 @@ export default function DocumentsScreen() {
     return (
       <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
         <View className="px-6 pt-4">
-          <Text className="text-xl font-poppins-bold text-foreground">Documentos</Text>
+          <Text className="text-xl font-poppins-bold text-foreground">
+            Documentos
+          </Text>
           <View className="mt-6 items-center gap-4 rounded-2xl border border-border/40 bg-card px-6 py-8">
             <WifiOff size={32} color={primaryColor} />
-            <Text className="text-center text-lg font-poppins-semibold text-foreground">Los pendientes requieren conexión</Text>
-            <Text className="text-center text-sm font-poppins text-muted-foreground">Conéctate para consultar y confirmar su recepción. Tus documentos recibidos están en Historial.</Text>
-            <Button variant="outline" onPress={() => router.push("/(protected)/history")}>
+            <Text className="text-center text-lg font-poppins-semibold text-foreground">
+              Los pendientes requieren conexión
+            </Text>
+            <Text className="text-center text-sm font-poppins text-muted-foreground">
+              Conéctate para consultar y confirmar su recepción. Tus documentos
+              recibidos están en Historial.
+            </Text>
+            <Button
+              variant="outline"
+              onPress={() => router.push("/(protected)/history")}
+            >
               <Text>Ver historial</Text>
             </Button>
           </View>
@@ -182,7 +195,6 @@ export default function DocumentsScreen() {
           onRefresh={() => void refetch()}
         />
       </View>
-
 
       {isLoading && !isRefreshing ? (
         <View className="flex-1 px-6 pt-4">
