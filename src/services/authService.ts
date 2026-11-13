@@ -1,5 +1,6 @@
 import { api, markSessionOpen } from "@/lib/axios";
 import { storage } from "@/lib/storage";
+import { offlineAuthService } from "@/services/offlineAuthService";
 import { AuthResponse } from "@/types/auth";
 import { Platform } from "react-native";
 
@@ -110,6 +111,18 @@ export const authService = {
 
         // Guardar Tokens de forma segura
         await storage.setItem("user", JSON.stringify(authData.User));
+
+        // En nativo se recuerda la sesion para poder abrir la app sin conexion:
+        // se guarda el hash del PIN (el mismo que viaja al servidor) y los
+        // datos del colaborador. En web la credencial vive en una cookie
+        // HttpOnly que la app no puede leer, asi que no hay nada que recordar.
+        if (Platform.OS !== "web" && credentials?.Password) {
+          await offlineAuthService.save(
+            credentials.DocumentNumber,
+            credentials.Password,
+            authData.User,
+          );
+        }
         if (Platform.OS !== "web") {
           await Promise.all([
             storage.setItem("token", authData.Token),

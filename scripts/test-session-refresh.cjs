@@ -445,6 +445,45 @@ function loadAxios({ platform, storage, refreshResult, postThrows }) {
     );
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // 7. Un fallo de red al renovar no cierra la sesion. Sin conexion el
+  //    colaborador sigue trabajando con los documentos ya descargados; solo
+  //    se cierra la sesion cuando el servidor dice que ya no es valida.
+  // ────────────────────────────────────────────────────────────────
+  {
+    const storage = makeStorage();
+    storage.stored.set('token', 'token-vencido');
+    storage.stored.set('refreshToken', 'refresh-1');
+
+    let logouts = 0;
+    const { module, handleError } = loadAxios({
+      platform: 'ios',
+      storage,
+      refreshResult: () => ({ data: { Succeeded: true }, headers: {} }),
+      postThrows: url =>
+        url === '/Token/Refresh'
+          ? {
+              message: 'Network Error',
+              config: { url: '/Token/Refresh', headers: {}, method: 'post' },
+            }
+          : null,
+    });
+    module.setGlobalLogoutCallback(() => {
+      logouts++;
+    });
+
+    const error = await expectRejection(
+      handleError(unauthorized('/MpwProcessedDocument/Mine')),
+    );
+
+    assert.equal(logouts, 0, 'un fallo de red no debe cerrar la sesion');
+    assert.match(
+      error.message,
+      /No se pudo renovar la sesi[oó]n/,
+      'el error debe explicar que no hubo respuesta del servidor',
+    );
+  }
+
   console.log('Session refresh, logout cascade and token rotation checks passed.');
 })().catch(error => {
   console.error(error);

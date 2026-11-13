@@ -32,7 +32,9 @@ function load(file, modules) {
         headers: { 'set-cookie': ['nova_connect_access_token=access-cookie; HttpOnly', 'nova_connect_refresh_token=refresh-cookie; HttpOnly'] } };
     } };
     let sessionOpened = 0;
-    const { authService } = load('src/services/authService.ts', { '@/lib/axios': { api, markSessionOpen: () => { sessionOpened++; } }, '@/lib/storage': { storage }, 'react-native': { Platform: { OS: platform } } });
+    const offlineSessions = [];
+    const { authService } = load('src/services/authService.ts', { '@/lib/axios': { api, markSessionOpen: () => { sessionOpened++; } }, '@/lib/storage': { storage }, 'react-native': { Platform: { OS: platform } },
+      '@/services/offlineAuthService': { offlineAuthService: { save: async (document, pinHash, user) => { offlineSessions.push({ document, pinHash, user }); }, clear: async () => { offlineSessions.length = 0; } } } });
     await authService.requestEnrollmentOtp('12345678');
     await authService.registerCollaborator('12345678', '123456', 'client-hash');
     assert.equal(calls[0].url, '/SecCollaborator/RequestEnrollmentOtp');
@@ -40,12 +42,17 @@ function load(file, modules) {
     assert.equal(calls[1].body.DocumentNumber, '12345678');
     assert.equal(calls[1].body.Otp, '123456');
     assert.equal(calls[1].body.PrsID, undefined);
-    const login = await authService.loginCollaborator({ DocumentNumber: '12345678' });
+    const login = await authService.loginCollaborator({ DocumentNumber: '12345678', Password: 'hash-del-pin' });
     assert.equal(login.success, true);
     assert.equal(stored.get('token'), platform === 'web' ? undefined : 'access-cookie');
     assert.equal(stored.get('refreshToken'), platform === 'web' ? undefined : 'refresh-cookie');
     assert.ok(!JSON.stringify([...stored]).includes('do-not-use-body'));
     assert.equal(sessionOpened, 1, 'iniciar sesion debe liberar la guarda de cierre');
+    assert.equal(offlineSessions.length, platform === 'web' ? 0 : 1, 'en nativo se recuerda la sesion para el modo offline');
+    if (platform !== 'web') {
+      assert.equal(offlineSessions[0].document, '12345678');
+      assert.equal(offlineSessions[0].pinHash, 'hash-del-pin', 'se guarda el hash del PIN, no el PIN');
+    }
     await authService.logout();
     assert.equal(calls.at(-1).url, '/Token/Logout');
     assert.equal(stored.size, 0);

@@ -3,6 +3,7 @@ import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { showToast } from "@/lib/toast";
 import {
   downloadDocument,
+  getCachedDocumentUri,
   saveDocumentToDevice,
 } from "@/services/documentDownload";
 import { Download, FileText, Loader2, RotateCw, X } from "lucide-react-native";
@@ -56,11 +57,19 @@ export default function DocumentViewerModal({
     setUrl(null);
     releaseUrl();
     try {
-      const objectUrl = await downloadDocument(fileId);
+      // Primero la copia guardada para ver sin conexion; si no existe, se
+      // descarga con la sesion.
+      const objectUrl =
+        (await getCachedDocumentUri(fileId)) ??
+        (await downloadDocument(fileId));
       objectUrlRef.current = objectUrl;
       setUrl(objectUrl);
     } catch {
-      setError("No se pudo cargar el documento.");
+      setError(
+        typeof navigator !== "undefined" && !navigator.onLine
+          ? "Este documento no esta guardado para verse sin conexion."
+          : "No se pudo cargar el documento."
+      );
     } finally {
       setLoading(false);
     }

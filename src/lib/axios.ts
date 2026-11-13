@@ -97,7 +97,13 @@ async function renewSession(): Promise<boolean> {
     // No se reintenta: si la petición llegó al servidor pero se perdió la
     // respuesta, el refresh token ya pudo rotar y un segundo intento
     // invalidaría la sesión.
-    throw new Error(describeRefreshFailure(error));
+    const failure = new Error(describeRefreshFailure(error)) as Error & {
+      status?: number;
+    };
+    failure.status = (
+      error as { response?: { status?: number } }
+    )?.response?.status;
+    throw failure;
   }
 
   const body = response.data as { Succeeded?: boolean } | undefined;
@@ -220,7 +226,13 @@ api.interceptors.response.use(
       }
       return api(originalRequest);
     } catch (refreshError) {
-      await closeSession();
+      // Un fallo de red no significa que la sesión haya caducado: sin
+      // conexión se sigue trabajando con los datos ya descargados. Solo se
+      // cierra la sesión cuando el servidor dice que ya no es válida.
+      const status = (refreshError as { status?: number })?.status;
+      if (status === 401 || status === 403) {
+        await closeSession();
+      }
       return Promise.reject(refreshError);
     }
   },

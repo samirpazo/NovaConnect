@@ -10,6 +10,8 @@ import { showToast } from "@/lib/toast";
 import { authService } from "@/services/authService";
 import { secCollaboratorPreferenceService } from "@/services/secCollaboratorPreferenceService";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { offlineAuthService } from "@/services/offlineAuthService";
+import { useNetwork } from "@/hooks/useNetwork";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Link, Stack, router, useFocusEffect } from "expo-router";
 import * as LocalAuthentication from "expo-local-authentication";
@@ -47,7 +49,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 
 export default function LoginScreen() {
-  const { login, isAuthenticating } = useAuthStore();
+  const { login, loginOffline, isAuthenticating } = useAuthStore();
+  const isOnline = useNetwork();
   const { setPreferences, primaryColor: storePrimaryColor } = usePreferenceStore();
   const primaryColor = storePrimaryColor?.toLowerCase() === '#ff0000' || storePrimaryColor?.toLowerCase() === 'ff0000' ? '#002aff' : storePrimaryColor;
   const [step, setStep] = React.useState<1 | 2>(1);
@@ -131,6 +134,28 @@ export default function LoginScreen() {
   const handleNextStep = async () => {
     if (!PrsDocumentNumber || PrsDocumentNumber.length < 8) {
       showToast.warning("Documento inválido", "Ingrese un documento válido.");
+      return;
+    }
+
+    // Sin conexion no se puede validar el documento contra el servidor: si en
+    // este dispositivo hay una sesion guardada para el, se entra con el PIN.
+    const offlineSession = await offlineAuthService.get();
+    if (!isOnline && offlineSession?.document === PrsDocumentNumber.trim()) {
+      showToast.warning(
+        "Sin conexión",
+        "Ingresa tu PIN para entrar con la sesión guardada en este dispositivo.",
+      );
+      opacity.value = withTiming(0, { duration: 200 });
+      translateX.value = withTiming(-50, { duration: 200 }, (finished) => {
+        if (finished) {
+          scheduleOnRN(() => {
+            setStep(2);
+            translateX.value = 50;
+            opacity.value = withTiming(1, { duration: 200 });
+            translateX.value = withTiming(0, { duration: 200 });
+          });
+        }
+      });
       return;
     }
 
@@ -313,13 +338,31 @@ export default function LoginScreen() {
     if (result.success) {
       await biometricService.rememberDocument(PrsDocumentNumber);
       processSuccessfulLogin();
-    } else {
-      showToast.error(
-        "Error de autenticación",
-        result.error || "PIN o documento incorrecto",
-      );
-      setPin(""); // Reset PIN on error
+      return;
     }
+
+    // Sin conexion el servidor no puede validar el PIN: si este dispositivo
+    // recuerda la sesion, se entra con el hash guardado en el dispositivo.
+    if (!isOnline) {
+      const offlineResult = await loginOffline({
+        DocumentNumber: PrsDocumentNumber,
+        Pin: pin,
+      });
+      if (offlineResult.success) {
+        showToast.warning(
+          "Modo sin conexión",
+          "Entraste con la sesión guardada en este dispositivo.",
+        );
+        processSuccessfulLogin();
+        return;
+      }
+    }
+
+    showToast.error(
+      "Error de autenticación",
+      result.error || "PIN o documento incorrecto",
+    );
+    setPin(""); // Reset PIN on error
   };
 
   const handlePinPress = (num: string) => {

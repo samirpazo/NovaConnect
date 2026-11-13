@@ -1,14 +1,17 @@
 import { api } from '@/lib/axios';
 import { fileService } from '@/services/fileService';
+import * as cacheStore from '@/services/pdfCacheStore';
 
 /**
  * En web el documento se descarga con la sesion y se muestra embebido en un
- * iframe. El blob vive en memoria: no hay cache persistente en disco.
+ * iframe. El blob vive en memoria; para tenerlo disponible sin conexion se
+ * guarda en la Cache API del navegador.
  */
-export async function downloadDocument(
+
+async function fetchBlob(
   fileId: number,
   onProgress?: (received: number, total: number) => void
-): Promise<string> {
+): Promise<Blob> {
   const response = await api.get(fileService.getFileUrl(fileId), {
     responseType: 'blob',
     onDownloadProgress: (event) => {
@@ -16,14 +19,57 @@ export async function downloadDocument(
       onProgress?.(event.loaded ?? 0, total);
     },
   });
-  return window.URL.createObjectURL(
-    new Blob([response.data], { type: 'application/pdf' })
-  );
+  return new Blob([response.data], { type: 'application/pdf' });
 }
 
-/** En web el blob vive en memoria: no hay cache persistente. */
-export async function isDocumentCached(_fileId: number): Promise<boolean> {
-  return false;
+/** Descarga el documento y devuelve una URL de objeto para mostrarlo. */
+export async function downloadDocument(
+  fileId: number,
+  onProgress?: (received: number, total: number) => void
+): Promise<string> {
+  const blob = await fetchBlob(fileId, onProgress);
+  return window.URL.createObjectURL(blob);
+}
+
+/**
+ * Guarda el documento en el almacen del navegador para verlo sin conexion.
+ * Devuelve la URL de objeto del PDF guardado.
+ */
+export async function cacheDocument(
+  fileId: number,
+  onProgress?: (received: number, total: number) => void
+): Promise<string | null> {
+  const blob = await fetchBlob(fileId, onProgress);
+  const stored = await cacheStore.write(fileId, blob);
+  if (!stored) return null;
+  return window.URL.createObjectURL(blob);
+}
+
+/** URL de objeto del documento guardado, o null si no esta guardado. */
+export async function getCachedDocumentUri(
+  fileId: number
+): Promise<string | null> {
+  return cacheStore.read(fileId);
+}
+
+/** Indica si el documento esta guardado para verse sin conexion. */
+export async function isDocumentCached(fileId: number): Promise<boolean> {
+  return cacheStore.isStored(fileId);
+}
+
+/** Identificadores de los documentos guardados sin conexion. */
+export async function listCachedDocuments(): Promise<number[]> {
+  return cacheStore.list();
+}
+
+/** Elimina un documento del almacen offline. */
+export async function removeCachedDocument(fileId: number): Promise<void> {
+  await cacheStore.remove(fileId);
+}
+
+/** Libera todo el espacio ocupado por los documentos offline. */
+export async function clearCachedDocuments(): Promise<void> {
+  await cacheStore.clear();
 }
 
 /**

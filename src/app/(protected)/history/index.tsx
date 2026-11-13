@@ -3,6 +3,7 @@ import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { Input } from "@/components/ui/input";
 import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
+import { toOfflineInput } from "@/services/offlineDocuments";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { showToast } from "@/lib/toast";
@@ -137,12 +138,12 @@ export default function HistoryYearsScreen() {
           />
         </View>
 
-        {Platform.OS !== "web" && documents.length > 0 ? (
+        {documents.length > 0 ? (
           <View className="flex-row items-center gap-2">
             <Pressable
               onPress={async () => {
                 const result = await offline.cacheAll(
-                  documents.map((document) => document.PdcFilID),
+                  documents.map(toOfflineInput),
                 );
                 if (result.failed > 0)
                   showToast.error(

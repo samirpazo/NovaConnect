@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
+import { toOfflineInput } from "@/services/offlineDocuments";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { showToast } from "@/lib/toast";
 import { saveDocumentToDevice } from "@/services/documentDownload";
@@ -54,6 +55,44 @@ export default function HistoryMonthDocumentsScreen() {
         d.PdcPeriodMonth.toLowerCase() === month?.toLowerCase(),
     );
   }, [allDocuments, year, month]);
+
+  // Sin conexion la lista llega vacia: se muestran los documentos que ya
+  // estaban guardados en el dispositivo.
+  const offlineList = React.useMemo<ProcessedDocument[]>(() => {
+    if (!error || offline.offlineDocuments.length === 0) return [];
+    const targetMonth =
+      month?.charAt(0).toUpperCase() + month?.slice(1).toLowerCase();
+    return offline.offlineDocuments
+      .filter(item => {
+        if (!item.periodYear || !item.periodMonth) return false;
+        return (
+          item.periodYear.toString() === year &&
+          (item.periodMonth.charAt(0).toUpperCase() +
+            item.periodMonth.slice(1).toLowerCase()) ===
+            targetMonth
+        );
+      })
+      .map(item => ({
+        PdcID: item.fileId,
+        PrsID: 0,
+        PdcPeriodYear: item.periodYear ?? "",
+        PdcPeriodMonth: item.periodMonth ?? "",
+        PdcPeriodWeek: null,
+        PdcFilID: item.fileId,
+        SecStatus: 1,
+        CreateUserId: 0,
+        UpdateUserId: null,
+        DeleteUserId: null,
+        CreateDate: new Date(item.savedAt).toISOString(),
+        UpdateDate: null,
+        DeleteDate: null,
+        PdcIsReceived: false,
+        DprID: 0,
+        DprDisplayName: item.title,
+      }));
+  }, [error, offline.offlineDocuments, year, month]);
+
+  const listData = documents.length > 0 ? documents : offlineList;
 
   // En web el documento se muestra embebido en la app (el visor usa un iframe
   // con el blob descargado con la sesion). En nativo no hay visor PDF
@@ -157,12 +196,12 @@ export default function HistoryMonthDocumentsScreen() {
             </View>
           </View>
 
-          {Platform.OS !== "web" && documents.length > 0 ? (
+          {documents.length > 0 ? (
             <View className="flex-row items-center gap-2">
               <Pressable
                 onPress={async () => {
                   const result = await offline.cacheAll(
-                    documents.map((document) => document.PdcFilID),
+                    documents.map(toOfflineInput),
                   );
                   if (result.failed > 0)
                     showToast.error(
@@ -194,6 +233,15 @@ export default function HistoryMonthDocumentsScreen() {
             </View>
           ) : null}
         </View>
+        {offlineList.length > 0 ? (
+          <View className="mx-6 mb-2 flex-row items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
+            <WifiOff size={14} color="#F59E0B" />
+            <Text className="flex-1 text-xs font-poppins-medium text-foreground">
+              Sin conexión: se muestran los documentos guardados en este dispositivo.
+            </Text>
+          </View>
+        ) : null}
+
         {isLoading && !isRefreshing ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color={primaryColor} />
@@ -203,11 +251,12 @@ export default function HistoryMonthDocumentsScreen() {
           </View>
         ) : (
           <FlatList
-            data={documents}
-            keyExtractor={(item) => item.PdcID.toString()}
+            data={listData}
+            keyExtractor={(item) => String(item.PdcFilID || item.PdcID)}
             renderItem={renderItem}
             contentContainerStyle={{
-              padding: 24,
+              paddingHorizontal: 24,
+              paddingTop: 4,
               paddingBottom: 100,
               flexGrow: 1,
             }}
@@ -221,7 +270,7 @@ export default function HistoryMonthDocumentsScreen() {
               />
             }
             ListEmptyComponent={
-              error ? (
+              error && offlineList.length === 0 ? (
                 <Animated.View
                   entering={FadeInDown.springify()}
                   style={{

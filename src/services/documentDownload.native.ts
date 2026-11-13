@@ -3,27 +3,23 @@ import * as Sharing from 'expo-sharing';
 
 import { storage } from '@/lib/storage';
 import { fileService } from '@/services/fileService';
-
-const CACHE_DIRECTORY = new Directory(Paths.cache, 'nova-connect', 'pdf');
-
-function cachedFile(fileId: number): File {
-  return new File(CACHE_DIRECTORY, `doc-${fileId}.pdf`);
-}
+import * as cacheStore from '@/services/pdfCacheStore.native';
 
 /**
- * Descarga el documento con la sesion actual y lo deja en la cache del
- * dispositivo.
- *
- * La descarga directa a disco es la unica forma de llevar la credencial: la
- * URL de GenFiles la exige, asi que abrirla en el navegador del sistema
- * devolveria 401.
+ * Descarga temporal: se usa para entregar el archivo al visor del sistema.
+ * No sobrevive a una limpieza del sistema, asi que no cuenta como offline.
  */
-export async function downloadDocument(
+const TEMP_DIRECTORY = new Directory(Paths.cache, 'nova-connect', 'pdf');
+
+function tempFile(fileId: number): File {
+  return new File(TEMP_DIRECTORY, `doc-${fileId}.pdf`);
+}
+
+async function fetchTo(
   fileId: number,
+  destination: File,
   onProgress?: (received: number, total: number) => void
 ): Promise<string> {
-  CACHE_DIRECTORY.create({ intermediates: true, idempotent: true });
-  const destination = cachedFile(fileId);
   const token = await storage.getItem('token');
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -41,13 +37,66 @@ export async function downloadDocument(
   return file.uri;
 }
 
-/** Indica si el documento ya esta disponible sin conexion. */
-export async function isDocumentCached(fileId: number): Promise<boolean> {
+/**
+ * Descarga el documento con la sesion actual a un archivo temporal.
+ *
+ * La descarga directa a disco es la unica forma de llevar la credencial: la
+ * URL de GenFiles la exige, asi que abrirla en el navegador del sistema
+ * devolveria 401.
+ */
+export async function downloadDocument(
+  fileId: number,
+  onProgress?: (received: number, total: number) => void
+): Promise<string> {
+  TEMP_DIRECTORY.create({ intermediates: true, idempotent: true });
+  return fetchTo(fileId, tempFile(fileId), onProgress);
+}
+
+/**
+ * Guarda el documento en el directorio persistente para verlo sin conexion.
+ * Devuelve la ruta local del archivo guardado.
+ */
+export async function cacheDocument(
+  fileId: number,
+  onProgress?: (received: number, total: number) => void
+): Promise<string | null> {
+  cacheStore.ensureDirectory();
   try {
-    return cachedFile(fileId).exists;
+    return await fetchTo(
+      fileId,
+      cacheStore.fileFor(fileId),
+      onProgress
+    );
   } catch {
-    return false;
+    return null;
   }
+}
+
+/** Ruta local del documento guardado, o null si no esta guardado. */
+export async function getCachedDocumentUri(
+  fileId: number
+): Promise<string | null> {
+  return cacheStore.read(fileId);
+}
+
+/** Indica si el documento esta guardado para verse sin conexion. */
+export async function isDocumentCached(fileId: number): Promise<boolean> {
+  return cacheStore.isStored(fileId);
+}
+
+/** Identificadores de los documentos guardados sin conexion. */
+export async function listCachedDocuments(): Promise<number[]> {
+  return cacheStore.list();
+}
+
+/** Elimina un documento del almacen offline. */
+export async function removeCachedDocument(fileId: number): Promise<void> {
+  await cacheStore.remove(fileId);
+}
+
+/** Libera todo el espacio ocupado por los documentos offline. */
+export async function clearCachedDocuments(): Promise<void> {
+  await cacheStore.clear();
 }
 
 /**
@@ -62,8 +111,8 @@ export async function saveDocumentToDevice(
   fileId: number,
   fileName: string
 ): Promise<void> {
-  const cached = await isDocumentCached(fileId);
-  const uri = cached ? cachedFile(fileId).uri : await downloadDocument(fileId);
+  const cached = await getCachedDocumentUri(fileId);
+  const uri = cached ?? (await downloadDocument(fileId));
 
   await Sharing.shareAsync(uri, {
     mimeType: 'application/pdf',

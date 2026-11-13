@@ -1,5 +1,6 @@
 import { Text } from "@/components/ui/text";
 import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
+import { toOfflineInput } from "@/services/offlineDocuments";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { showToast } from "@/lib/toast";
@@ -131,7 +132,7 @@ export default function HistoryMonthsScreen() {
                       {item.cached > 0 ? ` · ${item.cached} offline` : ""}
                     </Text>
                   </View>
-                  {Platform.OS !== "web" && !monthCached ? (
+                  {!monthCached ? (
                     <Pressable
                       onPress={async () => {
                         const result = await offline.cacheAll(
@@ -143,7 +144,7 @@ export default function HistoryMonthsScreen() {
                                   document.PdcPeriodMonth.slice(1).toLowerCase()) ===
                                   item.month,
                             )
-                            .map((document) => document.PdcFilID),
+                            .map(toOfflineInput),
                         );
                         if (result.failed > 0)
                           showToast.error(

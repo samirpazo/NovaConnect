@@ -17,6 +17,7 @@ import { PendingDocumentsSkeleton } from "@/components/documents/PendingDocument
 import { PendingEmptyState } from "@/components/documents/PendingEmptyState";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
+import { toOfflineInput } from "@/services/offlineDocuments";
 import { useProcessedDocuments } from "@/hooks/useProcessedDocuments";
 import { saveDocumentToDevice } from "@/services/documentDownload";
 import DocumentViewerModal from "@/components/documents/DocumentViewerModal";
@@ -34,6 +35,32 @@ export default function DocumentsScreen() {
   const { documents, isLoading, isRefreshing, refetch, error } = useProcessedDocuments(false);
   const offline = useOfflineDocuments();
   const isOnline = useNetwork();
+
+  // Sin conexion la lista llega vacia: se muestran los documentos que ya
+  // estaban guardados en el dispositivo.
+  const offlineList = React.useMemo<ProcessedDocument[]>(() => {
+    if (!error || offline.offlineDocuments.length === 0) return [];
+    return offline.offlineDocuments.map(item => ({
+      PdcID: item.fileId,
+      PrsID: 0,
+      PdcPeriodYear: item.periodYear ?? "",
+      PdcPeriodMonth: item.periodMonth ?? "",
+      PdcPeriodWeek: null,
+      PdcFilID: item.fileId,
+      SecStatus: 1,
+      CreateUserId: 0,
+      UpdateUserId: null,
+      DeleteUserId: null,
+      CreateDate: new Date(item.savedAt).toISOString(),
+      UpdateDate: null,
+      DeleteDate: null,
+      PdcIsReceived: false,
+      DprID: 0,
+      DprDisplayName: item.title,
+    }));
+  }, [error, offline.offlineDocuments]);
+
+  const listData = documents.length > 0 ? documents : offlineList;
   const [confirming, setConfirming] = React.useState(false);
 
   // En web el documento se muestra embebido en la app (el visor usa un iframe
@@ -130,9 +157,9 @@ export default function DocumentsScreen() {
             </View>
           </View>
 
-          {Platform.OS !== 'web' && !offline.isCached(item.PdcFilID) ? (
+          {!offline.isCached(item.PdcFilID) ? (
             <Pressable
-              onPress={() => void offline.cache(item.PdcFilID)}
+              onPress={() => void offline.cache(toOfflineInput(item))}
               disabled={offline.downloadingId !== null}
               accessibilityRole="button"
               accessibilityLabel="Guardar documento para ver sin conexion"
@@ -163,14 +190,14 @@ export default function DocumentsScreen() {
           primaryColor={primaryColor}
           onRefresh={() => void refetch()}
         />
-        {Platform.OS !== 'web' && documents.length > 0 ? (
+        {documents.length > 0 ? (
           <View className="flex-row items-center gap-2">
             <Button
               variant="outline"
               disabled={offline.progress !== null}
               onPress={async () => {
                 const result = await offline.cacheAll(
-                  documents.map(item => item.PdcFilID)
+                  documents.map(toOfflineInput)
                 );
                 if (result.failed > 0)
                   showToast.error(
@@ -200,16 +227,30 @@ export default function DocumentsScreen() {
         ) : null}
       </View>
 
+      {offlineList.length > 0 ? (
+        <View className="mx-6 mb-2 flex-row items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
+          <WifiOff size={14} color="#F59E0B" />
+          <Text className="flex-1 text-xs font-poppins-medium text-foreground">
+            Sin conexión: se muestran los documentos guardados en este dispositivo.
+          </Text>
+        </View>
+      ) : null}
+
       {isLoading && !isRefreshing ? (
         <View className="flex-1 px-6 pt-4">
           <PendingDocumentsSkeleton />
         </View>
       ) : (
         <FlatList
-          data={documents}
-          keyExtractor={(item) => item.PdcID.toString()}
+          data={listData}
+          keyExtractor={(item) => String(item.PdcFilID || item.PdcID)}
           renderItem={renderItem}
-          contentContainerStyle={{ padding: 24, paddingBottom: 100, flexGrow: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 24,
+            paddingTop: 4,
+            paddingBottom: 100,
+            flexGrow: 1,
+          }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -220,7 +261,7 @@ export default function DocumentsScreen() {
             />
           }
           ListEmptyComponent={
-            error ? (
+            error && offlineList.length === 0 ? (
               <Animated.View
                 entering={FadeInDown.springify()}
                 style={{ flex: 1, alignItems: "center", justifyContent: "center", marginTop: 80 }}
