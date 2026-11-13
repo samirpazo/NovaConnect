@@ -1,7 +1,5 @@
 import { Text } from "@/components/ui/text";
-import { showToast } from "@/lib/toast";
-import { sanitizePrimaryColor } from "@/lib/colorUtils";
-import { logger } from "@/lib/logger";
+import { AlertHelper } from "@/lib/alert";
 import { hashPassword } from "@/lib/security";
 import { storage } from "@/lib/storage";
 import { authService } from "@/services/authService";
@@ -10,8 +8,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { Image } from "expo-image";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { PinKeypad } from "@/components/ui/pin-keypad";
-import { ChevronLeft } from "lucide-react-native";
+import { ChevronLeft, Delete } from "lucide-react-native";
 import * as React from "react";
 import {
   KeyboardAvoidingView,
@@ -24,31 +21,23 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RegisterScreen() {
-  const { doc, prsId } = useLocalSearchParams();
+  const { doc } = useLocalSearchParams<{ doc: string }>();
   const { login } = useAuthStore();
   const { setPreferences, primaryColor: storePrimaryColor } =
     usePreferenceStore();
-  const primaryColor = sanitizePrimaryColor(storePrimaryColor);
-  const [step, setStep] = React.useState<1 | 2>(1);
+  const primaryColor =
+    storePrimaryColor?.toLowerCase() === "#ff0000" ||
+    storePrimaryColor?.toLowerCase() === "ff0000"
+      ? "#002aff"
+      : storePrimaryColor;
+  const [step, setStep] = React.useState<1 | 2 | 3>(1);
   const [firstPin, setFirstPin] = React.useState("");
   const [pin, setPin] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
 
-  // Parse prsId to number, since URL params are strings
-  const parsedPrsId = prsId ? parseInt(prsId as string, 10) : null;
-
-  React.useEffect(() => {
-    if (!doc || !prsId) {
-      setTimeout(() => {
-        showToast.error("Acceso denegado", "Debes validar tu documento primero.");
-        router.replace("/");
-      }, 0);
-    }
-  }, [doc, prsId]);
-
   const handleContinue = () => {
     if (pin.length < 6) {
-      showToast.error("Error", "El PIN debe tener 6 dígitos.");
+      AlertHelper.alert("Error", "El PIN debe tener 6 dígitos.");
       return;
     }
     setFirstPin(pin);
@@ -58,34 +47,44 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (pin.length < 6) {
-      showToast.error("Error", "El PIN debe tener 6 dígitos.");
+      AlertHelper.alert("Error", "El PIN debe tener 6 dígitos.");
       return;
     }
 
-    if (pin !== firstPin) {
-      showToast.error(
+    if (step === 2 && pin !== firstPin) {
+      AlertHelper.alert(
         "Error",
-        "Los PINs no coinciden. Por favor, inténtalo de nuevo."
+        "Los PINs no coinciden. Por favor, inténtalo de nuevo.",
       );
       setPin("");
       return;
     }
 
-    if (!parsedPrsId) {
-      showToast.error("Error", "No se ha proporcionado un ID válido.");
+    if (!doc) {
+      AlertHelper.alert("Error", "No se ha proporcionado un documento válido.");
       return;
     }
 
     setIsLoading(true);
 
-    // Hash in frontend just like Login
-    const hashedPin = hashPassword(pin);
+    if (step === 2) {
+      const sent = await authService.requestEnrollmentOtp(doc);
+      setIsLoading(false);
+      if (!sent.success) {
+        AlertHelper.alert(
+          "Error",
+          sent.error || "No se pudo enviar el código.",
+        );
+        return;
+      }
+      setPin("");
+      setStep(3);
+      return;
+    }
+    const hashedPin = hashPassword(firstPin);
 
     // Call the Save flow
-    const result = await authService.registerCollaborator(
-      parsedPrsId,
-      hashedPin,
-    );
+    const result = await authService.registerCollaborator(doc, pin, hashedPin);
 
     setIsLoading(false);
 
@@ -104,33 +103,50 @@ export default function RegisterScreen() {
             await secCollaboratorPreferenceService.getMyPreferences();
           if (pref) {
             setPreferences(
-              (pref.Theme ?? "system") as "light" | "dark" | "system",
+              (pref.Theme as any) || "system",
               pref.PrimaryColor || "#002aff",
             );
           }
         } catch (e) {
-          logger.log("Failed to load user preferences", e);
+          console.log("Failed to load user preferences", e);
         }
 
-        showToast.success("¡Éxito!", "Te has registrado correctamente.");
-        router.replace("/(protected)/home");
+        AlertHelper.alert("¡Éxito!", "Te has registrado correctamente.", [
+          {
+            text: "Comenzar",
+            onPress: () => router.replace("/(protected)/profile"),
+          },
+        ]);
       } else {
-        showToast.success(
+        AlertHelper.alert(
           "¡Éxito!",
-          "Te has registrado correctamente. Por favor inicia sesión."
+          "Te has registrado correctamente. Por favor inicia sesión.",
+          [{ text: "Ir al Login", onPress: () => router.replace("/") }],
         );
-        router.replace("/");
       }
     } else {
-      showToast.error(
+      AlertHelper.alert(
         "Error",
-        result.error || "No se pudo completar el registro."
+        result.error || "No se pudo completar el registro.",
       );
     }
   };
 
+  const handlePinPress = (num: string) => {
+    if (pin.length < 6) {
+      setPin((prev) => prev + num);
+    }
+  };
+
+  const handleDeletePin = () => {
+    setPin((prev) => prev.slice(0, -1));
+  };
+
   const handleBack = () => {
-    if (step === 2) {
+    if (step === 3) {
+      setStep(2);
+      setPin("");
+    } else if (step === 2) {
       setStep(1);
       setPin(firstPin);
     } else {
@@ -141,6 +157,8 @@ export default function RegisterScreen() {
       }
     }
   };
+
+  const keypadItems = [1, 2, 3, 4, 5, 6, 7, 8, 9, "", 0, "del"];
 
   return (
     <>
@@ -171,7 +189,7 @@ export default function RegisterScreen() {
             <Animated.View
               key={step}
               entering={FadeInDown.duration(400).springify()}
-              className="bg-card w-full max-w-[300px] mt-2 self-center rounded-3xl p-5 border border-border/40 shadow-sm dark:shadow-xl"
+              className="bg-card w-full max-w-[300px] mt-2 self-center rounded-3xl p-6 shadow-sm dark:shadow-xl"
             >
               <View className="items-center mb-3">
                 <View
@@ -186,45 +204,117 @@ export default function RegisterScreen() {
                     className="text-[10px] font-bold font-poppins uppercase tracking-widest"
                     style={{ color: primaryColor || "#002aff" }}
                   >
-                    Paso {step} de 2
+                    Paso {step} de 3
                   </Text>
                 </View>
               </View>
               <Text className="text-xl font-bold font-poppins text-center text-foreground mb-4">
-                {step === 1 ? "Crea tu PIN" : "Confirma tu PIN"}
+                {step === 1
+                  ? "Crea tu PIN"
+                  : step === 2
+                    ? "Confirma tu PIN"
+                    : "Verifica tu correo"}
               </Text>
 
-              {/* Keypad */}
-              <View className="w-full mb-5 mt-2">
-                <PinKeypad
-                  pin={pin}
-                  onPinChange={setPin}
-                  primaryColor={primaryColor || "#002aff"}
-                  maxLength={6}
-                  shuffle={false}
-                />
+              {step === 3 && (
+                <Text className="text-sm text-center text-muted-foreground mb-4">
+                  Ingresa el código enviado al correo registrado de tu ficha.
+                  Caduca en 15 minutos.
+                </Text>
+              )}
+              {/* Custom PIN Dots */}
+              <View className="flex-row gap-3 mb-6 justify-center">
+                {[...Array(6)].map((_, i) => (
+                  <View
+                    key={i}
+                    className={`size-3 rounded-full ${i < pin.length ? "" : "bg-muted"}`}
+                    style={
+                      i < pin.length
+                        ? { backgroundColor: primaryColor || "#002aff" }
+                        : {}
+                    }
+                  />
+                ))}
+              </View>
+
+              {step === 3 && (
+                <Pressable
+                  disabled={isLoading}
+                  onPress={async () => {
+                    setIsLoading(true);
+                    const result = await authService.requestEnrollmentOtp(doc);
+                    setIsLoading(false);
+                    AlertHelper.alert(
+                      result.success ? "Código enviado" : "Error",
+                      result.error ||
+                        "Revisa el correo registrado de tu ficha.",
+                    );
+                  }}
+                >
+                  <Text className="text-sm text-center mb-4 text-primary">
+                    Reenviar código
+                  </Text>
+                </Pressable>
+              )}
+              {/* Custom Keypad */}
+              <View className="w-full flex-row flex-wrap justify-center gap-3 mb-5">
+                {keypadItems.map((item, i) => (
+                  <Pressable
+                    key={i}
+                    onPress={() => {
+                      if (item === "del") handleDeletePin();
+                      else if (item !== "") handlePinPress(item.toString());
+                    }}
+                    className={`w-[30%] h-10 items-center justify-center rounded-lg ${item !== "" ? "bg-secondary active:bg-muted" : "opacity-0"}`}
+                    disabled={item === ""}
+                  >
+                    {item === "del" ? (
+                      <Delete size={20} className="text-muted-foreground" />
+                    ) : item !== "" ? (
+                      <Text className="text-xl font-bold text-foreground font-poppins select-none">
+                        {item}
+                      </Text>
+                    ) : null}
+                  </Pressable>
+                ))}
               </View>
 
               {step === 1 ? (
-                <Pressable 
-                  onPress={handleContinue} 
+                <Pressable
+                  onPress={handleContinue}
                   disabled={pin.length < 6}
-                  className={`w-full h-12 rounded-2xl flex-row items-center justify-center ${pin.length < 6 ? 'bg-muted opacity-60' : ''}`}
-                  style={pin.length >= 6 ? { backgroundColor: primaryColor || '#002aff' } : {}}
+                  className={`w-full h-12 rounded-xl flex-row items-center justify-center ${pin.length < 6 ? "bg-muted opacity-60" : ""}`}
+                  style={
+                    pin.length >= 6
+                      ? { backgroundColor: primaryColor || "#002aff" }
+                      : {}
+                  }
                 >
-                  <Text className={`font-poppins text-base font-bold ${pin.length >= 6 ? 'text-white' : 'text-muted-foreground'}`}>
+                  <Text
+                    className={`font-poppins text-base font-bold ${pin.length >= 6 ? "text-white" : "text-muted-foreground"}`}
+                  >
                     Continuar
                   </Text>
                 </Pressable>
               ) : (
-                <Pressable 
-                  onPress={handleRegister} 
+                <Pressable
+                  onPress={handleRegister}
                   disabled={isLoading || pin.length < 6}
-                  className={`w-full h-12 rounded-2xl flex-row items-center justify-center ${pin.length < 6 ? 'bg-muted opacity-60' : ''}`}
-                  style={pin.length >= 6 ? { backgroundColor: primaryColor || '#002aff' } : {}}
+                  className={`w-full h-12 rounded-xl flex-row items-center justify-center ${pin.length < 6 ? "bg-muted opacity-60" : ""}`}
+                  style={
+                    pin.length >= 6
+                      ? { backgroundColor: primaryColor || "#002aff" }
+                      : {}
+                  }
                 >
-                  <Text className={`font-poppins text-base font-bold ${pin.length >= 6 ? 'text-white' : 'text-muted-foreground'}`}>
-                    {isLoading ? 'Registrando...' : 'Finalizar Registro'}
+                  <Text
+                    className={`font-poppins text-base font-bold ${pin.length >= 6 ? "text-white" : "text-muted-foreground"}`}
+                  >
+                    {isLoading
+                      ? "Procesando..."
+                      : step === 2
+                        ? "Enviar código"
+                        : "Verificar y registrar"}
                   </Text>
                 </Pressable>
               )}

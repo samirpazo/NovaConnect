@@ -1,4 +1,3 @@
-import { logger } from "@/lib/logger";
 import { storage } from "@/lib/storage";
 import axios from "axios";
 import { Platform } from "react-native";
@@ -12,131 +11,108 @@ export const API_URL =
 
 export const api = axios.create({
   baseURL: API_URL,
-  // Web (site3): necesario para que el navegador envíe/almacene las cookies
-  // (auth HttpOnly + CSRF). En native React Native no persiste cookies, por lo
-  // que este flag es un no-op; allí el Bearer se construye desde Set-Cookie.
-  withCredentials: true,
+  withCredentials: Platform.OS === "web",
   headers: {
     "Content-Type": "application/json",
-    "X-Nova-Client": "nova-connect",
   },
 });
 
-// ---------------------------------------------------------------------------
-// CSRF (Double Submit Cookie)
-//
-// GET /Token/CsrfToken devuelve un token aleatorio y lo guarda en la cookie
-// 'nova-csrf-token'. En cada POST/PUT/DELETE/PATCH (fuera de /token) el backend
-// exige que el header X-CSRF-TOKEN coincida con esa cookie.
-//   - Web (site3): el navegador administra la cookie automáticamente (withCredentials).
-//   - Native: React Native bloquea el header 'Cookie' y la auth es por Bearer (sin
-//     cookies) → no es vulnerable a CSRF. La app envía 'X-Client-Platform: native'
-//     y el backend exime estos requests de la validación.
-// ---------------------------------------------------------------------------
-let _csrfToken: string | null = null;
+let csrfToken = "";
+let csrfRequest: Promise<void> | null = null;
 
-export function setCsrfToken(token: string | null) {
-  _csrfToken = token;
-}
+// Renovación de la sesión. El backend rota el refresh token en cada uso, así que
+// dos renovaciones simultáneas harían que la segunda usara un token ya invalidado.
+// Un único vuelo compartido lo evita.
+let refreshPromise: Promise<boolean> | null = null;
 
-export function getCsrfToken(): string | null {
-  return _csrfToken;
-}
-
-export async function initCsrf(): Promise<void> {
-  try {
-    const response = await axios.get<{ Succeeded: boolean; Data?: string }>(
-      `${API_URL}/Token/CsrfToken`,
-      {
-        withCredentials: true,
-        headers: { "X-Nova-Client": "nova-connect" },
-      },
-    );
-    if (response.data?.Succeeded && response.data?.Data) {
-      _csrfToken = response.data.Data;
-    }
-  } catch (error) {
-    logger.warn("initCsrf failed", error);
-  }
-}
-
-const MUTATING_METHODS = ["post", "put", "patch", "delete"];
-
-/** Evita enviar Bearer/Cookie con valores inválidos tipo "undefined" (legacy de localStorage). */
-export function isValidToken(value: string | null | undefined): value is string {
-  return !!value && value !== "undefined" && value !== "null";
-}
-
-function getSetCookie(headers: any): any {
-  if (!headers) return null;
-  return headers["set-cookie"] ?? headers["Set-Cookie"] ?? null;
-}
-
-function parseCookieValue(cookies: any, name: string): string | null {
-  if (!cookies) return null;
-  const raw = Array.isArray(cookies) ? cookies.join(";") : String(cookies);
-  const match = raw.match(new RegExp(`${name}=([^;]+)`, "i"));
-  return match ? match[1] : null;
-}
-
-/**
- * En native el header Set-Cookie es legible por JS (el backend entrega los tokens
- * en cookies HttpOnly). En web el navegador lo filtra y la auth es por cookies.
- */
-export async function fetchTokensFromResponse(response: any): Promise<{
-  token: string | null;
-  refreshToken: string | null;
-}> {
-  const cookies = getSetCookie(response?.headers);
-  return {
-    token:
-      parseCookieValue(cookies, "nova_connect_access_token") ??
-      parseCookieValue(cookies, "nova_access_token"),
-    refreshToken:
-      parseCookieValue(cookies, "nova_connect_refresh_token") ??
-      parseCookieValue(cookies, "nova_refresh_token"),
-  };
-}
-
-// Variables para control de concurrencia en el refresh
-let isRefreshing = false;
-let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
-
-let isLoggingOut = false;
+// Se invoca cuando la sesión ya no puede renovarse y hay que cerrar el acceso.
 let globalLogoutCallback: (() => void) | null = null;
+
+// Una vez cerrada la sesión no se vuelve a pedir el cierre. El propio
+// POST /Token/Logout responde 401 cuando el token ya venció y, sin esta
+// guarda, disparaba un logout en cascada: 401 -> logout -> 401 -> logout -> ...
+let sessionClosed = false;
 
 export const setGlobalLogoutCallback = (callback: () => void) => {
   globalLogoutCallback = callback;
 };
 
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token!);
-    }
-  });
-  failedQueue = [];
+/** Se invoca al iniciar sesión de nuevo para permitir un futuro cierre. */
+export const markSessionOpen = () => {
+  sessionClosed = false;
 };
 
-/** Aplica Bearer solo si hay token válido; si no, lo elimina (web se autentica por cookies). */
-const applyBearer = (config: any, token: string | null | undefined) => {
-  if (!config.headers) return;
-  if (isValidToken(token)) {
-    config.headers.Authorization = `Bearer ${token}`;
-  } else {
-    delete config.headers.Authorization;
+const isTokenEndpoint = (url?: string) =>
+  (url ?? "").toLowerCase().includes("/token");
+
+function readCookie(response: unknown, name: string): string {
+  const headers = (response as { headers?: Record<string, unknown> })?.headers;
+  const cookies = headers?.["set-cookie"];
+  const cookieText = Array.isArray(cookies)
+    ? cookies.join(", ")
+    : String(cookies || "");
+  return (
+    cookieText.match(new RegExp(`(?:^|[,;]\\s*)${name}=([^;,\\s]+)`))?.[1] || ""
+  );
+}
+
+/**
+ * Renueva la sesión contra NovaApi.
+ *
+ * En web el refresh token viaja en una cookie HttpOnly y solo hay que pedir la
+ * renovación; en nativo se envía en el cuerpo y se guardan los tokens que
+ * devuelve la respuesta.
+ */
+async function renewSession(): Promise<boolean> {
+  const refreshToken =
+    Platform.OS === "web" ? null : await storage.getItem("refreshToken");
+
+  const response = await api.post(
+    "/Token/Refresh",
+    refreshToken ? { RefreshToken: refreshToken } : {},
+  );
+
+  const body = response.data as { Succeeded?: boolean } | undefined;
+  if (!body?.Succeeded) return false;
+
+  if (Platform.OS !== "web") {
+    const accessToken = readCookie(response, "nova_connect_access_token");
+    if (!accessToken) return false;
+    const rotatedRefresh = readCookie(response, "nova_connect_refresh_token");
+    await storage.setItem("token", accessToken);
+    if (rotatedRefresh) await storage.setItem("refreshToken", rotatedRefresh);
   }
-};
 
-// Request interceptor: agrega JWT Bearer, API Key móvil y token CSRF a mutaciones
+  return true;
+}
+
+/**
+ * Indica si hay con que renovar la sesion. En nativo es el refresh token del
+ * almacenamiento seguro; en web la cookie de sesion, que el navegador envia
+ * sola y la app no puede leer.
+ */
+async function hasRenewableCredential(): Promise<boolean> {
+  if (Platform.OS === "web") return true;
+  return !!(await storage.getItem("refreshToken"));
+}
+
+async function closeSession(): Promise<void> {
+  if (sessionClosed) return;
+  sessionClosed = true;
+  globalLogoutCallback?.();
+}
+
+// Request interceptor: agrega Token JWT y API Key móvil
 api.interceptors.request.use(
   async (config) => {
     try {
       // 1. JWT Bearer token (para endpoints protegidos post-login)
-      const token = await storage.getItem("token");
-      if (isValidToken(token)) {
+      config.headers["X-Nova-Client"] = "nova-connect";
+      config.headers["X-Client-Platform"] =
+        Platform.OS === "web" ? "web" : "native";
+      const token =
+        Platform.OS === "web" ? null : await storage.getItem("token");
+      if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
 
@@ -146,19 +122,29 @@ api.interceptors.request.use(
       if (mobileApiKey) {
         config.headers["X-Mobile-Api-Key"] = mobileApiKey;
       }
-
-      // 3. CSRF en mutaciones (Double Submit Cookie: header debe coincidir con la cookie).
-      //    - Web: el navegador envía la cookie automáticamente (withCredentials).
-      //    - Native: React Native bloquea el header 'Cookie', por lo que el backend exime
-      //      los requests con 'X-Client-Platform: native' (auth por Bearer, sin cookies).
-      if (Platform.OS !== "web") {
-        config.headers["X-Client-Platform"] = "native";
-      }
-      if (config.method && MUTATING_METHODS.includes(config.method) && _csrfToken) {
-        config.headers["X-CSRF-TOKEN"] = _csrfToken;
-      }
     } catch (error) {
-      logger.error("Error getting token from SecureStore", error);
+      return Promise.reject(error);
+    }
+    // El backend excluye de CSRF los endpoints /Token* (login, refresh,
+    // logout y la propia emission del token). Pedirselo ahi provocaba que un
+    // refresh fallara al no poder obtener el token CSRF.
+    if (
+      Platform.OS === "web" &&
+      ["post", "put", "patch", "delete"].includes(config.method || "") &&
+      !isTokenEndpoint(config.url)
+    ) {
+      if (!csrfToken) {
+        csrfRequest ??= api
+          .get("/Token/CsrfToken")
+          .then(({ data }) => {
+            csrfToken = data.Data;
+          })
+          .finally(() => {
+            csrfRequest = null;
+          });
+        await csrfRequest;
+      }
+      config.headers["X-CSRF-TOKEN"] = csrfToken;
     }
     return config;
   },
@@ -170,110 +156,44 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const status = error.response?.status;
     const originalRequest = error.config;
 
-    // Auto-recuperación CSRF: si una mutación fue rechazada por token inválido/faltante
-    // re-inicializamos el token y reintentamos UNA vez.
-    const errData = error.response?.data;
-    const errMessage =
-      typeof errData === "object" && errData !== null && typeof errData.Message === "string"
-        ? errData.Message
-        : "";
+    // Los endpoints de /Token quedan fuera: un 401 del propio refresh o del
+    // logout no debe cerrar la sesión ni provocar una cascada.
     if (
-      status === 400 &&
-      errMessage.includes("CSRF") &&
-      !originalRequest._csrfRetry &&
-      !originalRequest.url?.toLowerCase().includes("/token")
+      error.response?.status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      isTokenEndpoint(originalRequest.url)
     ) {
-      originalRequest._csrfRetry = true;
-      try {
-        await initCsrf();
-        return api(originalRequest);
-      } catch {
-        // Si el re-init falla, propagamos el error original de abajo
-      }
-    }
-
-    // Solo errores 401 disparan el flujo de refresh
-    if (status !== 401) {
       return Promise.reject(error);
     }
 
-    if (!originalRequest._retry && !isLoggingOut) {
-      if (isRefreshing) {
-        return new Promise<string>(function (resolve, reject) {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            applyBearer(originalRequest, token);
-            return api(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
-      }
+    originalRequest._retry = true;
 
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        const refreshToken = await storage.getItem("refreshToken");
-
-        // Web: refresh sin body → el backend lee 'nova_refresh_token' de la cookie.
-        // Native: enviamos el refresh token guardado en SecureStore.
-        const response = await axios.post(
-          `${API_URL}/Token/Refresh`,
-          isValidToken(refreshToken) ? { RefreshToken: refreshToken } : {},
-          {
-            withCredentials: true,
-            headers: { "X-Nova-Client": "nova-connect" },
-          },
-        );
-
-        if (response.data.Succeeded && response.data.Data) {
-          const { token: newToken, refreshToken: newRefreshToken } = await fetchTokensFromResponse(response);
-
-          if (isValidToken(newToken)) {
-            await storage.setItem("token", newToken);
-          }
-          if (isValidToken(newRefreshToken)) {
-            await storage.setItem("refreshToken", newRefreshToken);
-          }
-
-          applyBearer(originalRequest, newToken);
-          processQueue(null, newToken);
-          return api(originalRequest);
-        } else {
-          throw new Error("Invalid refresh response");
-        }
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        logger.warn("Token refresh failed, logging out", refreshError);
-        isLoggingOut = true;
-        if (globalLogoutCallback) {
-          globalLogoutCallback();
-        }
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-        isLoggingOut = false;
-      }
+    // Sin credencial no hay nada que renovar: en el pre-login (documento,
+    // registro, ayuda) un 401 solo significa "no autorizado todavia".
+    if (!(await hasRenewableCredential())) {
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    try {
+      refreshPromise ??= renewSession().finally(() => {
+        refreshPromise = null;
+      });
+      const renewed = await refreshPromise;
+      if (!renewed) throw new Error("No se pudo renovar la sesión.");
+
+      if (Platform.OS !== "web") {
+        const token = await storage.getItem("token");
+        if (token) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+        }
+      }
+      return api(originalRequest);
+    } catch (refreshError) {
+      await closeSession();
+      return Promise.reject(refreshError);
+    }
   },
 );
-
-// Helper to create AbortController tied to AbortSignal
-// Usage in components:
-//   const { signal, cancel } = createAbortController();
-//   await api.get('/endpoint', { signal });
-//   cancel(); // on unmount
-export function createAbortController() {
-  const controller = new AbortController();
-  return {
-    signal: controller.signal,
-    cancel: () => controller.abort(),
-  };
-}

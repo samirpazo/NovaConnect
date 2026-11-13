@@ -1,235 +1,125 @@
 # Nova Connect
 
-App móvil del ecosistema **Nova Core Platform** — construida con [Expo](https://expo.dev/) + [React Native](https://reactnative.dev/) + [Nativewind](https://www.nativewind.dev/). Es el canal digital para que colaboradores accedan a sus documentos, recibos, historial y herramientas de identidad desde cualquier dispositivo (iOS, Android, Web).
+App móvil del colaborador. Permite autenticarse con documento y PIN (con acceso biométrico
+opcional), recibir documentos, consultar el historial y gestionar capacitaciones.
 
-- **Bundle ID iOS**: `com.novateam.novaconnect`
-- **Package Android**: `com.novateam.novaconnect`
-- **EAS Project ID**: `8da81d81-4793-4bcd-b2c2-bf4771f0c1a7`
+- **Expo SDK 56** · React Native 0.85 · expo-router · NativeWind · Zustand
+- **Backend**: NovaApi (`/Users/edinson/Documents/Desarrollo/Nova`), endpoints bajo `/Token/*`,
+  `/SecCollaborator/*`, `/MpwProcessedDocument/*` y `/MpwTraining*`.
 
-## 🚀 Stack Técnico
+## Configuración
 
-| Capa          | Tecnología                                                                 |
-| ------------- | -------------------------------------------------------------------------- |
-| Framework     | Expo SDK 55 + React Native 0.83 + React 19                                 |
-| Navegación    | Expo Router (file-based)                                                   |
-| Estilos       | NativeWind 4 (Tailwind CSS v3) + CSS variables HSL                         |
-| Estado global | Zustand 5 + TanStack React Query 5                                         |
-| HTTP          | Axios 1.17 con interceptors JWT + API Key                                  |
-| UI            | shadcn/ui (reactnativereusables.com) + lucide-react-native + sonner-native |
-| Seguridad     | expo-secure-store, expo-local-authentication, crypto-js (SHA512 + pepper)  |
-| Fuente        | Poppins (4 pesos vía Google Fonts)                                         |
-| Animaciones   | react-native-reanimated 4                                                  |
-
-## 📁 Estructura del Proyecto
-
-```
-nova-connect/
-├── src/
-│   ├── app/              → Rutas (Expo Router): login, register, recover + tabs protegidas
-│   ├── components/       → ui/ (button, text, input, card, pin-keypad, otp-input)
-│   │                       custom/ (NImage, PDFViewer, SessionWrapper)
-│   ├── hooks/            → useAppTheme, useProcessedDocuments, usePushNotifications, useVault
-│   ├── lib/              → axios, security, storage, toast, alert, theme, colorUtils, utils
-│   ├── services/         → authService, processedDocumentService, fileService, healthService
-│   ├── stores/           → useAuthStore, usePreferenceStore
-│   ├── types/            → auth.ts, document.ts
-│   └── global.css        → Tailwind base + variables CSS
-├── app/                  → Legado (placeholder, no usado en producción)
-├── assets/               → Imágenes, iconos, splash screens
-├── android/              → Proyecto nativo Android (gradle)
-├── ios/                  → Proyecto nativo iOS (Xcode)
-├── dist/                 → Build web estático (generado por `npx expo export`)
-├── public/               → Archivos estáticos web (opengraph, web.config)
-└── scripts/              → Utilidades (reset-project.js)
-```
-
-## 🔧 Requisitos Previos
-
-- Node.js >= 18
-- npm >= 9
-- Expo CLI (`npx expo`)
-- _(Opcional)_ EAS CLI para builds en la nube: `npm install -g eas-cli`
-
-## 🚀 Desarrollo Local
+El archivo `.env` **no se versiona**. Copiar `.env.example` y completar:
 
 ```bash
-# Instalar dependencias
-npm install
-
-# Limpiar caché e iniciar servidor de desarrollo
-npm run dev
-
-# O en plataforma específica
-npm run android
-npm run ios
-npm run web
+cp .env.example .env
 ```
 
-## 📦 Compilar para Producción
+| Variable | Para qué sirve |
+|---|---|
+| `EXPO_PUBLIC_API_URL` | URL del backend. En el emulador de Android usar `http://10.0.2.2:8080`. |
+| `EXPO_PUBLIC_PASSWORD_SECRET` | Pepper con el que se hashea el PIN antes de enviarlo. Debe coincidir con `SecuritySettings:PasswordSecret` del backend. |
+| `EXPO_PUBLIC_MOBILE_API_KEY` | Clave para los endpoints previos al login. Debe coincidir con `MobileApi:ApiKey` del backend. |
 
-Los ZIPs generados se guardan en la raíz del proyecto (`/nova-connect/`). Al descomprimirlos en el servidor, los archivos quedan directamente en la carpeta destino, **sin subcarpetas envolventes**.
+> `EXPO_PUBLIC_*` viaja **dentro del bundle**: son públicos para quien tenga el APK o el IPA.
+> No son un secreto, solo una primera barrera contra la fuerza bruta del PIN.
 
-### 🌐 Web — Exportar Estático y Comprimir (SmarterASP)
-
-> **Antes de compilar**: verifica que `.env` tenga la URL del backend correcta:
->
-> ```env
-> EXPO_PUBLIC_API_URL=https://novateam-001-site2.itempurl.com
-> EXPO_PUBLIC_PASSWORD_SECRET=nova_premium_pepper_2026_x77
-> EXPO_PUBLIC_MOBILE_API_KEY=NC-2026-a8f3d1e7b2c94f05ad6e82b7f31c9d4a
-> EXPO_PUBLIC_INACTIVITY_TIMEOUT_MINUTES=2
-> ```
+## Verificación
 
 ```bash
-# 1. Cambiar a entorno de producción
-cat << 'EOF' > .env
-EXPO_PUBLIC_API_URL=https://novateam-001-site2.itempurl.com
-# EXPO_PUBLIC_API_URL=http://localhost:8080
-EXPO_PUBLIC_PASSWORD_SECRET=nova_premium_pepper_2026_x77
-EXPO_PUBLIC_MOBILE_API_KEY=NC-2026-a8f3d1e7b2c94f05ad6e82b7f31c9d4a
-EXPO_PUBLIC_INACTIVITY_TIMEOUT_MINUTES=2
-EOF
-
-# 2. Exportar la versión web estática (limpiando caché)
-npx expo export --platform web -c
-
-# 3. Comprimir el contenido de dist/ directamente
-cd dist && zip -r ../nova-connect-web.zip . && cd ..
-
-# 4. Restaurar el .env a desarrollo local
-cat << 'EOF' > .env
-# EXPO_PUBLIC_API_URL=https://novateam-001-site2.itempurl.com
-EXPO_PUBLIC_API_URL=http://localhost:8080
-EXPO_PUBLIC_PASSWORD_SECRET=nova_premium_pepper_2026_x77
-EXPO_PUBLIC_MOBILE_API_KEY=NC-2026-a8f3d1e7b2c94f05ad6e82b7f31c9d4a
-EXPO_PUBLIC_INACTIVITY_TIMEOUT_MINUTES=2
-EOF
+npm run typecheck   # TypeScript estricto
+npm test            # transporte de cookies/CSRF y ciclo de vida de la sesión
+npx expo-doctor     # compatibilidad con el SDK
 ```
 
-> El archivo `nova-connect-web.zip` se guarda en la raíz del proyecto.  
-> Descomprimir en la **raíz del sitio web** en SmarterASP (donde va el `index.html`).
+`npm test` no necesita framework externo: los scripts de `scripts/` cargan los módulos con
+`vm.runInNewContext` y verifican el comportamiento con dobles de prueba.
 
-#### Verificar localmente antes de subir
+## Proyectos nativos
+
+`ios/` y `android/` se generan con `npx expo prebuild` y **no se versionan**.
 
 ```bash
-npx serve dist
-# o
-npx http-server dist -p 8080
+npx expo prebuild          # regenera ios/ y android/
+cd ios && pod install      # dependencias iOS
+npm run ios                # compila y levanta en el simulador
+npm run android            # compila y levanta en el emulador
 ```
 
----
+### Requisito de JDK 17 en Android
 
-### 🤖 Android — APK (instalación directa)
+React Native 0.85 pide `jvmToolchain(17)`. Si Gradle no encuentra un JDK 17 local intenta
+descargarlo con el resolver de Foojay, incompatible con Gradle 9, y la compilación aborta con
+`JvmVendorSpec does not have member field IBM_SEMERU`. Se resuelve declarando la ruta del JDK 17
+en `android/gradle.properties` y en `~/.gradle/gradle.properties`:
 
-```bash
-# 1. Pre-build nativo (genera la carpeta android/)
-npx expo prebuild --platform android --clean
-
-# 2. Compilar APK en modo Release
-cd android && ./gradlew assembleRelease && cd ..
-
-# El APK queda en:
-# android/app/build/outputs/apk/release/app-release.apk
+```properties
+org.gradle.java.installations.paths=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+org.gradle.java.installations.auto-download=false
 ```
 
-Para empaquetar el APK:
+El SDK location de Android va en `android/local.properties`:
 
-```bash
-cp android/app/build/outputs/apk/release/app-release.apk nova-connect-android.apk
-# o comprimir directo
-cd android/app/build/outputs/apk/release && zip -r ../../../../../../nova-connect-android.zip app-release.apk && cd ../../../../../..
+```properties
+sdk.dir=/Users/<usuario>/Library/Android/sdk
 ```
 
-### 🤖 Android — AAB (Google Play Store)
+### Plugins propios
 
-```bash
-npx expo prebuild --platform android --clean
-cd android && ./gradlew bundleRelease && cd ..
+`plugins/withPodDeploymentTarget.js` eleva el deployment target de los pods de terceros a 16.4.
+Xcode 26+ rechaza los targets antiguos que traen algunos pods (12.4, 13.4) y la compilación
+falla antes de empezar.
 
-# El AAB queda en:
-# android/app/build/outputs/bundle/release/app-release.aab
+## Sesión
+
+La renovación vive en `src/lib/axios.ts`:
+
+1. Un `401` renueva contra `POST /Token/Refresh` y **reintenta** la petición original.
+2. Las renovaciones simultáneas comparten un único vuelo: el backend rota el refresh token, así que
+   dos a la vez harían que la segunda usara un token ya invalidado.
+3. Solo se cierra la sesión si la renovación falla de verdad. Los endpoints `/Token*` quedan fuera
+   del interceptor para que el propio `POST /Token/Logout` (que responde `401` con el token
+   vencido) no dispare una cascada de cierres.
+4. En nativo el access y el refresh token se guardan en SecureStore; en web viajan en cookies
+   HttpOnly y el cliente no los toca.
+
+Las ventanas de sesión las define el backend (`Authentication:Mobile*`): access token de 60
+minutos, refresh token y ventana de inactividad de 30 días.
+
+## Estructura
+
+```text
+src/
+  app/                 Rutas de expo-router (el router usa src/app, no app/)
+  components/          Componentes de interfaz
+  lib/                 Cliente HTTP, almacenamiento seguro, tema, formato
+  services/            Clientes de los endpoints del backend
+  stores/              Estado de sesión y de preferencias
+  types/               Contratos
+scripts/               Pruebas ejecutables con node
+plugins/               Plugins de prebuild
 ```
 
----
+## Pendiente conocido
 
-### 🍎 iOS — Build local (requiere Mac + Xcode)
+- **Sin soporte offline.** No hay base de datos local, caché ni cola de operaciones pendientes: la
+  app necesita red para funcionar, incluido el login. Además, si la carga de documentos falla por
+  red la pantalla muestra "Todo al día" en lugar del error.
+- El hash del PIN se guarda en SecureStore sin `requireAuthentication`, y el pepper viaja en el
+  bundle: quien tenga acceso al keychain puede forzar el PIN en bruto.
 
-```bash
-npx expo prebuild --platform ios --clean
-cd ios && xcodebuild -workspace NovaConnect.xcworkspace -scheme NovaConnect -configuration Release -archivePath build/NovaConnect.xcarchive archive && cd ..
-```
+## Documentos y archivos
 
----
+NovaApi guarda los documentos en el servicio unificado de archivos (`GenFiles`). La relación con la
+persona la mantiene `MpwProcessedDocument.PdcFilID`:
 
-### ☁️ EAS Build (Nube — Recomendado)
+- `GET /MpwProcessedDocument/GetByPrsID?PdcIsReceived={bool}` devuelve los documentos del
+  colaborador con su `PdcFilID`. Los campos `PdcFileName` y `PdcFilePath` ya no existen.
+- `GET /GenFiles/{PdcFilID}/preview` devuelve el contenido. Para PDF devuelve el archivo crudo.
 
-Compila en la nube sin necesidad de Android Studio ni Xcode:
+La URL de `GenFiles` exige `Authorization`, así que **no se puede abrir directamente en el navegador
+del sistema**: la app lo descarga con la sesión (`src/services/documentDownload.native.ts`) y lo
+entrega al visor de PDF que elija el usuario (`expo-sharing`). No se usa visor PDF nativo.
 
-```bash
-# Login en Expo (solo la primera vez)
-npx eas login
-
-# APK para pruebas
-npx eas build --platform android --profile preview
-
-# AAB firmado para Play Store
-npx eas build --platform android --profile production
-
-# IPA para App Store
-npx eas build --platform ios --profile production
-
-# Ambas plataformas a la vez
-npx eas build --platform all --profile production
-```
-
-> Los perfiles (`preview`, `production`) se configuran en `eas.json`.
-
----
-
-### 🔄 Actualización OTA con EAS Update
-
-Actualiza el código JS sin necesidad de publicar nueva versión en las tiendas:
-
-```bash
-npx eas update --branch production --message "Fix: descripción del cambio"
-```
-
----
-
-### ⚡ Compilar Web de Una Sola Vez
-
-```bash
-npx expo export --platform web && cd dist && zip -r ../nova-connect-web.zip . && cd .. && echo "✅ Listo: nova-connect-web.zip en /nova-connect/"
-```
-
-## 🌐 Navegación (Rutas)
-
-| Ruta                                  | Pantalla                                    |
-| ------------------------------------- | ------------------------------------------- |
-| `/`                                   | Login (PIN + biometría)                     |
-| `/register`                           | Registro de nuevo colaborador               |
-| `/recover`                            | Recuperación de PIN vía OTP                 |
-| `/(protected)/home`                   | Perfil y dashboard                          |
-| `/(protected)/home/settings`          | Configuración (tema, color, PIN, biometría) |
-| `/(protected)/home/help`              | Centro de ayuda                             |
-| `/(protected)/home/vault`             | Bóveda offline de documentos                |
-| `/(protected)/documents`              | Documentos pendientes                       |
-| `/(protected)/documents/viewer`       | Visor PDF                                   |
-| `/(protected)/history`                | Historial por años                          |
-| `/(protected)/history/[year]`         | Meses de un año                             |
-| `/(protected)/history/[year]/[month]` | Documentos de un mes                        |
-| `/(protected)/history/viewer`         | Visor PDF (historial)                       |
-| `/(protected)/dining`                 | Comedor (Coming Soon)                       |
-
-## 🔐 Variables de Entorno (`.env`)
-
-```
-EXPO_PUBLIC_API_URL=            # URL del backend (https://...)
-EXPO_PUBLIC_PASSWORD_SECRET=    # Pepper para hash de PIN
-EXPO_PUBLIC_MOBILE_API_KEY=     # API Key para endpoints pre-login
-EXPO_PUBLIC_INACTIVITY_TIMEOUT_MINUTES=  # Minutos de inactividad antes de auto-logout
-```
-
-## 📄 Licencia
-
-Propietaria — Nova Team
+El botón "Guardar para ver sin conexion" deja el documento en la cache del dispositivo y la lista
+muestra la insignia "Listo offline".

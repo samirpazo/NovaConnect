@@ -1,21 +1,12 @@
 {
   "expo": {
-    "name": "Nova Connect",
+    "name": "nova-connect",
     "slug": "nova-connect",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icons/icon.png",
     "scheme": "nova-connect",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/icons/splash-icon-light.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff",
-      "dark": {
-        "image": "./assets/images/icons/splash-icon-dark.png",
-        "backgroundColor": "#1a1a1c"
-      }
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -26,20 +17,24 @@
         "dark": "./assets/images/icons/ios-dark.png",
         "tinted": "./assets/images/icons/ios-tinted.png"
       },
-      "bundleIdentifier": "com.novateam.novaconnect"
+      "bundleIdentifier": "com.programador-sunshine.novaconnect",
+      "infoPlist": {
+        "UIApplicationSceneManifest": {
+          "UIApplicationSupportsMultipleScenes": false,
+          "UISceneConfigurations": {}
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icons/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "usesCleartextTraffic": true,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
       ],
-      "package": "com.novateam.novaconnect",
-      "googleServicesFile": "./google-services.json"
+      "package": "com.programador_sunshine.novaconnect"
     },
     "web": {
       "bundler": "metro",
@@ -53,6 +48,18 @@
           "origin": "https://novaconnect.com"
         }
       ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "image": "./assets/images/icons/splash-icon-light.png",
+          "imageWidth": 200,
+          "dark": {
+            "backgroundColor": "#0F172A",
+            "image": "./assets/images/icons/splash-icon-dark.png"
+          }
+        }
+      ],
       "expo-image",
       [
         "expo-local-authentication",
@@ -61,19 +68,11 @@
         }
       ],
       "expo-secure-store",
-      "expo-font"
+      "./plugins/withPodDeploymentTarget",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "router": {
-        "origin": "https://novaconnect.com"
-      },
-      "eas": {
-        "projectId": "8da81d81-4793-4bcd-b2c2-bf4771f0c1a7"
-      }
-    },
-    "owner": "nova-team-vd"
+    }
   }
 }

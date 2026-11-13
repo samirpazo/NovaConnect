@@ -31,6 +31,8 @@ yarn-error.*
 *.pem
 
 # local env files
+# El .env contiene el pepper y la API key movil: nunca se versionan.
+.env
 .env*.local
 
 # typescript
@@ -41,11 +43,7 @@ example
 # generated native folders
 /ios
 /android
-.env
 
-# Google Services / Firebase
-google-services.json
-GoogleService-Info.plist
-
-# Zips
-nova-connect-web.zip
+# Carpeta app/ del template de Expo. El router de expo-router usa src/app
+# (ver node_modules/expo/.../metro/router.js), por lo que app/ nunca se enruta.
+/app

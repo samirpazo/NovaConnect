@@ -1,5 +1,4 @@
-import { api } from "@/lib/axios";
-import { logger } from "@/lib/logger";
+import { api, API_URL } from "@/lib/axios";
 import { ProcessedDocument } from "@/types/document";
 
 export const processedDocumentService = {
@@ -12,7 +11,7 @@ export const processedDocumentService = {
       );
       return data.Data || [];
     } catch (error) {
-      logger.error("Error fetching processed documents:", error);
+      console.error("Error fetching processed documents:", error);
       throw error;
     }
   },
@@ -26,17 +25,16 @@ export const processedDocumentService = {
       );
       return data.Succeeded || data.Data;
     } catch (error) {
-      logger.error("Error updating document:", error);
+      console.error("Error updating document:", error);
       throw error;
     }
   },
   
-  async getPdfBlob(fileId: number): Promise<Blob> {
-    const { data } = await api.get(
-      `/GenFiles/${fileId}/download`,
-      { responseType: "blob" }
-    );
-    return new Blob([data], { type: "application/pdf" });
-  },
-
+  /**
+   * URL del documento. El archivo vive en GenFiles: el contenido se sirve con
+   * `/GenFiles/{PdcFilID}/preview` y no por nombre de archivo.
+   */
+  getFileUrl(fileId: number): string {
+    return `${API_URL}/GenFiles/${fileId}/preview`;
+  }
 };

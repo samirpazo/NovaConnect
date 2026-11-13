@@ -22,10 +22,6 @@ export default function DiningScreen() {
   
   const [selectedDetail, setSelectedDetail] = useState<DinMenuProgramDetailCe | null>(null);
 
-  useEffect(() => {
-    loadMenuForDay(selectedDay);
-  }, [selectedDay]);
-
   const loadMenuForDay = async (day: "Hoy" | "Mañana") => {
     setIsLoading(true);
     setDetails([]);
@@ -41,6 +37,15 @@ export default function DiningScreen() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // La carga se agenda en la siguiente vuelta para no actualizar el estado
+    // de forma síncrona dentro del efecto.
+    const timer = setTimeout(() => {
+      void loadMenuForDay(selectedDay);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [selectedDay]);
 
   const handleSaveRating = () => {
     if (rating === 0) {

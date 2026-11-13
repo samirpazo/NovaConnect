@@ -24,7 +24,6 @@ function CardTitle({
   className,
   ...props
 }: React.ComponentProps<typeof Text>) {
-
   return (
     <Text
       role="heading"

@@ -1,7 +1,6 @@
-import { api, API_URL, fetchTokensFromResponse, initCsrf, isValidToken } from "@/lib/axios";
+import { api, markSessionOpen } from "@/lib/axios";
 import { storage } from "@/lib/storage";
 import { AuthResponse } from "@/types/auth";
-import axios from "axios";
 import { Platform } from "react-native";
 
 export const authService = {
@@ -13,23 +12,35 @@ export const authService = {
         "/Token/AuthenticationCollaborator",
         credentials,
       );
-      const data = response.data;
+      const { data } = response;
       const isSuccess = data.Succeeded;
       const rawData = data.Data;
       const message = data.Message;
 
       if (isSuccess) {
-        // El backend entrega los tokens en cookies HttpOnly. En native leemos el
-        // header Set-Cookie de la respuesta (visible solo en RN) para reconstruir
-        // el Bearer; en web (site3) la auth es por cookies (withCredentials) y aquí
-        // el Set-Cookie viene filtrado por el navegador → no se guarda nada.
-        const { token: cookieToken, refreshToken: cookieRefreshToken } = await fetchTokensFromResponse(response);
-        const accessToken = cookieToken || rawData.Token;
-        const refreshToken = cookieRefreshToken || rawData.RefreshToken;
-
+        const cookies = response.headers["set-cookie"];
+        const cookieText = Array.isArray(cookies)
+          ? cookies.join(", ")
+          : String(cookies || "");
+        const accessToken =
+          Platform.OS === "web"
+            ? ""
+            : cookieText.match(
+                /(?:^|[,;]\s*)nova_connect_access_token=([^;,\s]+)/,
+              )?.[1] || "";
+        const refreshToken =
+          Platform.OS === "web"
+            ? ""
+            : cookieText.match(
+                /(?:^|[,;]\s*)nova_connect_refresh_token=([^;,\s]+)/,
+              )?.[1] || "";
+        if (Platform.OS !== "web" && (!accessToken || !refreshToken))
+          throw new Error(
+            "El servidor no entregó las credenciales de la sesión.",
+          );
         const authData: AuthResponse = {
-          Token: accessToken || "",
-          RefreshToken: refreshToken || "",
+          Token: accessToken,
+          RefreshToken: refreshToken,
           AccessTokenExpiration: rawData.AccessTokenExpiration,
           SsnID: rawData.SsnID,
           User: {
@@ -37,6 +48,7 @@ export const authService = {
             UsrName: rawData.Collaborator?.PrsDocumentNumber,
             ColID: rawData.Collaborator?.ColID,
             UsrEmail: rawData.Collaborator?.PrsEmail,
+            PrsPhoto: rawData.Collaborator?.PrsPhoto,
             UsrChangePassword: false,
             CreateDate: new Date(),
             PrsID: rawData.Collaborator?.PrsID,
@@ -92,19 +104,23 @@ export const authService = {
           },
         };
 
-        // Guardar Tokens de forma segura (solo si son válidos; en web se limpian
-        // para no enviar Bearer obsoleto — ahí la auth es por cookies)
-        await Promise.all([
-          isValidToken(accessToken)
-            ? storage.setItem("token", accessToken)
-            : storage.removeItem("token"),
-          isValidToken(refreshToken)
-            ? storage.setItem("refreshToken", refreshToken)
-            : storage.removeItem("refreshToken"),
-          storage.setItem("user", JSON.stringify(authData.User)),
-        ]);
+        // Una sesion nueva permite un futuro cierre de sesion: la guarda se
+        // limpia al volver a autenticarse.
+        markSessionOpen();
 
-        initCsrf();
+        // Guardar Tokens de forma segura
+        await storage.setItem("user", JSON.stringify(authData.User));
+        if (Platform.OS !== "web") {
+          await Promise.all([
+            storage.setItem("token", authData.Token),
+            storage.setItem("refreshToken", authData.RefreshToken),
+          ]);
+        } else {
+          await Promise.all([
+            storage.removeItem("token"),
+            storage.removeItem("refreshToken"),
+          ]);
+        }
 
         return { success: true, data: authData };
       } else {
@@ -174,108 +190,39 @@ export const authService = {
     }
   },
 
+  async requestEnrollmentOtp(
+    document: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data } = await api.post("/SecCollaborator/RequestEnrollmentOtp", {
+        DocumentNumber: document,
+      });
+      return { success: data.Succeeded, error: data.Message };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error?.response?.data?.Message || "No se pudo enviar el código.",
+      };
+    }
+  },
+
   async registerCollaborator(
-    prsId: number,
+    document: string,
+    otp: string,
     password: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { data } = await api.post("/SecCollaborator/Save", {
-        PrsID: prsId,
-        ColPassword: password,
-        SecStatus: true,
-      });
-
-      if (data.Succeeded) {
-        return { success: true };
-      }
-
-      return {
-        success: false,
-        error: data.Message || "No se pudo completar el registro.",
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error:
-          error?.response?.data?.Message ||
-          "Error al intentar registrar el colaborador.",
-      };
-    }
-  },
-
-  async requestPinReset(
-    documentNumber: string,
-    forceResend: boolean = false,
-  ): Promise<{ success: boolean; error?: string; noEmail?: boolean; secondsToWait?: number }> {
-    try {
-      const { data } = await api.post("/SecCollaborator/RequestPinReset", {
-        DocumentNumber: documentNumber,
-        ForceResend: forceResend,
-      });
-      if (data.Succeeded) return { success: true };
-      return {
-        success: false,
-        error: data.Message || "Error al solicitar el código.",
-      };
-    } catch (error: any) {
-      if (error.response?.data?.Message === "NO_EMAIL")
-        return { success: false, noEmail: true };
-      
-      const secondsToWait = error.response?.data?.Data?.secondsToWait;
-
-      return {
-        success: false,
-        error: error.response?.data?.Message || "Ocurrió un error inesperado.",
-        secondsToWait: secondsToWait
-      };
-    }
-  },
-
-  async confirmPinReset(
-    documentNumber: string,
-    otp: string,
-    newPasswordHash: string,
-  ): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { data } = await api.post("/SecCollaborator/ConfirmPinReset", {
-        DocumentNumber: documentNumber,
+      const { data } = await api.post("/SecCollaborator/ConfirmEnrollment", {
+        DocumentNumber: document,
         Otp: otp,
-        NewPasswordHash: newPasswordHash,
+        NewPasswordHash: password,
       });
-      if (data.Succeeded) return { success: true };
-      return {
-        success: false,
-        error: data.Message || "No se pudo actualizar el PIN.",
-      };
+      return { success: data.Succeeded, error: data.Message };
     } catch (error: any) {
       return {
         success: false,
         error:
-          error.response?.data?.Message || "Código incorrecto o ha expirado.",
-      };
-    }
-  },
-
-  async changePassword(
-    oldPasswordHash: string,
-    newPasswordHash: string,
-  ): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { data } = await api.post("/SecCollaborator/ChangePassword", {
-        OldPasswordHash: oldPasswordHash,
-        NewPasswordHash: newPasswordHash,
-      });
-      if (data.Succeeded) return { success: true };
-      return {
-        success: false,
-        error: data.Message || "No se pudo actualizar el PIN.",
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error:
-          error.response?.data?.Message ||
-          "Hubo un problema al contactar con el servidor.",
+          error?.response?.data?.Message || "No se pudo completar el registro.",
       };
     }
   },
@@ -284,7 +231,7 @@ export const authService = {
     try {
       await api.post("/Token/Logout");
     } catch {
-      // Silenciar errores: el logout local debe ejecutarse aunque falle la llamada
+      /* Local cleanup still runs if the session expired. */
     }
     await Promise.all([
       storage.removeItem("token"),
@@ -295,44 +242,9 @@ export const authService = {
 
   async getSession(): Promise<AuthResponse["User"] | null> {
     const userStr = await storage.getItem("user");
-    if (!userStr) return null;
-
-    try {
-      const refreshToken = await storage.getItem("refreshToken");
-      const response = await axios.post(
-        `${API_URL}/Token/Refresh`,
-        Platform.OS === "web" || !isValidToken(refreshToken)
-          ? {}
-          : { RefreshToken: refreshToken },
-        {
-          withCredentials: true,
-          headers: { "X-Nova-Client": "nova-connect" },
-        },
-      );
-
-      if (!response.data?.Succeeded || !response.data?.Data) {
-        throw new Error("La sesión no pudo renovarse");
-      }
-
-      const { token, refreshToken: newRefreshToken } =
-        await fetchTokensFromResponse(response);
-
-      if (Platform.OS !== "web") {
-        if (!isValidToken(token)) throw new Error("Access token ausente");
-        await storage.setItem("token", token);
-        if (isValidToken(newRefreshToken)) {
-          await storage.setItem("refreshToken", newRefreshToken);
-        }
-      }
-
-      return JSON.parse(userStr) as AuthResponse["User"];
-    } catch {
-      await Promise.all([
-        storage.removeItem("token"),
-        storage.removeItem("refreshToken"),
-        storage.removeItem("user"),
-      ]);
-      return null;
+    if (userStr) {
+      return JSON.parse(userStr);
     }
+    return null;
   },
 };

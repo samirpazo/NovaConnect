@@ -3,7 +3,11 @@
  */
 const DEFAULT_PRIMARY_COLOR = "#002aff";
 
-export function sanitizePrimaryColor(color: string | undefined | null, fallback = DEFAULT_PRIMARY_COLOR): string {
+/** Evita que el color rojo puro (#ff0000) se use como color de marca. */
+export function sanitizePrimaryColor(
+  color: string | undefined | null,
+  fallback = DEFAULT_PRIMARY_COLOR,
+): string {
   if (!color) return fallback;
   const normalized = color.toLowerCase();
   if (normalized === "#ff0000" || normalized === "ff0000") return fallback;
