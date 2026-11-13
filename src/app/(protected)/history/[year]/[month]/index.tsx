@@ -67,7 +67,8 @@ export default function HistoryMonthDocumentsScreen() {
       month?.charAt(0).toUpperCase() + month?.slice(1).toLowerCase();
     return offline.offlineDocuments
       .filter((item) => {
-        if (!item.periodYear || !item.periodMonth) return false;
+        if (item.isReceived !== true || !item.periodYear || !item.periodMonth)
+          return false;
         return (
           item.periodYear.toString() === year &&
           item.periodMonth.charAt(0).toUpperCase() +
@@ -89,7 +90,7 @@ export default function HistoryMonthDocumentsScreen() {
         CreateDate: new Date(item.savedAt).toISOString(),
         UpdateDate: null,
         DeleteDate: null,
-        PdcIsReceived: false,
+        PdcIsReceived: true,
         DprID: 0,
         DprDisplayName: item.title,
       }));
@@ -348,6 +349,7 @@ export default function HistoryMonthDocumentsScreen() {
         fileName={viewerDocument?.DprDisplayName}
         periodMonth={viewerDocument?.PdcPeriodMonth}
         periodYear={viewerDocument?.PdcPeriodYear}
+        isReceived={viewerDocument ? !!viewerDocument.PdcIsReceived : undefined}
         title={viewerDocument?.DprDisplayName}
         subtitle={
           viewerDocument

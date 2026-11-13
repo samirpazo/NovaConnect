@@ -1,0 +1,375 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "workflow",
+  "quality": "showcase",
+  "startedAt": "2026-11-13T13:43:39.533Z",
+  "specification": {
+    "path": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.json",
+    "sha256": "1787d13e829cf3ab1bb35f840fe85ba7c64cc4fac4dcd0b3798a97ea5f10997d",
+    "bytes": 6519
+  },
+  "artifact": {
+    "path": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+    "sha256": "4590c62dd4a8e9ae4026b8b7250a455548aadc7a00f82257b92313b5f88ef0a4",
+    "bytes": 849146
+  },
+  "stages": {
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "/Users/edinson/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/edinson/.codex/skills/archify/bin/archify.mjs",
+        "deliver",
+        "workflow",
+        "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.json",
+        "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/tmp/nova-flow-source-20261113-084204",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "1787d13e829cf3ab1bb35f840fe85ba7c64cc4fac4dcd0b3798a97ea5f10997d",
+          "bytes": 6519
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 306,
+      "command": [
+        "/Users/edinson/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/edinson/.codex/skills/archify/bin/archify.mjs",
+        "deliver",
+        "workflow",
+        "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.json",
+        "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/tmp/nova-flow-source-20261113-084204",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "128956e7-ec2f-48d9-95aa-e6e1ba5edd4c",
+        "ok": true,
+        "command": "deliver",
+        "type": "workflow",
+        "input": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.json",
+        "output": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+        "specification": {
+          "sha256": "1787d13e829cf3ab1bb35f840fe85ba7c64cc4fac4dcd0b3798a97ea5f10997d",
+          "bytes": 6519
+        },
+        "artifact": {
+          "sha256": "4590c62dd4a8e9ae4026b8b7250a455548aadc7a00f82257b92313b5f88ef0a4",
+          "bytes": 849146
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "evidence": {
+          "verified": true,
+          "repository": "https://github.com/samirpazo/NovaConnect",
+          "revision": "9e2dd428273c089780a50cf7b917b1c7fb1d79f8",
+          "references": 10,
+          "linkMode": "local-only"
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 90,
+      "command": [
+        "/Users/edinson/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/edinson/.codex/skills/archify/bin/archify.mjs",
+        "check",
+        "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+        "artifact": {
+          "sha256": "4590c62dd4a8e9ae4026b8b7250a455548aadc7a00f82257b92313b5f88ef0a4",
+          "bytes": 849146
+        },
+        "checks": [
+          {
+            "name": "single_svg",
+            "ok": true,
+            "details": [
+              "found 1 <svg> block(s)"
+            ]
+          },
+          {
+            "name": "finite_svg",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "orthogonal_arrows",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "label_route_clearance",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_crossings",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_corridors",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "container_border_runs",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "route_rhythm",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "legend_clearance",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "metrics": {
+            "properCrossings": 0,
+            "resolvedCrossovers": 0,
+            "ambiguousCorridors": 0,
+            "arrowheadCollisions": 0,
+            "containerBorderRuns": 0,
+            "labelRouteClearanceIssues": 0,
+            "labelCanvasOverflowIssues": 0,
+            "minLabelRouteClearance": 43,
+            "desktopReadabilityIssues": 0,
+            "viewportHeightIssues": 0,
+            "minProjectedNodeTextPx": 6.070955534531693,
+            "maxBends": 0,
+            "routesOverSuggestedBends": 0,
+            "maxStretch": 1,
+            "routesOverSuggestedStretch": 0,
+            "minSegmentPx": 8,
+            "minInteriorSegmentPx": null,
+            "shortSegmentCount": 1,
+            "shortEndpointSegmentCount": 1,
+            "shortInteriorSegmentCount": 0,
+            "microSegmentCount": 0
+          },
+          "suggestedLimits": {
+            "bendsPerRelationship": 2,
+            "stretch": 1.35,
+            "segmentPx": 16,
+            "microSegmentPx": 8
+          },
+          "routeReview": {
+            "crossings": [],
+            "detours": []
+          },
+          "leadingSpace": {
+            "measured": false,
+            "reviewSuggested": false
+          },
+          "desktopReadability": {
+            "budgetBasis": "legacy-930",
+            "readerContract": "declared-wide-v1",
+            "availableDiagramWidth": 930,
+            "actualBudgetPx": 930,
+            "limit": "legacy",
+            "requestedTargetPx": null,
+            "requestedTargetMet": null,
+            "hardFloorPx": 6,
+            "hardFloorMet": true,
+            "minimumOwner": {
+              "kind": "node",
+              "id": "sin-copia"
+            },
+            "minimumSourceTextPx": 6.9,
+            "minimumProjectedTextPx": 6.070955534531693,
+            "semanticTextCount": 25
+          },
+          "issues": []
+        },
+        "provenance": "current",
+        "deliveryReceiptId": "128956e7-ec2f-48d9-95aa-e6e1ba5edd4c"
+      }
+    },
+    "browser-check": {
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 31,
+      "command": [
+        "/Users/edinson/.nvm/versions/node/v24.20.0/bin/node",
+        "/Users/edinson/.codex/skills/archify/bin/archify.mjs",
+        "browser-check",
+        "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+        "--json",
+        "--require-provenance"
+      ],
+      "execution": "in-process",
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": false,
+        "command": "browser-check",
+        "evidenceKind": "automated-browser",
+        "status": "fail",
+        "visualReview": "not-requested",
+        "provenance": "current",
+        "deliveryReceiptId": "128956e7-ec2f-48d9-95aa-e6e1ba5edd4c",
+        "artifact": {
+          "path": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+          "sha256": "4590c62dd4a8e9ae4026b8b7250a455548aadc7a00f82257b92313b5f88ef0a4",
+          "bytes": 849146
+        },
+        "state": {
+          "detail": "read",
+          "motion": "still"
+        },
+        "chrome": {
+          "status": "available",
+          "executable": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        },
+        "diagnostics": [
+          {
+            "code": "viewer/browser-check-runtime",
+            "severity": "error",
+            "message": "browser-check could not complete its Chrome inspection.",
+            "subject": {
+              "artifact": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html"
+            },
+            "evidence": {
+              "reason": "Chrome DevTools read pipe failed: stream ended\nChrome process: still running.\nChrome transport: Node v24.20.0, libuv 1.52.1, darwin; pid=93254, exitCode=null, signalCode=null.\nChrome read pipe: readable=false, ended=true, destroyed=false, receivedBytes=0, messages=0, bufferedBytes=0.\nChrome write pipe: writable=true, ended=false, destroyed=false, completedWrites=1, writtenBytes=50, bufferedBytes=0."
+            },
+            "supportedFixes": [
+              "resolve the reported Chrome inspection error, then rerun browser-check"
+            ]
+          }
+        ],
+        "containment": {
+          "status": "fail",
+          "policy": "fit-or-reader-declared-readable-vertical-scroll",
+          "viewports": []
+        },
+        "themeStates": {
+          "status": "fail",
+          "viewports": []
+        },
+        "readability": {
+          "status": "fail",
+          "minimumProjectedNodeTextPx": 6,
+          "viewports": []
+        },
+        "viewerChrome": {
+          "status": "fail",
+          "viewports": []
+        },
+        "captures": {
+          "status": "not-requested",
+          "screenshots": [],
+          "contactSheet": null
+        },
+        "sidecars": {
+          "receipt": "visualizacion.browser-check.json",
+          "files": []
+        },
+        "error": "Chrome DevTools read pipe failed: stream ended\nChrome process: still running.\nChrome transport: Node v24.20.0, libuv 1.52.1, darwin; pid=93254, exitCode=null, signalCode=null.\nChrome read pipe: readable=false, ended=true, destroyed=false, receivedBytes=0, messages=0, bufferedBytes=0.\nChrome write pipe: writable=true, ended=false, destroyed=false, completedWrites=1, writtenBytes=50, bufferedBytes=0."
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/browser-check-runtime",
+      "severity": "error",
+      "message": "browser-check could not complete its Chrome inspection.",
+      "subject": {
+        "artifact": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html"
+      },
+      "evidence": {
+        "reason": "Chrome DevTools read pipe failed: stream ended\nChrome process: still running.\nChrome transport: Node v24.20.0, libuv 1.52.1, darwin; pid=93254, exitCode=null, signalCode=null.\nChrome read pipe: readable=false, ended=true, destroyed=false, receivedBytes=0, messages=0, bufferedBytes=0.\nChrome write pipe: writable=true, ended=false, destroyed=false, completedWrites=1, writtenBytes=50, bufferedBytes=0."
+      },
+      "supportedFixes": [
+        "resolve the reported Chrome inspection error, then rerun browser-check"
+      ]
+    }
+  ],
+  "evidence": {
+    "receipt": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.finalize.json",
+    "summaryReceipt": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.finalize-summary.json",
+    "browserCheckReceipt": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "failedStage": "browser-check",
+  "finishedAt": "2026-11-13T13:43:40.039Z",
+  "durationMs": 505,
+  "update": {
+    "status": "unavailable",
+    "installedVersion": null,
+    "availableVersion": null,
+    "releaseNotes": null,
+    "checkedAt": null,
+    "source": null,
+    "noticeRequired": false,
+    "noticeText": null,
+    "reason": "cache-unavailable"
+  }
+}

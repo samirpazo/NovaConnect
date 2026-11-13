@@ -1,3 +1,4 @@
+import { personPhotoCache } from '@/services/personPhotoCache';
 import { api, API_URL } from '@/lib/axios';
 
 /**
@@ -22,22 +23,34 @@ export const fileService = {
    * `user.PrsPhoto`, un campo que NovaApi nunca envia: la foto nunca se
    * solicitaba y el avatar caia siempre en las iniciales.
    */
-  async getMyPhoto(): Promise<string | null> {
+  async getCachedMyPhoto(owner: string): Promise<string | null> {
+    return personPhotoCache.get(owner);
+  },
+
+  async getMyPhoto(owner?: string): Promise<string | null> {
     try {
       const response = await api.get('/GenPerson/MyPhoto', {
         responseType: 'arraybuffer',
       });
       const contentType = String(response.headers['content-type'] ?? '').split(
-        ';'
+        ';',
       )[0];
-      if (!contentType.startsWith('image/')) return null;
+      if (!contentType.startsWith('image/'))
+        throw new Error('La respuesta no es una imagen.');
       const bytes = new Uint8Array(response.data);
       let binary = '';
       for (const byte of bytes) binary += String.fromCharCode(byte);
-      return `data:${contentType};base64,${btoa(binary)}`;
-    } catch {
-      // Sin foto, o sin permiso: el avatar sigue funcionando con las iniciales.
-      return null;
+      const source = `data:${contentType};base64,${btoa(binary)}`;
+      if (owner) await personPhotoCache.set(owner, source);
+      return source;
+    } catch (error) {
+      const status = (error as { response?: { status?: number } }).response
+        ?.status;
+      if (owner && status === 404) {
+        await personPhotoCache.remove(owner);
+        return null;
+      }
+      return owner ? personPhotoCache.get(owner) : null;
     }
   },
 };

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "workflow",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.json",
+    "sha256": "1787d13e829cf3ab1bb35f840fe85ba7c64cc4fac4dcd0b3798a97ea5f10997d",
+    "bytes": 6519
+  },
+  "artifact": {
+    "path": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+    "sha256": "4590c62dd4a8e9ae4026b8b7250a455548aadc7a00f82257b92313b5f88ef0a4",
+    "bytes": 849146
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/review-visualizacion/visualizacion.finalize.json",
+    "summaryReceipt": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/review-visualizacion/visualizacion.finalize-summary.json",
+    "browserCheckReceipt": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/review-visualizacion/visualizacion.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-13T13:43:59.682Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 1951,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}

@@ -1,12 +1,10 @@
+import { router } from "expo-router";
 import { Text } from "@/components/ui/text";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import {
   Calendar,
-  CheckCircle2,
   ChevronRight,
-  CloudDownload,
   FileText,
-  Loader2,
   WifiOff,
 } from "lucide-react-native";
 import {
@@ -22,7 +20,6 @@ import { DocumentsHeader } from "@/components/documents/DocumentsHeader";
 import { PendingDocumentsSkeleton } from "@/components/documents/PendingDocumentsSkeleton";
 import { PendingEmptyState } from "@/components/documents/PendingEmptyState";
 import { useNetwork } from "@/hooks/useNetwork";
-import { useOfflineDocuments } from "@/hooks/useOfflineDocuments";
 import {
   offlineDocumentsService,
   toOfflineInput,
@@ -43,34 +40,9 @@ export default function DocumentsScreen() {
 
   const { documents, isLoading, isRefreshing, refetch, error } =
     useProcessedDocuments(false);
-  const offline = useOfflineDocuments();
   const isOnline = useNetwork();
 
-  // Sin conexion la lista llega vacia: se muestran los documentos que ya
-  // estaban guardados en el dispositivo.
-  const offlineList = React.useMemo<ProcessedDocument[]>(() => {
-    if (!error || offline.offlineDocuments.length === 0) return [];
-    return offline.offlineDocuments.map((item) => ({
-      PdcID: item.fileId,
-      PrsID: 0,
-      PdcPeriodYear: item.periodYear ?? "",
-      PdcPeriodMonth: item.periodMonth ?? "",
-      PdcPeriodWeek: null,
-      PdcFilID: item.fileId,
-      SecStatus: 1,
-      CreateUserId: 0,
-      UpdateUserId: null,
-      DeleteUserId: null,
-      CreateDate: new Date(item.savedAt).toISOString(),
-      UpdateDate: null,
-      DeleteDate: null,
-      PdcIsReceived: false,
-      DprID: 0,
-      DprDisplayName: item.title,
-    }));
-  }, [error, offline.offlineDocuments]);
-
-  const listData = documents.length > 0 ? documents : offlineList;
+  const listData = documents;
   const [confirming, setConfirming] = React.useState(false);
 
   // En web el documento se muestra embebido en la app (el visor usa un iframe
@@ -107,12 +79,14 @@ export default function DocumentsScreen() {
     React.useState<ProcessedDocument | null>(null);
 
   const handleDocumentPress = (item: ProcessedDocument) => {
+    if (!isOnline || item.PdcIsReceived) return;
     setSelectedDocument(item);
     setIsModalVisible(true);
   };
 
   const confirmReception = async () => {
-    if (!selectedDocument) return;
+    if (!selectedDocument || selectedDocument.PdcIsReceived || !isOnline)
+      return;
     setConfirming(true);
     try {
       const success =
@@ -124,7 +98,10 @@ export default function DocumentsScreen() {
           "El documento se ha movido a tu historial.",
         );
         refetch();
-        await handleOpenPdf(selectedDocument.PdcFilID, selectedDocument);
+        await handleOpenPdf(selectedDocument.PdcFilID, {
+          ...selectedDocument,
+          PdcIsReceived: true,
+        });
       } else {
         showToast.error("Error", "No se pudo recepcionar el documento.");
       }
@@ -165,32 +142,9 @@ export default function DocumentsScreen() {
               <Text className="text-[11px] font-poppins-medium text-muted-foreground capitalize">
                 {item.PdcPeriodMonth} {item.PdcPeriodYear}
               </Text>
-              {offline.isCached(item.PdcFilID) ? (
-                <View className="flex-row items-center ml-2">
-                  <CheckCircle2 size={12} color="#10B981" className="mr-1" />
-                  <Text className="text-[11px] font-poppins-medium text-[#10B981]">
-                    Listo offline
-                  </Text>
-                </View>
-              ) : null}
+
             </View>
           </View>
-
-          {!offline.isCached(item.PdcFilID) ? (
-            <Pressable
-              onPress={() => void offline.cache(toOfflineInput(item))}
-              disabled={offline.downloadingId !== null}
-              accessibilityRole="button"
-              accessibilityLabel="Guardar documento para ver sin conexion"
-              className="w-9 h-9 rounded-full bg-secondary/50 items-center justify-center border border-border/50 mr-1 active:opacity-70"
-            >
-              {offline.downloadingId === item.PdcFilID ? (
-                <Loader2 size={16} className="text-muted-foreground" />
-              ) : (
-                <CloudDownload size={16} className="text-muted-foreground" />
-              )}
-            </Pressable>
-          ) : null}
 
           <View className="w-8 h-8 rounded-full bg-secondary/50 items-center justify-center border border-border/50">
             <ChevronRight size={16} className="text-muted-foreground" />
@@ -199,6 +153,24 @@ export default function DocumentsScreen() {
       </Animated.View>
     );
   };
+
+  if (!isOnline) {
+    return (
+      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+        <View className="px-6 pt-4">
+          <Text className="text-xl font-poppins-bold text-foreground">Documentos</Text>
+          <View className="mt-6 items-center gap-4 rounded-2xl border border-border/40 bg-card px-6 py-8">
+            <WifiOff size={32} color={primaryColor} />
+            <Text className="text-center text-lg font-poppins-semibold text-foreground">Los pendientes requieren conexión</Text>
+            <Text className="text-center text-sm font-poppins text-muted-foreground">Conéctate para consultar y confirmar su recepción. Tus documentos recibidos están en Historial.</Text>
+            <Button variant="outline" onPress={() => router.push("/(protected)/history")}>
+              <Text>Ver historial</Text>
+            </Button>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -209,52 +181,8 @@ export default function DocumentsScreen() {
           primaryColor={primaryColor}
           onRefresh={() => void refetch()}
         />
-        {documents.length > 0 ? (
-          <View className="flex-row items-center gap-2">
-            <Button
-              variant="outline"
-              disabled={offline.progress !== null}
-              onPress={async () => {
-                const result = await offline.cacheAll(
-                  documents.map(toOfflineInput),
-                );
-                if (result.failed > 0)
-                  showToast.error(
-                    "Error",
-                    `${result.failed} documento(s) no se pudieron guardar.`,
-                  );
-                else if (result.done > 0)
-                  showToast.success(
-                    "Documentos guardados",
-                    "Ya puedes verlos sin conexion.",
-                  );
-              }}
-              className="px-4 py-2"
-            >
-              {offline.progress ? (
-                <Loader2 size={14} className="text-muted-foreground" />
-              ) : (
-                <CloudDownload size={14} className="text-muted-foreground" />
-              )}
-              <Text className="text-xs">
-                {offline.progress
-                  ? `Guardando ${offline.progress.done}/${offline.progress.total}`
-                  : "Guardar para ver sin conexion"}
-              </Text>
-            </Button>
-          </View>
-        ) : null}
       </View>
 
-      {offlineList.length > 0 ? (
-        <View className="mx-6 mb-2 flex-row items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
-          <WifiOff size={14} color="#F59E0B" />
-          <Text className="flex-1 text-xs font-poppins-medium text-foreground">
-            Sin conexión: se muestran los documentos guardados en este
-            dispositivo.
-          </Text>
-        </View>
-      ) : null}
 
       {isLoading && !isRefreshing ? (
         <View className="flex-1 px-6 pt-4">
@@ -281,7 +209,7 @@ export default function DocumentsScreen() {
             />
           }
           ListEmptyComponent={
-            error && offlineList.length === 0 ? (
+            error && documents.length === 0 ? (
               <Animated.View
                 entering={FadeInDown.springify()}
                 style={{
@@ -313,6 +241,7 @@ export default function DocumentsScreen() {
               </Animated.View>
             ) : (
               <PendingEmptyState
+                offline={!isOnline}
                 refreshing={isRefreshing}
                 primaryColor={primaryColor}
                 onRefresh={() => void refetch()}
@@ -328,6 +257,7 @@ export default function DocumentsScreen() {
         fileName={viewerDocument?.DprDisplayName}
         periodMonth={viewerDocument?.PdcPeriodMonth}
         periodYear={viewerDocument?.PdcPeriodYear}
+        isReceived={viewerDocument ? !!viewerDocument.PdcIsReceived : undefined}
         title={viewerDocument?.DprDisplayName}
         subtitle={
           viewerDocument

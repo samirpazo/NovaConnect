@@ -20,6 +20,7 @@ export type DocumentViewerModalProps = {
   subtitle?: string;
   periodMonth?: string;
   periodYear?: string;
+  isReceived?: boolean;
   onClose: () => void;
 };
 
@@ -38,6 +39,7 @@ export default function DocumentViewerModal({
   subtitle,
   periodMonth,
   periodYear,
+  isReceived,
   onClose,
 }: DocumentViewerModalProps) {
   const { primaryColor: storePrimaryColor } = usePreferenceStore();
@@ -70,7 +72,13 @@ export default function DocumentViewerModal({
         (await downloadDocument(fileId));
       if (await isDocumentCached(fileId)) {
         await offlineDocumentsService
-          .upsert({ fileId, title: title || fileName, periodMonth, periodYear })
+          .upsert({
+            fileId,
+            title: title || fileName,
+            periodMonth,
+            periodYear,
+            isReceived,
+          })
           .catch(() => {});
       }
       objectUrlRef.current = objectUrl;
@@ -84,7 +92,15 @@ export default function DocumentViewerModal({
     } finally {
       setLoading(false);
     }
-  }, [fileId, releaseUrl, title, fileName, periodMonth, periodYear]);
+  }, [
+    fileId,
+    releaseUrl,
+    title,
+    fileName,
+    periodMonth,
+    periodYear,
+    isReceived,
+  ]);
 
   React.useEffect(() => {
     if (!visible || !fileId) return;

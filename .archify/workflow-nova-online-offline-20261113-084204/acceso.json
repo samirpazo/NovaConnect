@@ -1,0 +1,262 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Nova Connect · Acceso online y offline",
+    "output": ".archify/workflow-nova-online-offline-20261113-084204/acceso.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/samirpazo/NovaConnect.git",
+      "revision": "9e2dd428273c089780a50cf7b917b1c7fb1d79f8",
+      "link_mode": "local-only"
+    }
+  },
+  "lanes": [
+    {
+      "id": "entrada",
+      "label": "Inicio de sesión"
+    },
+    {
+      "id": "red",
+      "label": "Con conexión"
+    },
+    {
+      "id": "local",
+      "label": "Sin conexión"
+    },
+    {
+      "id": "fallo",
+      "label": "Acceso local rechazado"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "pin",
+      "lane": "entrada",
+      "col": 0,
+      "type": "frontend",
+      "label": "Documento y PIN",
+      "sublabel": "Cuenta del colaborador",
+      "sources": [
+        {
+          "path": "src/app/index.tsx",
+          "line": 335,
+          "end_line": 365
+        }
+      ]
+    },
+    {
+      "id": "conectividad",
+      "lane": "entrada",
+      "col": 1,
+      "type": "security",
+      "label": "¿Hay conexión?",
+      "sublabel": "Elegir validación",
+      "sources": [
+        {
+          "path": "src/app/index.tsx",
+          "line": 340,
+          "end_line": 362
+        }
+      ]
+    },
+    {
+      "id": "rechazo-remoto",
+      "lane": "entrada",
+      "col": 3,
+      "type": "security",
+      "label": "Rechazo del servidor",
+      "sublabel": "No usar acceso local",
+      "sources": [
+        {
+          "path": "src/stores/useAuthStore.ts",
+          "line": 48,
+          "end_line": 71
+        }
+      ]
+    },
+    {
+      "id": "api-login",
+      "lane": "red",
+      "col": 2,
+      "type": "cloud",
+      "label": "Autenticar en API",
+      "sublabel": "POST /Token/AuthenticationCollaborator",
+      "sources": [
+        {
+          "path": "src/services/authService.ts",
+          "line": 17,
+          "end_line": 142
+        }
+      ]
+    },
+    {
+      "id": "recordar",
+      "lane": "red",
+      "col": 3,
+      "type": "database",
+      "label": "Guardar referencia",
+      "sublabel": "Verificador + datos locales",
+      "sources": [
+        {
+          "path": "src/services/offlineAuthService.ts",
+          "line": 40,
+          "end_line": 72
+        }
+      ]
+    },
+    {
+      "id": "online-listo",
+      "lane": "red",
+      "col": 4,
+      "type": "frontend",
+      "label": "Acceso online",
+      "sublabel": "Perfil y módulos",
+      "sources": [
+        {
+          "path": "src/stores/useAuthStore.ts",
+          "line": 40,
+          "end_line": 70
+        }
+      ]
+    },
+    {
+      "id": "verificar-local",
+      "lane": "local",
+      "col": 2,
+      "type": "security",
+      "label": "Validar PIN local",
+      "sublabel": "Cuenta validada antes",
+      "sources": [
+        {
+          "path": "src/services/offlineAuthService.ts",
+          "line": 94,
+          "end_line": 130
+        }
+      ]
+    },
+    {
+      "id": "local-listo",
+      "lane": "local",
+      "col": 3,
+      "type": "frontend",
+      "label": "Acceso offline",
+      "sublabel": "Consultar datos guardados",
+      "sources": [
+        {
+          "path": "src/stores/useAuthStore.ts",
+          "line": 71,
+          "end_line": 93
+        }
+      ]
+    },
+    {
+      "id": "sin-acceso",
+      "lane": "fallo",
+      "col": 2,
+      "type": "security",
+      "label": "No permitir entrada",
+      "sublabel": "PIN erróneo o sin referencia",
+      "sources": [
+        {
+          "path": "src/services/offlineAuthService.ts",
+          "line": 94,
+          "end_line": 130
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "pin-conectividad",
+      "from": "pin",
+      "to": "conectividad"
+    },
+    {
+      "id": "conectividad-api-login",
+      "from": "conectividad",
+      "to": "api-login",
+      "label": "Sí",
+      "role": "branch"
+    },
+    {
+      "id": "conectividad-verificar-local",
+      "from": "conectividad",
+      "to": "verificar-local",
+      "label": "No",
+      "role": "branch"
+    },
+    {
+      "id": "api-login-recordar",
+      "from": "api-login",
+      "to": "recordar",
+      "label": "Válido"
+    },
+    {
+      "id": "recordar-online-listo",
+      "from": "recordar",
+      "to": "online-listo"
+    },
+    {
+      "id": "api-login-rechazo-remoto",
+      "from": "api-login",
+      "to": "rechazo-remoto",
+      "label": "Rechazado",
+      "role": "error"
+    },
+    {
+      "id": "api-login-verificar-local",
+      "from": "api-login",
+      "to": "verificar-local",
+      "label": "Fallo de red",
+      "role": "branch"
+    },
+    {
+      "id": "verificar-local-local-listo",
+      "from": "verificar-local",
+      "to": "local-listo",
+      "label": "PIN válido"
+    },
+    {
+      "id": "verificar-local-sin-acceso",
+      "from": "verificar-local",
+      "to": "sin-acceso",
+      "label": "No válido",
+      "role": "error"
+    }
+  ],
+  "mainPath": [
+    "pin",
+    "conectividad",
+    "api-login",
+    "recordar",
+    "online-listo"
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Sesión existente",
+      "items": [
+        "Si ya hay un usuario guardado, el arranque restaura esa sesión; no exige entrar otra vez en cada apertura."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Seguridad y conexión",
+      "items": [
+        "Una pérdida de red no equivale a credenciales incorrectas. Un rechazo real no activa el fallback local.",
+        "El PIN no se guarda en claro. Tras varios intentos erróneos hay una pausa local de 30 segundos.",
+        "El interceptor renueva una sesión online ante 401; solo cierra por rechazo 401/403 de la renovación."
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Alcance y evidencia",
+      "items": [
+        "Flujo del código local corregido, congelado en un snapshot de fuentes. No es un commit publicado.",
+        "La web necesita estar cargada antes de perder conexión; no incluye arranque web offline desde cero."
+      ]
+    }
+  ]
+}

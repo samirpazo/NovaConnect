@@ -1,15 +1,19 @@
+import { useNetwork } from "@/hooks/useNetwork";
 import { useState, useCallback } from "react";
 import { ProcessedDocument } from "@/types/document";
 import { processedDocumentService } from "@/services/processedDocumentService";
 import { useFocusEffect } from "expo-router";
 
 export function useProcessedDocuments(isReceived: boolean) {
+  const isOnline = useNetwork();
+  const canLoad = isReceived || isOnline;
   const [documents, setDocuments] = useState<ProcessedDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchDocuments = useCallback(async (refresh = false) => {
+    if (!canLoad) return;
     if (refresh) {
       setIsRefreshing(true);
     } else {
@@ -25,7 +29,7 @@ export function useProcessedDocuments(isReceived: boolean) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [isReceived]);
+  }, [isReceived, canLoad]);
 
   // Se ejecuta automáticamente cuando la pantalla recibe el foco
   useFocusEffect(
@@ -35,10 +39,10 @@ export function useProcessedDocuments(isReceived: boolean) {
   );
 
   return {
-    documents,
-    isLoading,
-    isRefreshing,
-    error,
+    documents: canLoad ? documents : [],
+    isLoading: canLoad && isLoading,
+    isRefreshing: canLoad && isRefreshing,
+    error: canLoad ? error : null,
     refetch: () => fetchDocuments(true),
   };
 }

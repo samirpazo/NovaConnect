@@ -1,0 +1,274 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Nova Connect · Recepcionar un documento",
+    "output": ".archify/workflow-nova-online-offline-20261113-084204/recepcion.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/samirpazo/NovaConnect.git",
+      "revision": "9e2dd428273c089780a50cf7b917b1c7fb1d79f8",
+      "link_mode": "local-only"
+    }
+  },
+  "lanes": [
+    {
+      "id": "usuario",
+      "label": "Documento pendiente"
+    },
+    {
+      "id": "online",
+      "label": "Confirmación online"
+    },
+    {
+      "id": "offline",
+      "label": "Consulta sin conexión"
+    },
+    {
+      "id": "error",
+      "label": "Fallo de confirmación"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "pendiente",
+      "lane": "usuario",
+      "col": 0,
+      "type": "frontend",
+      "label": "Lista de pendientes",
+      "sublabel": "Estado conocido: no recibido",
+      "sources": [
+        {
+          "path": "src/services/processedDocumentService.ts",
+          "line": 14,
+          "end_line": 76
+        }
+      ]
+    },
+    {
+      "id": "seleccionar",
+      "lane": "usuario",
+      "col": 1,
+      "type": "frontend",
+      "label": "Seleccionar documento",
+      "sublabel": "Separar consulta y recepción",
+      "sources": [
+        {
+          "path": "src/app/(protected)/documents/index.tsx",
+          "line": 85,
+          "end_line": 97
+        }
+      ]
+    },
+    {
+      "id": "abrir-final",
+      "lane": "usuario",
+      "col": 5,
+      "type": "frontend",
+      "label": "Abrir el PDF",
+      "sublabel": "Después de la confirmación",
+      "sources": [
+        {
+          "path": "src/app/(protected)/documents/index.tsx",
+          "line": 94,
+          "end_line": 134
+        }
+      ]
+    },
+    {
+      "id": "confirmar",
+      "lane": "online",
+      "col": 2,
+      "type": "security",
+      "label": "Confirmar recepción",
+      "sublabel": "Requiere internet",
+      "sources": [
+        {
+          "path": "src/app/(protected)/documents/index.tsx",
+          "line": 94,
+          "end_line": 134
+        }
+      ]
+    },
+    {
+      "id": "enviar",
+      "lane": "online",
+      "col": 3,
+      "type": "cloud",
+      "label": "Registrar en API",
+      "sublabel": "PUT /MpwProcessedDocument/Update",
+      "sources": [
+        {
+          "path": "src/services/processedDocumentService.ts",
+          "line": 79,
+          "end_line": 115
+        }
+      ]
+    },
+    {
+      "id": "actualizar",
+      "lane": "online",
+      "col": 4,
+      "type": "database",
+      "label": "Actualizar estado",
+      "sublabel": "Retirar de pendientes",
+      "sources": [
+        {
+          "path": "src/services/processedDocumentService.ts",
+          "line": 88,
+          "end_line": 114
+        }
+      ]
+    },
+    {
+      "id": "historial",
+      "lane": "online",
+      "col": 5,
+      "type": "database",
+      "label": "Añadir al historial",
+      "sublabel": "Mantener copia local coherente",
+      "sources": [
+        {
+          "path": "src/services/processedDocumentService.ts",
+          "line": 88,
+          "end_line": 114
+        }
+      ]
+    },
+    {
+      "id": "ver-local",
+      "lane": "offline",
+      "col": 2,
+      "type": "frontend",
+      "label": "Abrir copia guardada",
+      "sublabel": "No confirmar recepción",
+      "sources": [
+        {
+          "path": "src/app/(protected)/documents/index.tsx",
+          "line": 85,
+          "end_line": 97
+        }
+      ]
+    },
+    {
+      "id": "no-cambio",
+      "lane": "offline",
+      "col": 3,
+      "type": "database",
+      "label": "Estado sin cambios",
+      "sublabel": "Descargado no significa recibido",
+      "sources": [
+        {
+          "path": "src/app/(protected)/documents/index.tsx",
+          "line": 95,
+          "end_line": 104
+        }
+      ]
+    },
+    {
+      "id": "error-envio",
+      "lane": "error",
+      "col": 4,
+      "type": "security",
+      "label": "No marcar recibido",
+      "sublabel": "Reintentar con conexión",
+      "sources": [
+        {
+          "path": "src/app/(protected)/documents/index.tsx",
+          "line": 94,
+          "end_line": 134
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "pendiente-seleccionar",
+      "from": "pendiente",
+      "to": "seleccionar"
+    },
+    {
+      "id": "seleccionar-confirmar",
+      "from": "seleccionar",
+      "to": "confirmar",
+      "label": "Con red",
+      "role": "branch"
+    },
+    {
+      "id": "seleccionar-ver-local",
+      "from": "seleccionar",
+      "to": "ver-local",
+      "label": "Sin red",
+      "role": "branch"
+    },
+    {
+      "id": "confirmar-enviar",
+      "from": "confirmar",
+      "to": "enviar"
+    },
+    {
+      "id": "enviar-actualizar",
+      "from": "enviar",
+      "to": "actualizar",
+      "label": "Éxito"
+    },
+    {
+      "id": "actualizar-historial",
+      "from": "actualizar",
+      "to": "historial"
+    },
+    {
+      "id": "historial-abrir-final",
+      "from": "historial",
+      "to": "abrir-final"
+    },
+    {
+      "id": "ver-local-no-cambio",
+      "from": "ver-local",
+      "to": "no-cambio"
+    },
+    {
+      "id": "enviar-error-envio",
+      "from": "enviar",
+      "to": "error-envio",
+      "label": "Fallo",
+      "role": "error"
+    }
+  ],
+  "mainPath": [
+    "pendiente",
+    "seleccionar",
+    "confirmar",
+    "enviar",
+    "actualizar",
+    "historial",
+    "abrir-final"
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Dos estados independientes",
+      "items": [
+        "Recibido/pendiente viene de la confirmación del servidor. Guardado/no guardado indica si el PDF está en este dispositivo.",
+        "Un documento ya recibido no vuelve a pendientes por estar guardado offline."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Sin conexión",
+      "items": [
+        "No se registra una nueva recepción offline ni se encola una confirmación automática. Solo puede consultarse una copia ya guardada.",
+        "Un PDF antiguo sin estado conocido no se inventa como pendiente."
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Alcance y evidencia",
+      "items": [
+        "Flujo del código local corregido, congelado en un snapshot de fuentes. No es un commit publicado.",
+        "La web necesita estar cargada antes de perder conexión; no incluye arranque web offline desde cero."
+      ]
+    }
+  ]
+}

@@ -20,6 +20,7 @@ export type DocumentViewerModalProps = {
   subtitle?: string;
   periodMonth?: string;
   periodYear?: string;
+  isReceived?: boolean;
   onClose: () => void;
 };
 

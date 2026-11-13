@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "workflow",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/acceso.json",
+    "sha256": "2cb32a3eab84f8638eb369562ef25b636ef2c5baf0df12c722bdf9e00f6f6d21",
+    "bytes": 6093
+  },
+  "artifact": {
+    "path": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/acceso.html",
+    "sha256": "24092b851254bc62325182610885dfa400338554a649fffd32a77d6948e1add9",
+    "bytes": 847799
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "fail"
+  },
+  "failedStage": "browser-check",
+  "diagnostics": [
+    {
+      "code": "viewer/browser-check-runtime",
+      "severity": "error",
+      "message": "browser-check could not complete its Chrome inspection.",
+      "subject": {
+        "artifact": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/acceso.html"
+      },
+      "evidence": {
+        "reason": "Chrome DevTools read pipe failed: stream ended\nChrome process: still running.\nChrome transport: Node v24.20.0, libuv 1.52.1, darwin; pid=93065, exitCode=null, signalCode=null.\nChrome read pipe: readable=false, ended=true, destroyed=false, receivedBytes=0, messages=0, bufferedBytes=0.\nChrome write pipe: writable=true, ended=false, destroyed=false, completedWrites=1, writtenBytes=50, bufferedBytes=0."
+      },
+      "supportedFixes": [
+        "resolve the reported Chrome inspection error, then rerun browser-check"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/acceso.finalize.json",
+    "summaryReceipt": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/acceso.finalize-summary.json",
+    "browserCheckReceipt": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/acceso.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "durationMs": 521,
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  }
+}

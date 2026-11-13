@@ -1,3 +1,4 @@
+import { useNetwork } from "@/hooks/useNetwork";
 import { FullScreenPhotoModal } from "@/components/profile/FullScreenPhotoModal";
 import { PersonalInfoCard } from "@/components/profile/PersonalInfoCard";
 import { ProfileActionsCard } from "@/components/profile/ProfileActionsCard";
@@ -8,11 +9,7 @@ import { fileService } from "@/services/fileService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { usePreferenceStore } from "@/stores/usePreferenceStore";
 import { router } from "expo-router";
-import {
-  Headset,
-  LogOut,
-  Settings,
-} from "lucide-react-native";
+import { Headset, LogOut, Settings } from "lucide-react-native";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,20 +23,28 @@ export default function ProfileScreen() {
       ? "#002aff"
       : storePrimaryColor || "#002aff";
 
+  const isOnline = useNetwork();
+  const photoOwner =
+    user?.PrsDocumentNumber || String(user?.PrsID ?? user?.UsrID ?? "");
   const [photoVisible, setPhotoVisible] = React.useState(false);
   const [myPhoto, setMyPhoto] = React.useState<string | null>(null);
 
-  // La foto se pide una sola vez al backend: el campo PrsPhoto del login
-  // nunca llego porque NovaApi no lo envia.
+  // Muestra la copia local primero y la actualiza al recuperar conexión.
   React.useEffect(() => {
     let cancelled = false;
-    void fileService.getMyPhoto().then((source) => {
-      if (!cancelled) setMyPhoto(source);
-    });
+    void (async () => {
+      if (!photoOwner) return;
+      const cached = await fileService.getCachedMyPhoto(photoOwner);
+      if (!cancelled) setMyPhoto(cached);
+      if (isOnline) {
+        const source = await fileService.getMyPhoto(photoOwner);
+        if (!cancelled) setMyPhoto(source);
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [photoOwner, isOnline]);
 
   const handleLogout = async () => {
     AlertHelper.alert(
@@ -54,7 +59,7 @@ export default function ProfileScreen() {
             await logout();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -104,9 +109,9 @@ export default function ProfileScreen() {
                   label: "Configuración",
                   description: "Tema, PIN y biometría",
                   icon: Settings,
-                  onPress: () => router.push("/(protected)/profile/configuration"),
+                  onPress: () =>
+                    router.push("/(protected)/profile/configuration"),
                 },
-
               ]}
             />
           </View>

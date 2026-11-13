@@ -1,3 +1,4 @@
+import { personPhotoCache } from '@/services/personPhotoCache';
 import { clearCachedDocuments } from '@/services/documentDownload';
 import { offlineDocumentsService } from '@/services/offlineDocuments';
 import CryptoJS from 'crypto-js';
@@ -47,6 +48,7 @@ export const offlineAuthService = {
     if (previous && previous.document !== document.trim()) {
       await clearCachedDocuments();
       await offlineDocumentsService.clear();
+      await personPhotoCache.clear();
     }
     const savedAt = Date.now();
     const salt = `nova-connect-offline:${document.trim()}:${savedAt}`;
@@ -124,6 +126,7 @@ export const offlineAuthService = {
   /** Olvida la sesion local (al cerrar sesion). */
   async clear(): Promise<void> {
     await storage.removeItem(SESSION_KEY);
+    await personPhotoCache.clear();
     await clearCachedDocuments();
     await offlineDocumentsService.clear();
   },

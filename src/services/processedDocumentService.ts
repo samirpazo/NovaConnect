@@ -16,7 +16,10 @@ export const processedDocumentService = {
       const { data } = await api.get(
         `/MpwProcessedDocument/GetByPrsID?PdcIsReceived=${isReceived}`,
       );
-      const documents = data.Data || [];
+      const documents = (data.Data || []).filter(
+        (document: ProcessedDocument) =>
+          !!document.PdcIsReceived === isReceived,
+      );
       await storage.setItem(
         await documentListKey(isReceived),
         JSON.stringify(documents),
@@ -25,12 +28,19 @@ export const processedDocumentService = {
     } catch (error) {
       // Un rechazo del servidor nunca se convierte en acceso local.
       if (!(error as { response?: unknown }).response) {
+        if (!isReceived) return [];
         const ids = await listCachedDocuments();
         const snapshot = JSON.parse(
           (await storage.getItem(await documentListKey(isReceived))) || "[]",
         ) as ProcessedDocument[];
         if (Array.isArray(snapshot) && snapshot.length) {
-          return snapshot.filter((document) => ids.includes(document.PdcFilID));
+          const metadata = await offlineDocumentsService.list();
+          return snapshot.filter(
+            (document) =>
+              ids.includes(document.PdcFilID) &&
+              (metadata.find((item) => item.fileId === document.PdcFilID)
+                ?.isReceived ?? !!document.PdcIsReceived) === isReceived,
+          );
         }
         if (isReceived) {
           const metadata = await offlineDocumentsService.list();
@@ -38,6 +48,7 @@ export const processedDocumentService = {
             .filter(
               (document) =>
                 ids.includes(document.fileId) &&
+                document.isReceived === true &&
                 document.periodYear &&
                 document.periodMonth,
             )
@@ -60,6 +71,7 @@ export const processedDocumentService = {
               DprDisplayName: document.title,
             }));
         }
+        return [];
       }
       throw error;
     }
@@ -72,7 +84,28 @@ export const processedDocumentService = {
         `/MpwProcessedDocument/Update?id=${document.PdcID}`,
         payload,
       );
-      return data.Succeeded || data.Data;
+      const success = !!(data.Succeeded || data.Data);
+      if (success) {
+        const received = { ...document, PdcIsReceived: true };
+        // La confirmación del servidor actualiza también las dos listas locales.
+        for (const isReceived of [false, true]) {
+          const key = await documentListKey(isReceived);
+          const previous = JSON.parse(
+            (await storage.getItem(key)) || "[]",
+          ) as ProcessedDocument[];
+          const next = previous.filter((item) => item.PdcID !== document.PdcID);
+          if (isReceived) next.push(received);
+          await storage.setItem(key, JSON.stringify(next));
+        }
+        await offlineDocumentsService.upsert({
+          fileId: document.PdcFilID,
+          title: document.DprDisplayName,
+          periodMonth: document.PdcPeriodMonth,
+          periodYear: document.PdcPeriodYear,
+          isReceived: true,
+        });
+      }
+      return success;
     } catch (error) {
       console.error("Error updating document:", error);
       throw error;

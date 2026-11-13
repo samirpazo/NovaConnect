@@ -1,0 +1,275 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Nova Connect · Ver y guardar un documento",
+    "output": ".archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+    "locale": "es",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/samirpazo/NovaConnect.git",
+      "revision": "9e2dd428273c089780a50cf7b917b1c7fb1d79f8",
+      "link_mode": "local-only"
+    }
+  },
+  "lanes": [
+    {
+      "id": "app",
+      "label": "Abrir documento"
+    },
+    {
+      "id": "cache",
+      "label": "Copia local disponible"
+    },
+    {
+      "id": "red",
+      "label": "Descarga autenticada"
+    },
+    {
+      "id": "limite",
+      "label": "Fallo o almacenamiento no disponible"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "abrir",
+      "lane": "app",
+      "col": 0,
+      "type": "frontend",
+      "label": "Ver documento",
+      "sublabel": "Desde historial o tras recibir",
+      "sources": [
+        {
+          "path": "src/app/(protected)/documents/index.tsx",
+          "line": 60,
+          "end_line": 85
+        }
+      ]
+    },
+    {
+      "id": "buscar-copia",
+      "lane": "app",
+      "col": 1,
+      "type": "database",
+      "label": "¿Hay copia local?",
+      "sublabel": "Consultar almacenamiento",
+      "sources": [
+        {
+          "path": "src/components/documents/DocumentViewerModal.web.tsx",
+          "line": 70,
+          "end_line": 86
+        }
+      ]
+    },
+    {
+      "id": "leer",
+      "lane": "cache",
+      "col": 2,
+      "type": "database",
+      "label": "Leer PDF guardado",
+      "sublabel": "No volver a descargar",
+      "sources": [
+        {
+          "path": "src/components/documents/DocumentViewerModal.web.tsx",
+          "line": 70,
+          "end_line": 86
+        }
+      ]
+    },
+    {
+      "id": "mostrar-local",
+      "lane": "cache",
+      "col": 3,
+      "type": "frontend",
+      "label": "Mostrar documento",
+      "sublabel": "Disponible sin internet",
+      "sources": [
+        {
+          "path": "src/components/documents/DocumentViewerModal.web.tsx",
+          "line": 57,
+          "end_line": 62
+        }
+      ]
+    },
+    {
+      "id": "descargar",
+      "lane": "red",
+      "col": 2,
+      "type": "cloud",
+      "label": "Descargar PDF",
+      "sublabel": "GET autenticado a GenFiles",
+      "sources": [
+        {
+          "path": "src/services/documentDownload.ts",
+          "line": 12,
+          "end_line": 28
+        }
+      ]
+    },
+    {
+      "id": "guardar",
+      "lane": "red",
+      "col": 3,
+      "type": "database",
+      "label": "Guardar copia offline",
+      "sublabel": "Si hay espacio y permisos",
+      "sources": [
+        {
+          "path": "src/services/documentDownload.ts",
+          "line": 27,
+          "end_line": 43
+        }
+      ]
+    },
+    {
+      "id": "mostrar-online",
+      "lane": "red",
+      "col": 5,
+      "type": "frontend",
+      "label": "Mostrar PDF",
+      "sublabel": "Web: visor; móvil: sistema",
+      "sources": [
+        {
+          "path": "src/components/documents/DocumentViewerModal.web.tsx",
+          "line": 70,
+          "end_line": 90
+        }
+      ]
+    },
+    {
+      "id": "actualizar-listas",
+      "lane": "red",
+      "col": 4,
+      "type": "messagebus",
+      "label": "Notificar disponibilidad",
+      "sublabel": "Mes, año e historial",
+      "sources": [
+        {
+          "path": "src/services/offlineDocuments.ts",
+          "line": 53,
+          "end_line": 73
+        }
+      ]
+    },
+    {
+      "id": "sin-copia",
+      "lane": "limite",
+      "col": 2,
+      "type": "security",
+      "label": "No se puede abrir",
+      "sublabel": "Sin red y sin copia guardada",
+      "sources": [
+        {
+          "path": "src/components/documents/DocumentViewerModal.web.tsx",
+          "line": 86,
+          "end_line": 96
+        }
+      ]
+    },
+    {
+      "id": "solo-temporal",
+      "lane": "limite",
+      "col": 4,
+      "type": "frontend",
+      "label": "Mostrar temporal",
+      "sublabel": "Si falla el guardado local",
+      "sources": [
+        {
+          "path": "src/services/documentDownload.native.ts",
+          "line": 53,
+          "end_line": 63
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "abrir-buscar-copia",
+      "from": "abrir",
+      "to": "buscar-copia"
+    },
+    {
+      "id": "buscar-copia-leer",
+      "from": "buscar-copia",
+      "to": "leer",
+      "label": "Sí",
+      "role": "branch"
+    },
+    {
+      "id": "leer-mostrar-local",
+      "from": "leer",
+      "to": "mostrar-local"
+    },
+    {
+      "id": "buscar-copia-descargar",
+      "from": "buscar-copia",
+      "to": "descargar",
+      "label": "No; con red",
+      "role": "branch"
+    },
+    {
+      "id": "buscar-copia-sin-copia",
+      "from": "buscar-copia",
+      "to": "sin-copia",
+      "label": "No; sin red",
+      "role": "error"
+    },
+    {
+      "id": "descargar-guardar",
+      "from": "descargar",
+      "to": "guardar"
+    },
+    {
+      "id": "guardar-actualizar-listas",
+      "from": "guardar",
+      "to": "actualizar-listas",
+      "label": "Guardado"
+    },
+    {
+      "id": "actualizar-listas-mostrar-online",
+      "from": "actualizar-listas",
+      "to": "mostrar-online"
+    },
+    {
+      "id": "guardar-solo-temporal",
+      "from": "guardar",
+      "to": "solo-temporal",
+      "label": "Sin espacio",
+      "role": "branch"
+    }
+  ],
+  "mainPath": [
+    "abrir",
+    "buscar-copia",
+    "descargar",
+    "guardar",
+    "actualizar-listas",
+    "mostrar-online"
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Abrir no es recepcionar",
+      "items": [
+        "Consultar el PDF no cambia su estado de recepción. La recepción solo cambia tras la respuesta exitosa del PUT."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Persistencia y límites",
+      "items": [
+        "Web: PDF en Cache API. Móvil: copia persistente en el directorio de documentos de la app.",
+        "Si el usuario o el navegador elimina el archivo, deja de estar disponible offline.",
+        "Los contadores se actualizan por notificaciones del almacén; no necesitan recargar la página."
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Alcance y evidencia",
+      "items": [
+        "Flujo del código local corregido, congelado en un snapshot de fuentes. No es un commit publicado.",
+        "La web necesita estar cargada antes de perder conexión; no incluye arranque web offline desde cero."
+      ]
+    }
+  ]
+}

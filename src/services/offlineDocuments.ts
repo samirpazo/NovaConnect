@@ -21,6 +21,7 @@ export type OfflineDocument = {
   periodMonth?: string;
   periodYear?: string;
   savedAt: number;
+  isReceived?: boolean;
 };
 
 /**
@@ -88,5 +89,6 @@ export function toOfflineInput(document: ProcessedDocument) {
     title: document.DprDisplayName,
     periodMonth: document.PdcPeriodMonth,
     periodYear: document.PdcPeriodYear,
+    isReceived: !!document.PdcIsReceived,
   };
 }

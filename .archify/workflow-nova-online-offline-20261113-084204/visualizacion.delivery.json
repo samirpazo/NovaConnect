@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "3ee8fe01-b1c4-42cd-8512-0856eb2637e3",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.json",
+  "output": "/Users/edinson/Documents/Desarrollo/NovaConnect/.archify/workflow-nova-online-offline-20261113-084204/visualizacion.html",
+  "specification": {
+    "sha256": "9eb3b15edd16f1b7e75d99ad943c29c7c643ec3d06d89cc57508bb9edd09ff2c",
+    "bytes": 6525
+  },
+  "artifact": {
+    "sha256": "a26162d8a3fd04a5c76ef0461b061cda25847591ec6f514bbed6b204dc3fde52",
+    "bytes": 849159
+  }
+}

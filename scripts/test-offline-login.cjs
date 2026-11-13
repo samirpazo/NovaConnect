@@ -32,6 +32,9 @@ function load(file, modules, extra = {}) {
     'src/services/offlineAuthService.ts',
     {
       'crypto-js': CryptoJS,
+      '@/services/personPhotoCache': {
+        personPhotoCache: { clear: async () => {} },
+      },
       '@/lib/storage': { storage },
       '@/lib/security': { hashPassword: (pin) => `server-${pin}` },
       '@/services/documentDownload': {
@@ -195,6 +198,63 @@ function load(file, modules, extra = {}) {
     await assert.rejects(
       documents.getDocuments(true),
       'Un 401 no se convierte en datos locales',
+    );
+  }
+  {
+    const metadata = [];
+    let offline = false;
+    const pending = {
+      PdcID: 99,
+      PdcFilID: 99,
+      PdcIsReceived: false,
+      PdcPeriodMonth: 'Abril',
+      PdcPeriodYear: '2026',
+    };
+    await storage.setItem('user', JSON.stringify(user));
+    await storage.setItem(
+      'nova-connect.documentList:12345678:false',
+      JSON.stringify([pending]),
+    );
+    const { processedDocumentService: service } = load(
+      'src/services/processedDocumentService.ts',
+      {
+        '@/lib/axios': {
+          api: {
+            get: async () => {
+              if (offline) throw { code: 'ERR_NETWORK' };
+              return { data: { Data: [] } };
+            },
+            put: async () => ({ data: { Succeeded: true } }),
+          },
+        },
+        '@/lib/storage': { storage },
+        '@/services/documentDownload': {
+          listCachedDocuments: async () => [99],
+        },
+        '@/services/offlineDocuments': {
+          offlineDocumentsService: {
+            list: async () => metadata,
+            upsert: async (item) => metadata.push(item),
+          },
+        },
+      },
+    );
+    assert.equal(await service.receiveDocument(pending), true);
+    offline = true;
+    assert.equal(
+      (await service.getDocuments(false)).length,
+      0,
+      'Recepcionado nunca reaparece entre pendientes al perder conexión',
+    );
+    assert.equal((await service.getDocuments(true))[0].PdcIsReceived, true);
+    assert.equal(metadata[0].isReceived, true);
+    const pendingScreen = fs.readFileSync(
+      'src/app/(protected)/documents/index.tsx',
+      'utf8',
+    );
+    assert.ok(
+      !pendingScreen.includes('offline.offlineDocuments.map'),
+      'La pantalla no inventa pendientes a partir de todos los PDF guardados',
     );
   }
   console.log(
